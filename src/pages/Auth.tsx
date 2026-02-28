@@ -41,6 +41,9 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-2">
+            <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-16 w-16 rounded-full" />
+          </div>
           <CardTitle className="text-2xl">Chapter 84 Connect</CardTitle>
           <CardDescription>{isSignUp ? "Create an account" : "Sign in to continue"}</CardDescription>
         </CardHeader>

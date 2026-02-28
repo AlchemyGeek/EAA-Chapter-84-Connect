@@ -104,8 +104,10 @@ export default function AppLayout() {
   return (
     <div className="flex min-h-screen">
       <aside className="w-60 border-r border-sidebar-border bg-sidebar text-sidebar-foreground flex flex-col shrink-0">
-        <div className="p-4 border-b border-sidebar-border">
-          <h1 className="font-bold text-lg text-sidebar-primary">Ch.84 Connect</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-10 w-10 rounded-full" />
+            <h1 className="font-bold text-lg text-sidebar-primary">Ch.84 Connect</h1>
+          </div>
           <p className="text-xs text-sidebar-foreground/70 truncate">{user.email}</p>
           {isAdmin && (
             <span className="inline-flex items-center gap-1 mt-1 text-xs bg-sidebar-accent text-sidebar-accent-foreground px-2 py-0.5 rounded">
