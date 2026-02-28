@@ -92,6 +92,42 @@ export default function MemberHome() {
     },
   });
 
+  // Fetch member chapter data (for directory visibility)
+  const activeKeyId = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
+  const { data: chapterData } = useQuery({
+    queryKey: ["member-chapter-data", activeKeyId],
+    enabled: !!activeKeyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_chapter_data")
+        .select("*")
+        .eq("key_id", activeKeyId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const toggleVisibility = useMutation({
+    mutationFn: async (visible: boolean) => {
+      if (chapterData) {
+        const { error } = await supabase
+          .from("member_chapter_data")
+          .update({ visible_in_directory: visible })
+          .eq("key_id", activeKeyId!);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("member_chapter_data")
+          .insert({ key_id: activeKeyId!, visible_in_directory: visible });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["member-chapter-data", activeKeyId] });
+    },
+  });
+
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
