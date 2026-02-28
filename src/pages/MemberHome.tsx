@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
-import { Checkbox } from "@/components/ui/checkbox";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
