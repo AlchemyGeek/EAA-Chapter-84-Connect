@@ -19,7 +19,7 @@ export default function Members() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, eaa_number, first_name, last_name, member_type")
+        .select("key_id, eaa_number, first_name, last_name, nickname, member_type")
         .eq("current_standing", "Active")
         .order("last_name");
       if (error) throw error;
