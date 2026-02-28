@@ -86,12 +86,14 @@ interface StatusDashboardProps {
   currentStanding: string | null;
   expirationDate: string | null;
   memberType: string | null;
+  eaaNumber: string | null;
 }
 
 export function StatusDashboard({
   currentStanding,
   expirationDate,
   memberType,
+  eaaNumber,
 }: StatusDashboardProps) {
   const { status, message } = computeStatus(currentStanding, expirationDate);
   const config = statusConfig[status];
