@@ -116,7 +116,6 @@ export default function MemberHome() {
       ]
     : [];
 
-  const queryClient = useQueryClient();
 
   const handleSave = async (updates: Record<string, any>) => {
     const { error } = await supabase
