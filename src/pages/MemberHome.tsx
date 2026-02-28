@@ -314,23 +314,6 @@ export default function MemberHome() {
         {/* Editable & read-only sections */}
         {member && (
           <div className="space-y-2">
-            {/* Directory visibility toggle */}
-            {!isImpersonating && (
-              <div className="flex items-center gap-2.5 rounded-md border px-4 py-3">
-                <Checkbox
-                  id="visible-in-directory"
-                  checked={chapterData?.visible_in_directory ?? true}
-                  onCheckedChange={(checked) => toggleVisibility.mutate(!!checked)}
-                  disabled={toggleVisibility.isPending}
-                />
-                <label
-                  htmlFor="visible-in-directory"
-                  className="text-sm font-medium leading-none cursor-pointer select-none"
-                >
-                  Visible in member directory
-                </label>
-              </div>
-            )}
             <EditableSection
               title="Contact Information"
               icon={Phone}
@@ -338,6 +321,11 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={isImpersonating}
+              directoryVisible={chapterData?.contact_visible_in_directory ?? true}
+              onDirectoryVisibleChange={(checked) =>
+                toggleVisibility.mutate({ field: "contact_visible_in_directory", visible: checked })
+              }
+              directoryToggleDisabled={toggleVisibility.isPending || isImpersonating}
             />
             <EditableSection
               title="Aviation & Aircraft"
@@ -346,6 +334,11 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={isImpersonating}
+              directoryVisible={chapterData?.aviation_visible_in_directory ?? true}
+              onDirectoryVisibleChange={(checked) =>
+                toggleVisibility.mutate({ field: "aviation_visible_in_directory", visible: checked })
+              }
+              directoryToggleDisabled={toggleVisibility.isPending || isImpersonating}
             />
             <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
           </div>
