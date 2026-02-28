@@ -106,6 +106,19 @@ export default function MemberHome() {
   const member = impersonateKeyId ? impersonatedMember : myMember;
   const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
 
+  // Determine if member is inactive/lapsed
+  const isInactive = (() => {
+    if (!member) return false;
+    if (member.current_standing !== "Active") return true;
+    if (member.expiration_date && new Date(member.expiration_date) < new Date()) return true;
+    return false;
+  })();
+
+  // Find renewal link from site_links
+  const renewalLink = siteLinks.find(
+    (l) => l.name.toLowerCase().includes("renewal") || l.name.toLowerCase().includes("renew")
+  );
+
   const contactFieldDefs: EditableFieldDef[] = [
     { label: "Email", key: "email" },
     { label: "Cell Phone", key: "cell_phone" },
