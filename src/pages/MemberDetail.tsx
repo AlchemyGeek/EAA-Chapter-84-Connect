@@ -11,8 +11,8 @@ function Field({ label, value }: { label: string; value: any }) {
   const display = value === true ? "Yes" : String(value);
   return (
     <div>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-sm font-medium">{display}</dd>
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="text-base font-medium">{display}</dd>
     </div>
   );
 }
@@ -49,22 +49,22 @@ export default function MemberDetail() {
   if (!member) return <div className="p-6">Member not found.</div>;
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
+    <div className="p-4 md:p-6 space-y-6 max-w-4xl">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
-          <Link to="/members"><ArrowLeft className="h-4 w-4" /></Link>
+          <Link to="/members"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{member.first_name} {member.last_name}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl md:text-2xl font-bold">{member.first_name} {member.last_name}</h1>
           <p className="text-sm text-muted-foreground">EAA #{member.eaa_number} · Key ID {member.key_id}</p>
         </div>
-        <Badge variant="secondary" className="ml-auto">{member.member_type}</Badge>
+        <Badge variant="secondary" className="shrink-0">{member.member_type}</Badge>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader><CardTitle className="text-base">Personal</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
+          <CardContent className="grid grid-cols-2 gap-4">
             <Field label="Nickname" value={member.nickname} />
             <Field label="Gender" value={member.gender} />
             <Field label="Spouse" value={member.spouse} />
@@ -74,7 +74,7 @@ export default function MemberDetail() {
 
         <Card>
           <CardHeader><CardTitle className="text-base">Contact</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
+          <CardContent className="grid grid-cols-2 gap-4">
             <Field label="Email" value={member.email} />
             <Field label="Home Phone" value={member.home_phone} />
             <Field label="Cell Phone" value={member.cell_phone} />
@@ -88,7 +88,7 @@ export default function MemberDetail() {
 
         <Card>
           <CardHeader><CardTitle className="text-base">Membership</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
+          <CardContent className="grid grid-cols-2 gap-4">
             <Field label="Standing" value={member.current_standing} />
             <Field label="Expiration" value={member.expiration_date} />
             <Field label="EAA Expiration" value={member.eaa_expiration} />
@@ -100,7 +100,7 @@ export default function MemberDetail() {
 
         <Card>
           <CardHeader><CardTitle className="text-base">Aviation</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
+          <CardContent className="grid grid-cols-2 gap-4">
             <Field label="Ratings" value={member.ratings} />
             <Field label="Aircraft Owned" value={member.aircraft_owned} />
             <Field label="Aircraft Project" value={member.aircraft_project} />
@@ -116,7 +116,7 @@ export default function MemberDetail() {
 
         <Card>
           <CardHeader><CardTitle className="text-base">Compliance</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
+          <CardContent className="grid grid-cols-2 gap-4">
             <Field label="Youth Protection" value={member.youth_protection} />
             <Field label="Background Check" value={member.background_check} />
           </CardContent>
@@ -125,7 +125,7 @@ export default function MemberDetail() {
         {chapterData && (
           <Card>
             <CardHeader><CardTitle className="text-base">Chapter Data</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-2 gap-3">
+            <CardContent className="grid grid-cols-2 gap-4">
               <Field label="Payment Method" value={chapterData.chapter_payment_method} />
               <Field label="Payment Notes" value={chapterData.chapter_payment_notes} />
               <Field label="Application Status" value={chapterData.application_status} />

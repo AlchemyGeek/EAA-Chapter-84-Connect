@@ -3,22 +3,35 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, RefreshCw, Minus } from "lucide-react";
 import { format } from "date-fns";
 import { exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+function ChangeTypeBadge({ type }: { type: string }) {
+  const config: Record<string, { variant: "secondary" | "destructive"; icon: typeof Plus; label: string }> = {
+    added: { variant: "secondary", icon: Plus, label: "Added" },
+    modified: { variant: "secondary", icon: RefreshCw, label: "Modified" },
+    removed: { variant: "destructive", icon: Minus, label: "Removed" },
+  };
+  const { variant, icon: Icon, label } = config[type] || { variant: "secondary" as const, icon: RefreshCw, label: type };
+  return (
+    <Badge variant={variant} className="gap-1 text-xs">
+      <Icon className="h-3 w-3" />{label}
+    </Badge>
+  );
+}
 
 export default function ImportReport() {
   const { importId } = useParams();
+  const isMobile = useIsMobile();
 
   const { data: importRecord } = useQuery({
     queryKey: ["import", importId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_imports")
-        .select("*")
-        .eq("id", importId)
-        .single();
+      const { data, error } = await supabase.from("roster_imports").select("*").eq("id", importId).single();
       if (error) throw error;
       return data;
     },
@@ -39,45 +52,62 @@ export default function ImportReport() {
     enabled: !!importId,
   });
 
-  const changeTypeColor = (type: string) => {
-    switch (type) {
-      case "added": return "bg-green-100 text-green-800";
-      case "modified": return "bg-blue-100 text-blue-800";
-      case "removed": return "bg-red-100 text-red-800";
-      default: return "";
-    }
-  };
-
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/imports"><ArrowLeft className="h-4 w-4" /></Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Import Report</h1>
-          {importRecord && (
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(importRecord.imported_at), "MMM d, yyyy h:mm a")} · {importRecord.file_name}
-            </p>
-          )}
+    <div className="p-4 md:p-6 space-y-4">
+      <div className="flex flex-col md:flex-row md:items-center gap-3">
+        <div className="flex items-center gap-3 flex-1">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/imports"><ArrowLeft className="h-5 w-5" /></Link>
+          </Button>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold">Import Report</h1>
+            {importRecord && (
+              <p className="text-sm text-muted-foreground truncate">
+                {format(new Date(importRecord.imported_at), "MMM d, yyyy h:mm a")} · {importRecord.file_name}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => exportDiffToCsv(changes)}>Export CSV</Button>
-          <Button variant="outline" size="sm" onClick={() => exportDiffToExcel(changes)}>Export Excel</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportDiffToCsv(changes)} className="min-h-[44px]">Export CSV</Button>
+          <Button variant="outline" size="sm" onClick={() => exportDiffToExcel(changes)} className="min-h-[44px]">Export Excel</Button>
         </div>
       </div>
 
       {importRecord && (
-        <div className="flex gap-4 text-sm">
-          <span className="text-green-600 font-medium">+{importRecord.added_count} added</span>
-          <span className="text-blue-600 font-medium">{importRecord.modified_count} modified</span>
-          <span className="text-destructive font-medium">{importRecord.removed_count} removed</span>
+        <div className="flex gap-4 text-sm flex-wrap">
+          <span className="inline-flex items-center gap-1 text-success font-medium"><Plus className="h-3 w-3" />+{importRecord.added_count} added</span>
+          <span className="inline-flex items-center gap-1 text-info font-medium"><RefreshCw className="h-3 w-3" />{importRecord.modified_count} modified</span>
+          <span className="inline-flex items-center gap-1 text-destructive font-medium"><Minus className="h-3 w-3" />{importRecord.removed_count} removed</span>
         </div>
       )}
 
       {isLoading ? (
         <p className="text-muted-foreground">Loading changes...</p>
+      ) : isMobile ? (
+        <div className="space-y-3">
+          {changes.map((c) => (
+            <Card key={c.id}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-sm">{c.last_name}, {c.first_name}</p>
+                  <ChangeTypeBadge type={c.change_type} />
+                </div>
+                <p className="text-sm text-muted-foreground">EAA #{c.eaa_number}</p>
+                {c.field_name && (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">{c.field_name}: </span>
+                    {c.old_value && <span className="line-through text-muted-foreground mr-2">{c.old_value}</span>}
+                    {c.new_value && <span className="font-medium">{c.new_value}</span>}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+          {changes.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">No changes recorded for this import.</p>
+          )}
+        </div>
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -94,11 +124,7 @@ export default function ImportReport() {
             <TableBody>
               {changes.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${changeTypeColor(c.change_type)}`}>
-                      {c.change_type}
-                    </span>
-                  </TableCell>
+                  <TableCell><ChangeTypeBadge type={c.change_type} /></TableCell>
                   <TableCell className="font-medium">{c.last_name}, {c.first_name}</TableCell>
                   <TableCell>{c.eaa_number}</TableCell>
                   <TableCell>{c.field_name || "—"}</TableCell>
@@ -108,9 +134,7 @@ export default function ImportReport() {
               ))}
               {changes.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    No changes recorded for this import.
-                  </TableCell>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No changes recorded for this import.</TableCell>
                 </TableRow>
               )}
             </TableBody>

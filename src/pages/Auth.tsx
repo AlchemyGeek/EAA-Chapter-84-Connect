@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,14 +45,20 @@ const Auth = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            <div className="space-y-2">
+              <Label htmlFor="email">Email address</Label>
+              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            <button type="button" className="underline hover:text-foreground" onClick={() => setIsSignUp(!isSignUp)}>
+            <button type="button" className="underline hover:text-foreground min-h-0 min-w-0" onClick={() => setIsSignUp(!isSignUp)}>
               {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
             </button>
           </div>
