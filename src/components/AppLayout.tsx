@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Users, Upload, Download, FileText, LogOut, Shield, Menu, X } from "lucide-react";
+import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
