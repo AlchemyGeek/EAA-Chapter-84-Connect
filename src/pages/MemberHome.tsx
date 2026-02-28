@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
-  Plane, Phone, Award, ChevronRight, Bug, X, Settings, ExternalLink,
+  Plane, Phone, Award, ChevronRight, Bug, X, Settings, ExternalLink, AlertTriangle,
 } from "lucide-react";
 import {
   Dialog,
@@ -105,6 +105,19 @@ export default function MemberHome() {
 
   const member = impersonateKeyId ? impersonatedMember : myMember;
   const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
+
+  // Determine if member is inactive/lapsed
+  const isInactive = (() => {
+    if (!member) return false;
+    if (member.current_standing !== "Active") return true;
+    if (member.expiration_date && new Date(member.expiration_date) < new Date()) return true;
+    return false;
+  })();
+
+  // Find renewal link from site_links
+  const renewalLink = siteLinks.find(
+    (l) => l.name.toLowerCase().includes("renewal") || l.name.toLowerCase().includes("renew")
+  );
 
   const contactFieldDefs: EditableFieldDef[] = [
     { label: "Email", key: "email" },
@@ -230,6 +243,37 @@ export default function MemberHome() {
           </Card>
         )}
 
+        {/* Renewal CTA for inactive members */}
+        {member && isInactive && (
+          <Card className="border-2 border-destructive/40 bg-destructive/5 shadow-md">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-destructive/10 p-2 shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground leading-relaxed">
+                    Your Chapter 84 membership appears to be inactive. We'd love to have you back
+                    — please renew your subscription using the link below to continue participating
+                    in chapter programs and events.
+                  </p>
+                  {renewalLink ? (
+                    <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
+                      <Button className="mt-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold">
+                        Renew Membership
+                      </Button>
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Please contact your chapter coordinator for renewal information.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Editable & read-only sections */}
         {member && (
           <div className="space-y-2">
@@ -254,27 +298,36 @@ export default function MemberHome() {
         )}
 
         {/* Member Services */}
-        <Card>
+        <Card className={isInactive ? "opacity-60 relative" : ""}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Member Services</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
-            <AdminLink to="/members" icon={Users} label="Member Directory" />
-            {siteLinks.map((link) => (
-              <a
-                key={link.id}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted min-h-[44px]"
-              >
-                <span className="flex items-center gap-2.5">
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  {link.name}
-                </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </a>
-            ))}
+            {isInactive ? (
+              <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-3 text-sm text-muted-foreground">
+                <Shield className="h-4 w-4 shrink-0" />
+                <span>Renew your membership to access chapter services and resources.</span>
+              </div>
+            ) : (
+              <>
+                <AdminLink to="/members" icon={Users} label="Member Directory" />
+                {siteLinks.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted min-h-[44px]"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      {link.name}
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </a>
+                ))}
+              </>
+            )}
           </CardContent>
         </Card>
 
