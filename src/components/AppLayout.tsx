@@ -61,7 +61,10 @@ export default function AppLayout() {
     return (
       <div className="flex flex-col min-h-screen">
         <header className="bg-primary text-primary-foreground flex items-center justify-between px-4 h-14 shrink-0">
-          <h1 className="font-bold text-lg">Ch.84 Connect</h1>
+          <div className="flex items-center gap-2">
+            <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-8 w-8 rounded-full" />
+            <h1 className="font-bold text-lg">Ch.84 Connect</h1>
+          </div>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80 min-h-[44px] min-w-[44px]">
