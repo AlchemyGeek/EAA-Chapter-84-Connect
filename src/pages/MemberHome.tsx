@@ -321,6 +321,7 @@ export default function MemberHome() {
         </Dialog>
       )}
     </div>
+  );
 }
 
 
