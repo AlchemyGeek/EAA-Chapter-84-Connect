@@ -19,7 +19,7 @@ export default function Members() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, eaa_number, first_name, last_name, member_type, current_standing, email, expiration_date, preferred_city, preferred_state")
+        .select("key_id, eaa_number, first_name, last_name, member_type")
         .order("last_name");
       if (error) throw error;
       return data;
@@ -31,9 +31,7 @@ export default function Members() {
     return (
       !q ||
       m.first_name?.toLowerCase().includes(q) ||
-      m.last_name?.toLowerCase().includes(q) ||
-      m.eaa_number?.toLowerCase().includes(q) ||
-      m.email?.toLowerCase().includes(q)
+      m.last_name?.toLowerCase().includes(q)
     );
   });
 
@@ -48,7 +46,7 @@ export default function Members() {
         <Label htmlFor="member-search" className="sr-only">Search members</Label>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input id="member-search" placeholder="Search by name, EAA#, or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input id="member-search" placeholder="Search by name..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
       </div>
 
@@ -64,10 +62,9 @@ export default function Members() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 min-w-0 flex-1">
                       <p className="font-medium text-base truncate">{m.last_name}, {m.first_name}</p>
-                      <p className="text-sm text-muted-foreground">EAA #{m.eaa_number}</p>
                       <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
                         <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
-                        <span className="text-sm text-muted-foreground">{m.current_standing || "—"}</span>
                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
@@ -86,15 +83,11 @@ export default function Members() {
         /* Desktop: table */
         <div className="rounded-md border">
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>EAA #</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Standing</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Expiration</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,17 +98,13 @@ export default function Members() {
                       {m.last_name}, {m.first_name}
                     </Link>
                   </TableCell>
-                  <TableCell>{m.eaa_number}</TableCell>
+                  <TableCell>{m.eaa_number || "—"}</TableCell>
                   <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
-                  <TableCell>{m.current_standing || "—"}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{m.email || "—"}</TableCell>
-                  <TableCell>{[m.preferred_city, m.preferred_state].filter(Boolean).join(", ") || "—"}</TableCell>
-                  <TableCell>{m.expiration_date || "—"}</TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                     {search ? "No members match your search." : "No members yet. Import a roster to get started."}
                   </TableCell>
                 </TableRow>
