@@ -374,8 +374,17 @@ export default function MemberDetail() {
           onChange={(k, v) => handleChange(k, v)}
         />
         <FieldSection
-          title="Compliance"
+          title="Compliance (EAA-managed)"
           fields={COMPLIANCE_FIELDS}
+          data={member}
+          editing={editing}
+          editData={editRoster}
+          onChange={(k, v) => handleChange(k, v)}
+          forceReadOnly
+        />
+        <FieldSection
+          title="User Defined Fields"
+          fields={UDF_FIELDS}
           data={member}
           editing={editing}
           editData={editRoster}
