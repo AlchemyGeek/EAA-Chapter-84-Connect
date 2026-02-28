@@ -269,11 +269,10 @@ export default function MemberDetail() {
   });
 
   const startEditing = () => {
-    // Initialize edit state from current data
     const rosterFields = [
       ...PERSONAL_FIELDS, ...CONTACT_FIELDS, ...MEMBERSHIP_FIELDS,
-      ...AVIATION_FIELDS, ...COMPLIANCE_FIELDS,
-    ];
+      ...AVIATION_FIELDS, ...COMPLIANCE_FIELDS, ...UDF_FIELDS,
+    ].filter((f) => !READ_ONLY_KEYS.has(f.key));
     const rosterInit: Record<string, any> = {};
     rosterFields.forEach((f) => {
       rosterInit[f.key] = member?.[f.key as keyof typeof member] ?? null;
