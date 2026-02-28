@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import chapterLogo from "@/assets/chapter-logo.jpg";
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
@@ -40,6 +41,9 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-2">
+            <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-16 w-16 rounded-full" />
+          </div>
           <CardTitle className="text-2xl">Chapter 84 Connect</CardTitle>
           <CardDescription>{isSignUp ? "Create an account" : "Sign in to continue"}</CardDescription>
         </CardHeader>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Users, Upload, Download, FileText, LogOut, Shield, Menu, X } from "lucide-react";
+import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -60,7 +61,10 @@ export default function AppLayout() {
     return (
       <div className="flex flex-col min-h-screen">
         <header className="bg-primary text-primary-foreground flex items-center justify-between px-4 h-14 shrink-0">
-          <h1 className="font-bold text-lg">Ch.84 Connect</h1>
+          <div className="flex items-center gap-2">
+            <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-8 w-8 rounded-full" />
+            <h1 className="font-bold text-lg">Ch.84 Connect</h1>
+          </div>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80 min-h-[44px] min-w-[44px]">
@@ -101,7 +105,10 @@ export default function AppLayout() {
     <div className="flex min-h-screen">
       <aside className="w-60 border-r border-sidebar-border bg-sidebar text-sidebar-foreground flex flex-col shrink-0">
         <div className="p-4 border-b border-sidebar-border">
-          <h1 className="font-bold text-lg text-sidebar-primary">Ch.84 Connect</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-10 w-10 rounded-full" />
+            <h1 className="font-bold text-lg text-sidebar-primary">Ch.84 Connect</h1>
+          </div>
           <p className="text-xs text-sidebar-foreground/70 truncate">{user.email}</p>
           {isAdmin && (
             <span className="inline-flex items-center gap-1 mt-1 text-xs bg-sidebar-accent text-sidebar-accent-foreground px-2 py-0.5 rounded">
