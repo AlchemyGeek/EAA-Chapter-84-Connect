@@ -116,6 +116,11 @@ export function StatusDashboard({
               )}
             </div>
             <p className="text-sm text-muted-foreground">{message}</p>
+            {eaaNumber && (
+              <p className="text-xs text-muted-foreground">
+                EAA #{eaaNumber}
+              </p>
+            )}
             {expirationDate && (
               <p className="text-xs text-muted-foreground">
                 Expiration: {new Date(expirationDate).toLocaleDateString()}
