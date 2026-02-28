@@ -27,14 +27,20 @@ const PERSONAL_FIELDS: FieldConfig[] = [
   { label: "Gender", key: "gender" },
   { label: "Spouse", key: "spouse" },
   { label: "Birth Date", key: "birth_date", type: "date" },
+  { label: "Username", key: "username" },
+  { label: "Other Info", key: "other_info" },
 ];
 
 const CONTACT_FIELDS: FieldConfig[] = [
   { label: "Email", key: "email" },
+  { label: "Email Private", key: "email_private", type: "boolean" },
   { label: "Home Phone", key: "home_phone" },
+  { label: "Home Phone Private", key: "home_phone_private", type: "boolean" },
   { label: "Cell Phone", key: "cell_phone" },
+  { label: "Cell Phone Private", key: "cell_phone_private", type: "boolean" },
   { label: "Street Address 1", key: "street_address_1" },
   { label: "Street Address 2", key: "street_address_2" },
+  { label: "Address Private", key: "address_private", type: "boolean" },
   { label: "City", key: "preferred_city" },
   { label: "State", key: "preferred_state" },
   { label: "Zip", key: "zip_code" },
@@ -42,13 +48,16 @@ const CONTACT_FIELDS: FieldConfig[] = [
 ];
 
 const MEMBERSHIP_FIELDS: FieldConfig[] = [
+  { label: "EAA Number", key: "eaa_number" },
   { label: "Member Type", key: "member_type" },
   { label: "Standing", key: "current_standing" },
   { label: "Expiration", key: "expiration_date", type: "date" },
-  { label: "EAA Expiration", key: "eaa_expiration", type: "date" },
   { label: "Joined", key: "current_joined_on_date", type: "date" },
   { label: "Date Added", key: "date_added", type: "date" },
   { label: "Date Updated", key: "date_updated", type: "date" },
+  { label: "Updated By", key: "updated_by" },
+  { label: "Chapter Name", key: "chapter_name" },
+  { label: "Chapter Number", key: "chapter_number" },
 ];
 
 const AVIATION_FIELDS: FieldConfig[] = [
@@ -64,10 +73,28 @@ const AVIATION_FIELDS: FieldConfig[] = [
   { label: "Eagle Flight Volunteer", key: "eagle_flight_volunteer", type: "boolean" },
 ];
 
+// Read-only: these come from EAA and should not be editable
 const COMPLIANCE_FIELDS: FieldConfig[] = [
+  { label: "EAA Expiration", key: "eaa_expiration", type: "date" },
   { label: "Youth Protection", key: "youth_protection" },
   { label: "Background Check", key: "background_check" },
 ];
+
+const UDF_FIELDS: FieldConfig[] = [
+  { label: "UDF1", key: "udf1" },
+  { label: "UDF1 Text", key: "udf1_text" },
+  { label: "UDF2", key: "udf2" },
+  { label: "UDF2 Text", key: "udf2_text" },
+  { label: "UDF3", key: "udf3" },
+  { label: "UDF3 Text", key: "udf3_text" },
+  { label: "UDF4", key: "udf4" },
+  { label: "UDF4 Text", key: "udf4_text" },
+  { label: "UDF5", key: "udf5" },
+  { label: "UDF5 Text", key: "udf5_text" },
+];
+
+// Fields that are always read-only (from EAA, not editable)
+const READ_ONLY_KEYS = new Set(["eaa_expiration", "youth_protection", "background_check"]);
 
 const CHAPTER_FIELDS: FieldConfig[] = [
   { label: "Payment Method", key: "chapter_payment_method", table: "chapter" },
