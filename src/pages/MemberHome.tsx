@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,16 +7,39 @@ import { ReadOnlySection } from "@/components/member/ReadOnlySection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   LogOut, Shield, Upload, Download, FileText, Users,
-  Plane, Phone, Award, ChevronRight,
+  Plane, Phone, Award, ChevronRight, Bug, X,
 } from "lucide-react";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const [impersonateKeyId, setImpersonateKeyId] = useState<string | null>(null);
 
-  const { data: member, isLoading } = useQuery({
+  // Fetch all members for admin impersonation dropdown
+  const { data: allMembers } = useQuery({
+    queryKey: ["all-members-list"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, email, eaa_number")
+        .order("last_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch the logged-in user's own member record
+  const { data: myMember, isLoading: myLoading } = useQuery({
     queryKey: ["my-member", user?.email],
     enabled: !!user?.email,
     queryFn: async () => {
@@ -30,7 +53,24 @@ export default function MemberHome() {
     },
   });
 
-  if (authLoading || isLoading) {
+  // Fetch impersonated member record
+  const { data: impersonatedMember, isLoading: impLoading } = useQuery({
+    queryKey: ["impersonate-member", impersonateKeyId],
+    enabled: !!impersonateKeyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("*")
+        .eq("key_id", Number(impersonateKeyId))
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
+
+  if (authLoading || myLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -39,6 +79,9 @@ export default function MemberHome() {
   }
 
   if (!user) return <Navigate to="/auth" replace />;
+
+  const member = impersonateKeyId ? impersonatedMember : myMember;
+  const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
 
   const contactFields = member
     ? [
@@ -127,6 +170,50 @@ export default function MemberHome() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 -mt-4 pb-8 space-y-4">
+        {/* Admin impersonation banner */}
+        {isAdmin && (
+          <Card className="border-accent/50 bg-accent/5">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Bug className="h-4 w-4 text-accent" />
+                <span className="text-xs font-semibold text-accent">Debug: View as Member</span>
+                {isImpersonating && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setImpersonateKeyId(null)}
+                    className="ml-auto h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3 mr-1" /> Reset
+                  </Button>
+                )}
+              </div>
+              <Select
+                value={impersonateKeyId ?? ""}
+                onValueChange={(val) => setImpersonateKeyId(val || null)}
+              >
+                <SelectTrigger className="h-9 text-sm bg-background">
+                  <SelectValue placeholder="Select a member to impersonate..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {allMembers?.map((m) => (
+                    <SelectItem key={m.key_id} value={String(m.key_id)}>
+                      {m.last_name}, {m.first_name} — EAA #{m.eaa_number}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Impersonation indicator */}
+        {isImpersonating && (
+          <div className="rounded-md bg-accent/10 border border-accent/30 px-3 py-2 text-xs text-accent font-medium">
+            Viewing as: {impersonatedMember.first_name} {impersonatedMember.last_name} (EAA #{impersonatedMember.eaa_number})
+          </div>
+        )}
+
         {/* Status Dashboard */}
         {member ? (
           <StatusDashboard
@@ -145,7 +232,7 @@ export default function MemberHome() {
           </Card>
         )}
 
-        {/* Quick actions for members */}
+        {/* Quick actions */}
         {member && (
           <div className="grid grid-cols-3 gap-3">
             <QuickAction icon={Phone} label="Contact" anchor="#contact" />
