@@ -83,15 +83,11 @@ export default function Members() {
         /* Desktop: table */
         <div className="rounded-md border">
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>EAA #</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Standing</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Expiration</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -102,17 +98,13 @@ export default function Members() {
                       {m.last_name}, {m.first_name}
                     </Link>
                   </TableCell>
-                  <TableCell>{m.eaa_number}</TableCell>
+                  <TableCell>{m.eaa_number || "—"}</TableCell>
                   <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
-                  <TableCell>{m.current_standing || "—"}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{m.email || "—"}</TableCell>
-                  <TableCell>{[m.preferred_city, m.preferred_state].filter(Boolean).join(", ") || "—"}</TableCell>
-                  <TableCell>{m.expiration_date || "—"}</TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                     {search ? "No members match your search." : "No members yet. Import a roster to get started."}
                   </TableCell>
                 </TableRow>
