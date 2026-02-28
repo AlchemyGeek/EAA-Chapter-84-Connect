@@ -243,6 +243,37 @@ export default function MemberHome() {
           </Card>
         )}
 
+        {/* Renewal CTA for inactive members */}
+        {member && isInactive && (
+          <Card className="border-2 border-destructive/40 bg-destructive/5 shadow-md">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-destructive/10 p-2 shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground leading-relaxed">
+                    Your Chapter 84 membership appears to be inactive. We'd love to have you back
+                    — please renew your subscription using the link below to continue participating
+                    in chapter programs and events.
+                  </p>
+                  {renewalLink ? (
+                    <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
+                      <Button className="mt-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold">
+                        Renew Membership
+                      </Button>
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Please contact your chapter coordinator for renewal information.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Editable & read-only sections */}
         {member && (
           <div className="space-y-2">
