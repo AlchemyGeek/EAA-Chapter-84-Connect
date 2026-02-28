@@ -32,6 +32,7 @@ export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [impersonateKeyId, setImpersonateKeyId] = useState<string | null>(null);
+  const [debugOpen, setDebugOpen] = useState(false);
 
   // Fetch all members for admin impersonation dropdown
   const { data: allMembers } = useQuery({
