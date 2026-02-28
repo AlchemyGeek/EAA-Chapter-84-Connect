@@ -131,7 +131,7 @@ export function StatusDashboard({
         {status === "lapsed" && (
           <div className="mt-4 rounded-md bg-destructive/10 p-3">
             <p className="text-sm font-medium text-destructive">
-              Please contact your chapter to renew your membership.
+              Your membership is currently inactive.
             </p>
           </div>
         )}
