@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/imports" element={<ImportHistory />} />
             <Route path="/imports/:importId" element={<ImportReport />} />
             <Route path="/export" element={<Export />} />
+            <Route path="/site-config" element={<SiteConfig />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

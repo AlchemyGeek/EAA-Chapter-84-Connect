@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
-  Plane, Phone, Award, ChevronRight, Bug, X,
+  Plane, Phone, Award, ChevronRight, Bug, X, Settings, ExternalLink,
 } from "lucide-react";
 import {
   Dialog,
