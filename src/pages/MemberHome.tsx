@@ -269,8 +269,58 @@ export default function MemberHome() {
           </Card>
         )}
       </div>
+
+      {/* Floating debug button */}
+      {isAdmin && (
+        <Dialog open={debugOpen} onOpenChange={setDebugOpen}>
+          <Button
+            onClick={() => setDebugOpen(true)}
+            size="icon"
+            className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg bg-accent text-accent-foreground hover:bg-accent/90 z-50"
+          >
+            <Bug className="h-5 w-5" />
+          </Button>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Bug className="h-4 w-4" />
+                View as Member
+              </DialogTitle>
+            </DialogHeader>
+            <Select
+              value={impersonateKeyId ?? ""}
+              onValueChange={(val) => {
+                setImpersonateKeyId(val || null);
+                setDebugOpen(false);
+              }}
+            >
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder="Select a member..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {allMembers?.map((m) => (
+                  <SelectItem key={m.key_id} value={String(m.key_id)}>
+                    {m.last_name}, {m.first_name} — EAA #{m.eaa_number}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isImpersonating && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setImpersonateKeyId(null);
+                  setDebugOpen(false);
+                }}
+                className="w-full"
+              >
+                <X className="h-4 w-4 mr-2" /> Reset to My View
+              </Button>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
-  );
 }
 
 
