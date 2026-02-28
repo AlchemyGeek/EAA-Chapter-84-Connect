@@ -107,7 +107,7 @@ export default function AppLayout() {
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2 mb-1">
             <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-10 w-10 rounded-full" />
-            <h1 className="font-bold text-lg text-sidebar-primary">Ch.84 Connect</h1>
+            <h1 className="font-bold text-lg text-sidebar-primary">EAA 84 Connect</h1>
           </div>
           <p className="text-xs text-sidebar-foreground/70 truncate">{user.email}</p>
           {isAdmin && (
