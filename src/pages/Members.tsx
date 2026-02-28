@@ -46,7 +46,7 @@ export default function Members() {
         <Label htmlFor="member-search" className="sr-only">Search members</Label>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input id="member-search" placeholder="Search by name, EAA#, or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input id="member-search" placeholder="Search by name..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
       </div>
 
