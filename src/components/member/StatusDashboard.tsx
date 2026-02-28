@@ -128,13 +128,6 @@ export function StatusDashboard({
             )}
           </div>
         </div>
-        {status === "lapsed" && (
-          <div className="mt-4 rounded-md bg-destructive/10 p-3">
-            <p className="text-sm font-medium text-destructive">
-              Your membership is currently inactive.
-            </p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

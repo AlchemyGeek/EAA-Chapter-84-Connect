@@ -332,20 +332,9 @@ export default function MemberHome() {
         </Card>
 
         {/* Admin tools */}
-        {isAdmin && (
+        {isAdmin && !isInactive && (
           <Card className="border-secondary/30">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Shield className="h-4 w-4 text-secondary" />
-                Admin Tools
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              <AdminLink to="/import" icon={Upload} label="Import Roster" />
-              <AdminLink to="/imports" icon={FileText} label="Import History" />
-              <AdminLink to="/export" icon={Download} label="Export Data" />
-              <AdminLink to="/site-config" icon={Settings} label="Website Configuration" />
-            </CardContent>
+...
           </Card>
         )}
       </div>
