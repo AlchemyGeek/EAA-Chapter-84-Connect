@@ -28,7 +28,7 @@ const Auth = () => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/members");
+        navigate("/home");
       }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
