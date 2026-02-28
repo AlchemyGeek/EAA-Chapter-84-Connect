@@ -30,6 +30,9 @@ interface EditableSectionProps {
   data: Record<string, any>;
   onSave: (updates: Record<string, any>) => Promise<void>;
   disabled?: boolean;
+  directoryVisible?: boolean;
+  onDirectoryVisibleChange?: (checked: boolean) => void;
+  directoryToggleDisabled?: boolean;
 }
 
 export function EditableSection({
