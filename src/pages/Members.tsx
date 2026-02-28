@@ -62,10 +62,9 @@ export default function Members() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 min-w-0 flex-1">
                       <p className="font-medium text-base truncate">{m.last_name}, {m.first_name}</p>
-                      <p className="text-sm text-muted-foreground">EAA #{m.eaa_number}</p>
                       <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
                         <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
-                        <span className="text-sm text-muted-foreground">{m.current_standing || "—"}</span>
                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
