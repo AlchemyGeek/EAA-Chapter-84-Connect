@@ -238,11 +238,25 @@ export default function MemberHome() {
           </Card>
         )}
 
-        {/* Read-only sections */}
+        {/* Editable & read-only sections */}
         {member && (
           <div className="space-y-2">
-            <ReadOnlySection title="Contact Information" icon={Phone} fields={contactFields} />
-            <ReadOnlySection title="Aviation & Aircraft" icon={Plane} fields={aviationFields} />
+            <EditableSection
+              title="Contact Information"
+              icon={Phone}
+              fields={contactFieldDefs}
+              data={member}
+              onSave={handleSave}
+              disabled={isImpersonating}
+            />
+            <EditableSection
+              title="Aviation & Aircraft"
+              icon={Plane}
+              fields={aviationFieldDefs}
+              data={member}
+              onSave={handleSave}
+              disabled={isImpersonating}
+            />
             <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
           </div>
         )}
