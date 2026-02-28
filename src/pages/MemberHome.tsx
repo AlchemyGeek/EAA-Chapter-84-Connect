@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusDashboard } from "@/components/member/StatusDashboard";
 import { ReadOnlySection } from "@/components/member/ReadOnlySection";
+import { EditableSection } from "@/components/member/EditableSection";
+import type { EditableFieldDef } from "@/components/member/EditableSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
