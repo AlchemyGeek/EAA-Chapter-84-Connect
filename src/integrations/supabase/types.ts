@@ -17,41 +17,44 @@ export type Database = {
       member_chapter_data: {
         Row: {
           application_status: string | null
+          aviation_visible_in_directory: boolean
           chapter_payment_method: string | null
           chapter_payment_notes: string | null
+          contact_visible_in_directory: boolean
           created_at: string
           id: string
           internal_notes: string | null
           key_id: number
           pending_roster_update: boolean | null
           updated_at: string
-          visible_in_directory: boolean
           volunteer_notes: string | null
         }
         Insert: {
           application_status?: string | null
+          aviation_visible_in_directory?: boolean
           chapter_payment_method?: string | null
           chapter_payment_notes?: string | null
+          contact_visible_in_directory?: boolean
           created_at?: string
           id?: string
           internal_notes?: string | null
           key_id: number
           pending_roster_update?: boolean | null
           updated_at?: string
-          visible_in_directory?: boolean
           volunteer_notes?: string | null
         }
         Update: {
           application_status?: string | null
+          aviation_visible_in_directory?: boolean
           chapter_payment_method?: string | null
           chapter_payment_notes?: string | null
+          contact_visible_in_directory?: boolean
           created_at?: string
           id?: string
           internal_notes?: string | null
           key_id?: number
           pending_roster_update?: boolean | null
           updated_at?: string
-          visible_in_directory?: boolean
           volunteer_notes?: string | null
         }
         Relationships: [

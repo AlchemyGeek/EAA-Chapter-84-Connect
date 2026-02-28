@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface EditableFieldDef {
   label: string;
@@ -29,6 +30,9 @@ interface EditableSectionProps {
   data: Record<string, any>;
   onSave: (updates: Record<string, any>) => Promise<void>;
   disabled?: boolean;
+  directoryVisible?: boolean;
+  onDirectoryVisibleChange?: (checked: boolean) => void;
+  directoryToggleDisabled?: boolean;
 }
 
 export function EditableSection({
@@ -38,6 +42,9 @@ export function EditableSection({
   data,
   onSave,
   disabled = false,
+  directoryVisible,
+  onDirectoryVisibleChange,
+  directoryToggleDisabled,
 }: EditableSectionProps) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -89,6 +96,22 @@ export function EditableSection({
           </span>
         </AccordionTrigger>
         <AccordionContent>
+          {directoryVisible !== undefined && onDirectoryVisibleChange && (
+            <div className="flex items-center gap-2.5 mb-4 rounded-md bg-muted/50 px-3 py-2.5">
+              <Checkbox
+                id={`dir-visible-${title}`}
+                checked={directoryVisible}
+                onCheckedChange={(checked) => onDirectoryVisibleChange(!!checked)}
+                disabled={directoryToggleDisabled || disabled}
+              />
+              <label
+                htmlFor={`dir-visible-${title}`}
+                className="text-xs font-medium leading-none cursor-pointer select-none text-muted-foreground"
+              >
+                Visible in member directory
+              </label>
+            </div>
+          )}
           {!editing ? (
             <div>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">

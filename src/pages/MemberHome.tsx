@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
-import { Checkbox } from "@/components/ui/checkbox";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
@@ -109,17 +108,17 @@ export default function MemberHome() {
   });
 
   const toggleVisibility = useMutation({
-    mutationFn: async (visible: boolean) => {
+    mutationFn: async ({ field, visible }: { field: "contact_visible_in_directory" | "aviation_visible_in_directory"; visible: boolean }) => {
       if (chapterData) {
         const { error } = await supabase
           .from("member_chapter_data")
-          .update({ visible_in_directory: visible })
+          .update({ [field]: visible })
           .eq("key_id", activeKeyId!);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("member_chapter_data")
-          .insert({ key_id: activeKeyId!, visible_in_directory: visible });
+          .insert({ key_id: activeKeyId!, [field]: visible });
         if (error) throw error;
       }
     },
@@ -314,23 +313,6 @@ export default function MemberHome() {
         {/* Editable & read-only sections */}
         {member && (
           <div className="space-y-2">
-            {/* Directory visibility toggle */}
-            {!isImpersonating && (
-              <div className="flex items-center gap-2.5 rounded-md border px-4 py-3">
-                <Checkbox
-                  id="visible-in-directory"
-                  checked={chapterData?.visible_in_directory ?? true}
-                  onCheckedChange={(checked) => toggleVisibility.mutate(!!checked)}
-                  disabled={toggleVisibility.isPending}
-                />
-                <label
-                  htmlFor="visible-in-directory"
-                  className="text-sm font-medium leading-none cursor-pointer select-none"
-                >
-                  Visible in member directory
-                </label>
-              </div>
-            )}
             <EditableSection
               title="Contact Information"
               icon={Phone}
@@ -338,6 +320,11 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={isImpersonating}
+              directoryVisible={chapterData?.contact_visible_in_directory ?? true}
+              onDirectoryVisibleChange={(checked) =>
+                toggleVisibility.mutate({ field: "contact_visible_in_directory", visible: checked })
+              }
+              directoryToggleDisabled={toggleVisibility.isPending || isImpersonating}
             />
             <EditableSection
               title="Aviation & Aircraft"
@@ -346,6 +333,11 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={isImpersonating}
+              directoryVisible={chapterData?.aviation_visible_in_directory ?? true}
+              onDirectoryVisibleChange={(checked) =>
+                toggleVisibility.mutate({ field: "aviation_visible_in_directory", visible: checked })
+              }
+              directoryToggleDisabled={toggleVisibility.isPending || isImpersonating}
             />
             <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
           </div>
