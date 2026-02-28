@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusDashboard } from "@/components/member/StatusDashboard";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
@@ -88,6 +89,42 @@ export default function MemberHome() {
         .order("sort_order");
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Fetch member chapter data (for directory visibility)
+  const activeKeyId = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
+  const { data: chapterData } = useQuery({
+    queryKey: ["member-chapter-data", activeKeyId],
+    enabled: !!activeKeyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_chapter_data")
+        .select("*")
+        .eq("key_id", activeKeyId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const toggleVisibility = useMutation({
+    mutationFn: async (visible: boolean) => {
+      if (chapterData) {
+        const { error } = await supabase
+          .from("member_chapter_data")
+          .update({ visible_in_directory: visible })
+          .eq("key_id", activeKeyId!);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("member_chapter_data")
+          .insert({ key_id: activeKeyId!, visible_in_directory: visible });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["member-chapter-data", activeKeyId] });
     },
   });
 
@@ -277,6 +314,23 @@ export default function MemberHome() {
         {/* Editable & read-only sections */}
         {member && (
           <div className="space-y-2">
+            {/* Directory visibility toggle */}
+            {!isImpersonating && (
+              <div className="flex items-center gap-2.5 rounded-md border px-4 py-3">
+                <Checkbox
+                  id="visible-in-directory"
+                  checked={chapterData?.visible_in_directory ?? true}
+                  onCheckedChange={(checked) => toggleVisibility.mutate(!!checked)}
+                  disabled={toggleVisibility.isPending}
+                />
+                <label
+                  htmlFor="visible-in-directory"
+                  className="text-sm font-medium leading-none cursor-pointer select-none"
+                >
+                  Visible in member directory
+                </label>
+              </div>
+            )}
             <EditableSection
               title="Contact Information"
               icon={Phone}
