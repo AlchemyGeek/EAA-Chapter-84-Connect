@@ -34,6 +34,7 @@ function FieldGrid({ fields }: { fields: FieldDisplay[] }) {
 interface ReadOnlySectionProps {
   title: string;
   fields: FieldDisplay[];
+  icon?: LucideIcon;
   defaultOpen?: boolean;
 }
 
