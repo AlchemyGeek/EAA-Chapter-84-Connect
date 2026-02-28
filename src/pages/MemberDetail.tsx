@@ -173,6 +173,7 @@ function FieldSection({
   editing,
   editData,
   onChange,
+  forceReadOnly,
 }: {
   title: string;
   fields: FieldConfig[];
@@ -180,14 +181,23 @@ function FieldSection({
   editing: boolean;
   editData: Record<string, any>;
   onChange: (key: string, val: any) => void;
+  forceReadOnly?: boolean;
 }) {
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="text-base">
+          {title}
+          {forceReadOnly && editing && (
+            <span className="text-xs font-normal text-muted-foreground ml-2">(read-only)</span>
+          )}
+        </CardTitle>
+      </CardHeader>
       <CardContent className="grid grid-cols-2 gap-4">
         {fields.map((field) => {
-          const val = editing ? editData[field.key] : data[field.key];
-          return editing ? (
+          const isReadOnly = forceReadOnly || READ_ONLY_KEYS.has(field.key);
+          const val = editing && !isReadOnly ? editData[field.key] : data[field.key];
+          return editing && !isReadOnly ? (
             <EditableField key={field.key} field={field} value={val} onChange={onChange} />
           ) : (
             <ReadOnlyField key={field.key} label={field.label} value={data[field.key]} />
