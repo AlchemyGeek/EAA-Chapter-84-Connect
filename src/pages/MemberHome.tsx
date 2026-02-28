@@ -19,6 +19,12 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
 
@@ -26,6 +32,7 @@ export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [impersonateKeyId, setImpersonateKeyId] = useState<string | null>(null);
+  const [debugOpen, setDebugOpen] = useState(false);
 
   // Fetch all members for admin impersonation dropdown
   const { data: allMembers } = useQuery({
@@ -176,47 +183,18 @@ export default function MemberHome() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 -mt-4 pb-8 space-y-4">
-        {/* Admin impersonation banner */}
-        {isAdmin && (
-          <Card className="border-accent/50 bg-accent/5">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Bug className="h-4 w-4 text-accent" />
-                <span className="text-xs font-semibold text-accent">Debug: View as Member</span>
-                {isImpersonating && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setImpersonateKeyId(null)}
-                    className="ml-auto h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-3 w-3 mr-1" /> Reset
-                  </Button>
-                )}
-              </div>
-              <Select
-                value={impersonateKeyId ?? ""}
-                onValueChange={(val) => setImpersonateKeyId(val || null)}
-              >
-                <SelectTrigger className="h-9 text-sm bg-background">
-                  <SelectValue placeholder="Select a member to impersonate..." />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {allMembers?.map((m) => (
-                    <SelectItem key={m.key_id} value={String(m.key_id)}>
-                      {m.last_name}, {m.first_name} — EAA #{m.eaa_number}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Impersonation indicator */}
         {isImpersonating && (
           <div className="rounded-md bg-accent/10 border border-accent/30 px-3 py-2 text-xs text-accent font-medium">
             Viewing as: {impersonatedMember.first_name} {impersonatedMember.last_name} (EAA #{impersonatedMember.eaa_number})
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setImpersonateKeyId(null)}
+              className="ml-2 h-6 px-2 text-xs text-accent hover:text-foreground"
+            >
+              <X className="h-3 w-3 mr-1" /> Reset
+            </Button>
           </div>
         )}
 
@@ -291,6 +269,57 @@ export default function MemberHome() {
           </Card>
         )}
       </div>
+
+      {/* Floating debug button */}
+      {isAdmin && (
+        <Dialog open={debugOpen} onOpenChange={setDebugOpen}>
+          <Button
+            onClick={() => setDebugOpen(true)}
+            size="icon"
+            className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg bg-accent text-accent-foreground hover:bg-accent/90 z-50"
+          >
+            <Bug className="h-5 w-5" />
+          </Button>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Bug className="h-4 w-4" />
+                View as Member
+              </DialogTitle>
+            </DialogHeader>
+            <Select
+              value={impersonateKeyId ?? ""}
+              onValueChange={(val) => {
+                setImpersonateKeyId(val || null);
+                setDebugOpen(false);
+              }}
+            >
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder="Select a member..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {allMembers?.map((m) => (
+                  <SelectItem key={m.key_id} value={String(m.key_id)}>
+                    {m.last_name}, {m.first_name} — EAA #{m.eaa_number}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isImpersonating && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setImpersonateKeyId(null);
+                  setDebugOpen(false);
+                }}
+                className="w-full"
+              >
+                <X className="h-4 w-4 mr-2" /> Reset to My View
+              </Button>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
