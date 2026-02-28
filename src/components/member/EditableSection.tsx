@@ -42,6 +42,9 @@ export function EditableSection({
   data,
   onSave,
   disabled = false,
+  directoryVisible,
+  onDirectoryVisibleChange,
+  directoryToggleDisabled,
 }: EditableSectionProps) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
