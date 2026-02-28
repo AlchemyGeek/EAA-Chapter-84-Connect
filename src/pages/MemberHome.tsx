@@ -204,6 +204,7 @@ export default function MemberHome() {
             currentStanding={member.current_standing}
             expirationDate={member.expiration_date}
             memberType={member.member_type}
+            eaaNumber={member.eaa_number}
           />
         ) : (
           <Card className="border-amber-200">
