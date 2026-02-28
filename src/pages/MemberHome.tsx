@@ -232,27 +232,12 @@ export default function MemberHome() {
           </Card>
         )}
 
-        {/* Quick actions */}
-        {member && (
-          <div className="grid grid-cols-3 gap-3">
-            <QuickAction icon={Phone} label="Contact" anchor="#contact" />
-            <QuickAction icon={Plane} label="Aviation" anchor="#aviation" />
-            <QuickAction icon={Award} label="Volunteer" anchor="#volunteer" />
-          </div>
-        )}
-
         {/* Read-only sections */}
         {member && (
-          <div className="space-y-2" id="info-sections">
-            <div id="contact">
-              <ReadOnlySection title="Contact Information" fields={contactFields} />
-            </div>
-            <div id="aviation">
-              <ReadOnlySection title="Aviation & Aircraft" fields={aviationFields} />
-            </div>
-            <div id="volunteer">
-              <ReadOnlySection title="Volunteering" fields={volunteerFields} />
-            </div>
+          <div className="space-y-2">
+            <ReadOnlySection title="Contact Information" icon={Phone} fields={contactFields} />
+            <ReadOnlySection title="Aviation & Aircraft" icon={Plane} fields={aviationFields} />
+            <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
           </div>
         )}
 
