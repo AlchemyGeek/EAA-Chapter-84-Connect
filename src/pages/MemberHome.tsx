@@ -156,6 +156,7 @@ export default function MemberHome() {
   );
 
   const contactFieldDefs: EditableFieldDef[] = [
+    { label: "Nickname", key: "nickname" },
     { label: "Email", key: "email" },
     { label: "Cell Phone", key: "cell_phone" },
     { label: "Home Phone", key: "home_phone" },
