@@ -275,17 +275,6 @@ export default function MemberHome() {
   );
 }
 
-function QuickAction({ icon: Icon, label, anchor }: { icon: typeof Phone; label: string; anchor: string }) {
-  return (
-    <a
-      href={anchor}
-      className="flex flex-col items-center gap-1.5 rounded-lg border bg-card p-3 text-center transition-colors hover:bg-muted min-h-[44px]"
-    >
-      <Icon className="h-5 w-5 text-secondary" />
-      <span className="text-xs font-medium text-foreground">{label}</span>
-    </a>
-  );
-}
 
 function AdminLink({ to, icon: Icon, label }: { to: string; icon: typeof Users; label: string }) {
   return (
