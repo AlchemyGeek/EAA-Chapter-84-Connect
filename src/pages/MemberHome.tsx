@@ -85,32 +85,24 @@ export default function MemberHome() {
   const member = impersonateKeyId ? impersonatedMember : myMember;
   const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
 
-  const contactFields = member
-    ? [
-        { label: "Email", value: member.email },
-        { label: "Cell Phone", value: member.cell_phone },
-        { label: "Home Phone", value: member.home_phone },
-        {
-          label: "Address",
-          value:
-            [member.street_address_1, member.street_address_2]
-              .filter(Boolean)
-              .join(", ") || null,
-        },
-        { label: "City", value: member.preferred_city },
-        { label: "State", value: member.preferred_state },
-        { label: "Zip", value: member.zip_code },
-      ]
-    : [];
+  const contactFieldDefs: EditableFieldDef[] = [
+    { label: "Email", key: "email" },
+    { label: "Cell Phone", key: "cell_phone" },
+    { label: "Home Phone", key: "home_phone" },
+    { label: "Street Address 1", key: "street_address_1" },
+    { label: "Street Address 2", key: "street_address_2" },
+    { label: "City", key: "preferred_city" },
+    { label: "State", key: "preferred_state" },
+    { label: "Zip", key: "zip_code" },
+    { label: "Country", key: "country" },
+  ];
 
-  const aviationFields = member
-    ? [
-        { label: "Ratings", value: member.ratings },
-        { label: "Aircraft Owned", value: member.aircraft_owned },
-        { label: "Aircraft Project", value: member.aircraft_project },
-        { label: "Aircraft Built", value: member.aircraft_built },
-      ]
-    : [];
+  const aviationFieldDefs: EditableFieldDef[] = [
+    { label: "Ratings", key: "ratings" },
+    { label: "Aircraft Owned", key: "aircraft_owned" },
+    { label: "Aircraft Project", key: "aircraft_project" },
+    { label: "Aircraft Built", key: "aircraft_built" },
+  ];
 
   const volunteerFields = member
     ? [
@@ -122,6 +114,18 @@ export default function MemberHome() {
         { label: "VMC Club", value: member.vmc },
       ]
     : [];
+
+  const queryClient = useQueryClient();
+
+  const handleSave = async (updates: Record<string, any>) => {
+    const { error } = await supabase
+      .from("roster_members")
+      .update(updates)
+      .eq("key_id", member!.key_id);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ["my-member"] });
+    queryClient.invalidateQueries({ queryKey: ["impersonate-member"] });
+  };
 
   return (
     <div className="min-h-screen bg-background">
