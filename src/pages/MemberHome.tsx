@@ -259,7 +259,6 @@ export default function MemberHome() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
-              <AdminLink to="/members" icon={Users} label="Member Directory" />
               <AdminLink to="/import" icon={Upload} label="Import Roster" />
               <AdminLink to="/imports" icon={FileText} label="Import History" />
               <AdminLink to="/export" icon={Download} label="Export Data" />
