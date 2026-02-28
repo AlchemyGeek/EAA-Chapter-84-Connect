@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -33,12 +34,14 @@ function FieldGrid({ fields }: { fields: FieldDisplay[] }) {
 interface ReadOnlySectionProps {
   title: string;
   fields: FieldDisplay[];
+  icon?: LucideIcon;
   defaultOpen?: boolean;
 }
 
 export function ReadOnlySection({
   title,
   fields,
+  icon: Icon,
   defaultOpen = false,
 }: ReadOnlySectionProps) {
   return (
@@ -49,7 +52,10 @@ export function ReadOnlySection({
     >
       <AccordionItem value={title} className="border rounded-lg px-4">
         <AccordionTrigger className="text-sm font-semibold">
-          {title}
+          <span className="flex items-center gap-2">
+            {Icon && <Icon className="h-4 w-4 text-secondary" />}
+            {title}
+          </span>
         </AccordionTrigger>
         <AccordionContent>
           <FieldGrid fields={fields} />
