@@ -78,6 +78,19 @@ export default function MemberHome() {
     },
   });
 
+  // Fetch site links
+  const { data: siteLinks = [] } = useQuery({
+    queryKey: ["site-links"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("site_links")
+        .select("*")
+        .order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
