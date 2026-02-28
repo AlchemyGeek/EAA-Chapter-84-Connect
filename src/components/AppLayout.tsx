@@ -104,6 +104,7 @@ export default function AppLayout() {
   return (
     <div className="flex min-h-screen">
       <aside className="w-60 border-r border-sidebar-border bg-sidebar text-sidebar-foreground flex flex-col shrink-0">
+        <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2 mb-1">
             <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-10 w-10 rounded-full" />
             <h1 className="font-bold text-lg text-sidebar-primary">Ch.84 Connect</h1>
