@@ -19,7 +19,7 @@ export default function Members() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, eaa_number, first_name, last_name, member_type, current_standing, email, expiration_date, preferred_city, preferred_state")
+        .select("key_id, eaa_number, first_name, last_name, member_type")
         .order("last_name");
       if (error) throw error;
       return data;
@@ -31,9 +31,7 @@ export default function Members() {
     return (
       !q ||
       m.first_name?.toLowerCase().includes(q) ||
-      m.last_name?.toLowerCase().includes(q) ||
-      m.eaa_number?.toLowerCase().includes(q) ||
-      m.email?.toLowerCase().includes(q)
+      m.last_name?.toLowerCase().includes(q)
     );
   });
 
