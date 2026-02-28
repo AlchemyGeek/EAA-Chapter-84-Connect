@@ -63,7 +63,7 @@ export default function AppLayout() {
         <header className="bg-primary text-primary-foreground flex items-center justify-between px-4 h-14 shrink-0">
           <div className="flex items-center gap-2">
             <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-8 w-8 rounded-full" />
-            <h1 className="font-bold text-lg">Ch.84 Connect</h1>
+            <h1 className="font-bold text-lg">EAA 84 Connect</h1>
           </div>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
@@ -107,7 +107,7 @@ export default function AppLayout() {
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2 mb-1">
             <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-10 w-10 rounded-full" />
-            <h1 className="font-bold text-lg text-sidebar-primary">Ch.84 Connect</h1>
+            <h1 className="font-bold text-lg text-sidebar-primary">EAA 84 Connect</h1>
           </div>
           <p className="text-xs text-sidebar-foreground/70 truncate">{user.email}</p>
           {isAdmin && (
