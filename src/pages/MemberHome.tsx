@@ -156,6 +156,7 @@ export default function MemberHome() {
   );
 
   const contactFieldDefs: EditableFieldDef[] = [
+    { label: "Nickname", key: "nickname" },
     { label: "Email", key: "email" },
     { label: "Cell Phone", key: "cell_phone" },
     { label: "Home Phone", key: "home_phone" },
@@ -224,7 +225,7 @@ export default function MemberHome() {
           {member ? (
             <div>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Welcome, {member.first_name}
+                Welcome, {member.first_name}{member.nickname ? ` (${member.nickname})` : ""}
               </h1>
               <p className="text-primary-foreground/70 text-sm mt-1">
                 EAA #{member.eaa_number} · {member.chapter_name}

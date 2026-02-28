@@ -19,7 +19,7 @@ export default function Members() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, eaa_number, first_name, last_name, member_type")
+        .select("key_id, eaa_number, first_name, last_name, nickname, member_type")
         .eq("current_standing", "Active")
         .order("last_name");
       if (error) throw error;
@@ -62,7 +62,7 @@ export default function Members() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-medium text-base truncate">{m.last_name}, {m.first_name}</p>
+                      <p className="font-medium text-base truncate">{m.first_name}{m.nickname ? ` (${m.nickname})` : ""} {m.last_name}</p>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
                         <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
@@ -96,7 +96,7 @@ export default function Members() {
                 <TableRow key={m.key_id}>
                   <TableCell>
                     <Link to={`/members/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
-                      {m.last_name}, {m.first_name}
+                      {m.first_name}{m.nickname ? ` (${m.nickname})` : ""} {m.last_name}
                     </Link>
                   </TableCell>
                   <TableCell>{m.eaa_number || "—"}</TableCell>
