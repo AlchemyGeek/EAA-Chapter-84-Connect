@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import AppLayout from "./components/AppLayout";
 import Members from "./pages/Members";
@@ -31,7 +32,7 @@ const App = () => (
             <Route path="/imports/:importId" element={<ImportReport />} />
             <Route path="/export" element={<Export />} />
           </Route>
-          <Route path="/" element={<Navigate to="/members" replace />} />
+          <Route path="/" element={<Landing />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
