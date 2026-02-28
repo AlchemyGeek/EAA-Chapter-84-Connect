@@ -32,7 +32,7 @@ const App = () => (
             <Route path="/imports/:importId" element={<ImportReport />} />
             <Route path="/export" element={<Export />} />
           </Route>
-          <Route path="/" element={<Navigate to="/members" replace />} />
+          <Route path="/" element={<Landing />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
