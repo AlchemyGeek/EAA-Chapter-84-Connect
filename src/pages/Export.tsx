@@ -110,8 +110,8 @@ export default function Export() {
 
             {lastImport && (
               <div className="flex gap-4 text-sm flex-wrap">
-                <span className="inline-flex items-center gap-1 text-green-600 font-medium"><Plus className="h-3 w-3" />+{lastImport.added_count ?? 0} added</span>
-                <span className="inline-flex items-center gap-1 text-blue-600 font-medium"><RefreshCw className="h-3 w-3" />{lastImport.modified_count ?? 0} modified</span>
+                <span className="inline-flex items-center gap-1 text-success font-medium"><Plus className="h-3 w-3" />+{lastImport.added_count ?? 0} added</span>
+                <span className="inline-flex items-center gap-1 text-info font-medium"><RefreshCw className="h-3 w-3" />{lastImport.modified_count ?? 0} modified</span>
                 <span className="inline-flex items-center gap-1 text-destructive font-medium"><Minus className="h-3 w-3" />{lastImport.removed_count ?? 0} removed</span>
               </div>
             )}
