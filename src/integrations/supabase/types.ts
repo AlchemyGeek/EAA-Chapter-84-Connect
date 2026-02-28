@@ -14,16 +14,367 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      member_chapter_data: {
+        Row: {
+          application_status: string | null
+          chapter_payment_method: string | null
+          chapter_payment_notes: string | null
+          created_at: string
+          id: string
+          internal_notes: string | null
+          key_id: number
+          pending_roster_update: boolean | null
+          updated_at: string
+          volunteer_notes: string | null
+        }
+        Insert: {
+          application_status?: string | null
+          chapter_payment_method?: string | null
+          chapter_payment_notes?: string | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          key_id: number
+          pending_roster_update?: boolean | null
+          updated_at?: string
+          volunteer_notes?: string | null
+        }
+        Update: {
+          application_status?: string | null
+          chapter_payment_method?: string | null
+          chapter_payment_notes?: string | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          key_id?: number
+          pending_roster_update?: boolean | null
+          updated_at?: string
+          volunteer_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_chapter_data_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: true
+            referencedRelation: "roster_members"
+            referencedColumns: ["key_id"]
+          },
+        ]
+      }
+      roster_import_changes: {
+        Row: {
+          change_type: string
+          created_at: string
+          eaa_number: string | null
+          field_name: string | null
+          first_name: string | null
+          id: string
+          import_id: string
+          key_id: number
+          last_name: string | null
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          change_type: string
+          created_at?: string
+          eaa_number?: string | null
+          field_name?: string | null
+          first_name?: string | null
+          id?: string
+          import_id: string
+          key_id: number
+          last_name?: string | null
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          change_type?: string
+          created_at?: string
+          eaa_number?: string | null
+          field_name?: string | null
+          first_name?: string | null
+          id?: string
+          import_id?: string
+          key_id?: number
+          last_name?: string | null
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_import_changes_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "roster_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roster_imports: {
+        Row: {
+          added_count: number | null
+          file_name: string | null
+          id: string
+          imported_at: string
+          imported_by: string | null
+          modified_count: number | null
+          record_count: number | null
+          removed_count: number | null
+          status: string | null
+        }
+        Insert: {
+          added_count?: number | null
+          file_name?: string | null
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          modified_count?: number | null
+          record_count?: number | null
+          removed_count?: number | null
+          status?: string | null
+        }
+        Update: {
+          added_count?: number | null
+          file_name?: string | null
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          modified_count?: number | null
+          record_count?: number | null
+          removed_count?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      roster_members: {
+        Row: {
+          address_private: boolean | null
+          admin_level_desc: string | null
+          aircraft_built: string | null
+          aircraft_owned: string | null
+          aircraft_project: string | null
+          aptify_id: number | null
+          background_check: string | null
+          birth_date: string | null
+          cell_phone: string | null
+          cell_phone_private: boolean | null
+          chapter_name: string | null
+          chapter_number: string | null
+          chapter_type: string | null
+          country: string | null
+          created_at: string
+          current_joined_on_date: string | null
+          current_standing: string | null
+          date_added: string | null
+          date_updated: string | null
+          eaa_expiration: string | null
+          eaa_number: string | null
+          eagle_flight_volunteer: boolean | null
+          eagle_pilot: boolean | null
+          email: string | null
+          email_private: boolean | null
+          expiration_date: string | null
+          first_name: string | null
+          gender: string | null
+          home_phone: string | null
+          home_phone_private: boolean | null
+          imc: boolean | null
+          key_id: number
+          last_import_id: string | null
+          last_name: string | null
+          member_type: string | null
+          nickname: string | null
+          other_info: string | null
+          preferred_city: string | null
+          preferred_state: string | null
+          ratings: string | null
+          spouse: string | null
+          street_address_1: string | null
+          street_address_2: string | null
+          udf1: string | null
+          udf1_text: string | null
+          udf2: string | null
+          udf2_text: string | null
+          udf3: string | null
+          udf3_text: string | null
+          udf4: string | null
+          udf4_text: string | null
+          udf5: string | null
+          udf5_text: string | null
+          updated_at: string
+          updated_by: string | null
+          username: string | null
+          vmc: boolean | null
+          young_eagle_pilot: boolean | null
+          young_eagle_volunteer: boolean | null
+          youth_protection: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address_private?: boolean | null
+          admin_level_desc?: string | null
+          aircraft_built?: string | null
+          aircraft_owned?: string | null
+          aircraft_project?: string | null
+          aptify_id?: number | null
+          background_check?: string | null
+          birth_date?: string | null
+          cell_phone?: string | null
+          cell_phone_private?: boolean | null
+          chapter_name?: string | null
+          chapter_number?: string | null
+          chapter_type?: string | null
+          country?: string | null
+          created_at?: string
+          current_joined_on_date?: string | null
+          current_standing?: string | null
+          date_added?: string | null
+          date_updated?: string | null
+          eaa_expiration?: string | null
+          eaa_number?: string | null
+          eagle_flight_volunteer?: boolean | null
+          eagle_pilot?: boolean | null
+          email?: string | null
+          email_private?: boolean | null
+          expiration_date?: string | null
+          first_name?: string | null
+          gender?: string | null
+          home_phone?: string | null
+          home_phone_private?: boolean | null
+          imc?: boolean | null
+          key_id: number
+          last_import_id?: string | null
+          last_name?: string | null
+          member_type?: string | null
+          nickname?: string | null
+          other_info?: string | null
+          preferred_city?: string | null
+          preferred_state?: string | null
+          ratings?: string | null
+          spouse?: string | null
+          street_address_1?: string | null
+          street_address_2?: string | null
+          udf1?: string | null
+          udf1_text?: string | null
+          udf2?: string | null
+          udf2_text?: string | null
+          udf3?: string | null
+          udf3_text?: string | null
+          udf4?: string | null
+          udf4_text?: string | null
+          udf5?: string | null
+          udf5_text?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          username?: string | null
+          vmc?: boolean | null
+          young_eagle_pilot?: boolean | null
+          young_eagle_volunteer?: boolean | null
+          youth_protection?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address_private?: boolean | null
+          admin_level_desc?: string | null
+          aircraft_built?: string | null
+          aircraft_owned?: string | null
+          aircraft_project?: string | null
+          aptify_id?: number | null
+          background_check?: string | null
+          birth_date?: string | null
+          cell_phone?: string | null
+          cell_phone_private?: boolean | null
+          chapter_name?: string | null
+          chapter_number?: string | null
+          chapter_type?: string | null
+          country?: string | null
+          created_at?: string
+          current_joined_on_date?: string | null
+          current_standing?: string | null
+          date_added?: string | null
+          date_updated?: string | null
+          eaa_expiration?: string | null
+          eaa_number?: string | null
+          eagle_flight_volunteer?: boolean | null
+          eagle_pilot?: boolean | null
+          email?: string | null
+          email_private?: boolean | null
+          expiration_date?: string | null
+          first_name?: string | null
+          gender?: string | null
+          home_phone?: string | null
+          home_phone_private?: boolean | null
+          imc?: boolean | null
+          key_id?: number
+          last_import_id?: string | null
+          last_name?: string | null
+          member_type?: string | null
+          nickname?: string | null
+          other_info?: string | null
+          preferred_city?: string | null
+          preferred_state?: string | null
+          ratings?: string | null
+          spouse?: string | null
+          street_address_1?: string | null
+          street_address_2?: string | null
+          udf1?: string | null
+          udf1_text?: string | null
+          udf2?: string | null
+          udf2_text?: string | null
+          udf3?: string | null
+          udf3_text?: string | null
+          udf4?: string | null
+          udf4_text?: string | null
+          udf5?: string | null
+          udf5_text?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          username?: string | null
+          vmc?: boolean | null
+          young_eagle_pilot?: boolean | null
+          young_eagle_volunteer?: boolean | null
+          youth_protection?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +501,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "member"],
+    },
   },
 } as const
