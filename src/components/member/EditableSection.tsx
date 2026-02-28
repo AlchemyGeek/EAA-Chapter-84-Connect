@@ -96,22 +96,6 @@ export function EditableSection({
           </span>
         </AccordionTrigger>
         <AccordionContent>
-          {directoryVisible !== undefined && onDirectoryVisibleChange && (
-            <div className="flex items-center gap-2.5 mb-4 rounded-md bg-muted/50 px-3 py-2.5">
-              <Checkbox
-                id={`dir-visible-${title}`}
-                checked={directoryVisible}
-                onCheckedChange={(checked) => onDirectoryVisibleChange(!!checked)}
-                disabled={directoryToggleDisabled || disabled}
-              />
-              <label
-                htmlFor={`dir-visible-${title}`}
-                className="text-xs font-medium leading-none cursor-pointer select-none text-muted-foreground"
-              >
-                Visible in member directory
-              </label>
-            </div>
-          )}
           {!editing ? (
             <div>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
@@ -123,15 +107,31 @@ export function EditableSection({
                 ))}
               </dl>
               {!disabled && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={startEdit}
-                  className="mt-4 min-h-[44px]"
-                >
-                  <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                  Edit
-                </Button>
+                <div className="flex items-center gap-3 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={startEdit}
+                    className="min-h-[44px]"
+                  >
+                    <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                    Edit
+                  </Button>
+                  {directoryVisible !== undefined && onDirectoryVisibleChange && (
+                    <label
+                      htmlFor={`dir-visible-${title}`}
+                      className="flex items-center gap-2 min-h-[44px] rounded-md border px-3 cursor-pointer select-none text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <Checkbox
+                        id={`dir-visible-${title}`}
+                        checked={directoryVisible}
+                        onCheckedChange={(checked) => onDirectoryVisibleChange(!!checked)}
+                        disabled={directoryToggleDisabled}
+                      />
+                      Visible in directory
+                    </label>
+                  )}
+                </div>
               )}
             </div>
           ) : (
