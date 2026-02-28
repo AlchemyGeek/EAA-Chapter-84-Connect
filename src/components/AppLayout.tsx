@@ -63,7 +63,7 @@ export default function AppLayout() {
         <header className="bg-primary text-primary-foreground flex items-center justify-between px-4 h-14 shrink-0">
           <div className="flex items-center gap-2">
             <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-8 w-8 rounded-full" />
-            <h1 className="font-bold text-lg">Ch.84 Connect</h1>
+            <h1 className="font-bold text-lg">EAA 84 Connect</h1>
           </div>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
