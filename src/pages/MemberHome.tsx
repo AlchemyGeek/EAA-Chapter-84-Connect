@@ -239,15 +239,13 @@ export default function MemberHome() {
           </div>
         )}
 
-        {/* Services placeholder */}
+        {/* Member Services */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Member Services</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Services will be available here based on your membership role. Coming soon.
-            </p>
+          <CardContent className="space-y-1">
+            <AdminLink to="/members" icon={Users} label="Member Directory" />
           </CardContent>
         </Card>
 
