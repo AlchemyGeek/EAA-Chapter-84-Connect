@@ -109,17 +109,17 @@ export default function MemberHome() {
   });
 
   const toggleVisibility = useMutation({
-    mutationFn: async (visible: boolean) => {
+    mutationFn: async ({ field, visible }: { field: "contact_visible_in_directory" | "aviation_visible_in_directory"; visible: boolean }) => {
       if (chapterData) {
         const { error } = await supabase
           .from("member_chapter_data")
-          .update({ visible_in_directory: visible })
+          .update({ [field]: visible })
           .eq("key_id", activeKeyId!);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("member_chapter_data")
-          .insert({ key_id: activeKeyId!, visible_in_directory: visible });
+          .insert({ key_id: activeKeyId!, [field]: visible });
         if (error) throw error;
       }
     },
