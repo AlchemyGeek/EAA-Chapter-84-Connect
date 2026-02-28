@@ -24,6 +24,7 @@ import { Navigate, Link } from "react-router-dom";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [impersonateKeyId, setImpersonateKeyId] = useState<string | null>(null);
 
   // Fetch all members for admin impersonation dropdown
