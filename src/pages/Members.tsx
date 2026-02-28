@@ -20,6 +20,7 @@ export default function Members() {
       const { data, error } = await supabase
         .from("roster_members")
         .select("key_id, eaa_number, first_name, last_name, member_type")
+        .eq("current_standing", "Active")
         .order("last_name");
       if (error) throw error;
       return data;
