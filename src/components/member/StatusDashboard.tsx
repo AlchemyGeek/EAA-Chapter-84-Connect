@@ -86,12 +86,14 @@ interface StatusDashboardProps {
   currentStanding: string | null;
   expirationDate: string | null;
   memberType: string | null;
+  eaaNumber: string | null;
 }
 
 export function StatusDashboard({
   currentStanding,
   expirationDate,
   memberType,
+  eaaNumber,
 }: StatusDashboardProps) {
   const { status, message } = computeStatus(currentStanding, expirationDate);
   const config = statusConfig[status];
@@ -114,6 +116,11 @@ export function StatusDashboard({
               )}
             </div>
             <p className="text-sm text-muted-foreground">{message}</p>
+            {eaaNumber && (
+              <p className="text-xs text-muted-foreground">
+                EAA #{eaaNumber}
+              </p>
+            )}
             {expirationDate && (
               <p className="text-xs text-muted-foreground">
                 Expiration: {new Date(expirationDate).toLocaleDateString()}

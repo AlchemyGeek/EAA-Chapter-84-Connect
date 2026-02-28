@@ -81,6 +81,7 @@ export default function MemberDetail() {
         currentStanding={member.current_standing}
         expirationDate={member.expiration_date}
         memberType={member.member_type}
+        eaaNumber={member.eaa_number}
       />
 
       {/* Read-only sections */}
