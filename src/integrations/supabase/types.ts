@@ -25,6 +25,7 @@ export type Database = {
           key_id: number
           pending_roster_update: boolean | null
           updated_at: string
+          visible_in_directory: boolean
           volunteer_notes: string | null
         }
         Insert: {
@@ -37,6 +38,7 @@ export type Database = {
           key_id: number
           pending_roster_update?: boolean | null
           updated_at?: string
+          visible_in_directory?: boolean
           volunteer_notes?: string | null
         }
         Update: {
@@ -49,6 +51,7 @@ export type Database = {
           key_id?: number
           pending_roster_update?: boolean | null
           updated_at?: string
+          visible_in_directory?: boolean
           volunteer_notes?: string | null
         }
         Relationships: [
