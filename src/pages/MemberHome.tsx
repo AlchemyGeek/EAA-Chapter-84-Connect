@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { StatusDashboard } from "@/components/member/StatusDashboard";
 import { ReadOnlySection } from "@/components/member/ReadOnlySection";
+import { EditableSection } from "@/components/member/EditableSection";
+import type { EditableFieldDef } from "@/components/member/EditableSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,7 @@ import { Navigate, Link } from "react-router-dom";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [impersonateKeyId, setImpersonateKeyId] = useState<string | null>(null);
 
   // Fetch all members for admin impersonation dropdown
@@ -83,32 +86,24 @@ export default function MemberHome() {
   const member = impersonateKeyId ? impersonatedMember : myMember;
   const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
 
-  const contactFields = member
-    ? [
-        { label: "Email", value: member.email },
-        { label: "Cell Phone", value: member.cell_phone },
-        { label: "Home Phone", value: member.home_phone },
-        {
-          label: "Address",
-          value:
-            [member.street_address_1, member.street_address_2]
-              .filter(Boolean)
-              .join(", ") || null,
-        },
-        { label: "City", value: member.preferred_city },
-        { label: "State", value: member.preferred_state },
-        { label: "Zip", value: member.zip_code },
-      ]
-    : [];
+  const contactFieldDefs: EditableFieldDef[] = [
+    { label: "Email", key: "email" },
+    { label: "Cell Phone", key: "cell_phone" },
+    { label: "Home Phone", key: "home_phone" },
+    { label: "Street Address 1", key: "street_address_1" },
+    { label: "Street Address 2", key: "street_address_2" },
+    { label: "City", key: "preferred_city" },
+    { label: "State", key: "preferred_state" },
+    { label: "Zip", key: "zip_code" },
+    { label: "Country", key: "country" },
+  ];
 
-  const aviationFields = member
-    ? [
-        { label: "Ratings", value: member.ratings },
-        { label: "Aircraft Owned", value: member.aircraft_owned },
-        { label: "Aircraft Project", value: member.aircraft_project },
-        { label: "Aircraft Built", value: member.aircraft_built },
-      ]
-    : [];
+  const aviationFieldDefs: EditableFieldDef[] = [
+    { label: "Ratings", key: "ratings" },
+    { label: "Aircraft Owned", key: "aircraft_owned" },
+    { label: "Aircraft Project", key: "aircraft_project" },
+    { label: "Aircraft Built", key: "aircraft_built" },
+  ];
 
   const volunteerFields = member
     ? [
@@ -120,6 +115,17 @@ export default function MemberHome() {
         { label: "VMC Club", value: member.vmc },
       ]
     : [];
+
+
+  const handleSave = async (updates: Record<string, any>) => {
+    const { error } = await supabase
+      .from("roster_members")
+      .update(updates)
+      .eq("key_id", member!.key_id);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ["my-member"] });
+    queryClient.invalidateQueries({ queryKey: ["impersonate-member"] });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -232,11 +238,25 @@ export default function MemberHome() {
           </Card>
         )}
 
-        {/* Read-only sections */}
+        {/* Editable & read-only sections */}
         {member && (
           <div className="space-y-2">
-            <ReadOnlySection title="Contact Information" icon={Phone} fields={contactFields} />
-            <ReadOnlySection title="Aviation & Aircraft" icon={Plane} fields={aviationFields} />
+            <EditableSection
+              title="Contact Information"
+              icon={Phone}
+              fields={contactFieldDefs}
+              data={member}
+              onSave={handleSave}
+              disabled={isImpersonating}
+            />
+            <EditableSection
+              title="Aviation & Aircraft"
+              icon={Plane}
+              fields={aviationFieldDefs}
+              data={member}
+              onSave={handleSave}
+              disabled={isImpersonating}
+            />
             <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
           </div>
         )}
