@@ -325,7 +325,7 @@ export default function MemberHome() {
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "contact_visible_in_directory", visible: checked })
               }
-              directoryToggleDisabled={toggleVisibility.isPending || isImpersonating}
+              directoryToggleDisabled={toggleVisibility.isPending}
             />
             <EditableSection
               title="Aviation & Aircraft"
