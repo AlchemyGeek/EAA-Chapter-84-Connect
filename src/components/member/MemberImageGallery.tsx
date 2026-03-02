@@ -120,7 +120,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Camera className="h-4 w-4 text-muted-foreground" />
-          Member Photos (visible in members directory)
+          Member Photos*
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -165,9 +165,10 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
         </div>
 
         {editable && (
-          <p className="text-xs text-muted-foreground mt-2">
-            {images.length}/{MAX_IMAGES} photos · Max 5MB each
-          </p>
+          <div className="text-xs text-muted-foreground mt-2 space-y-1">
+            <p>{images.length}/{MAX_IMAGES} photos · Max 5MB each</p>
+            <p>* Shown at the member's directory</p>
+          </div>
         )}
 
         <input
