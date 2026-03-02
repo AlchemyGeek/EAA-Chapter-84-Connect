@@ -24,18 +24,7 @@ export function useAuth() {
       }
     };
 
-    // Initial session check
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        await checkAdmin(currentUser.id);
-      }
-      if (mounted) setLoading(false);
-    });
-
-    // Listen for auth changes after initial load
+    // Set up listener FIRST (before getSession) to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
       const currentUser = session?.user ?? null;
@@ -46,6 +35,17 @@ export function useAuth() {
         setIsAdmin(false);
       }
       setLoading(false);
+    });
+
+    // Then check initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        await checkAdmin(currentUser.id);
+      }
+      if (mounted) setLoading(false);
     });
 
     return () => {
