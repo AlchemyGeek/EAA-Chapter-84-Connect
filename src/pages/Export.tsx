@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,8 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Download, Plus, RefreshCw, Minus } from "lucide-react";
 import { exportMembersToExcel, exportMembersToCsv, exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
+import { diffCurrentVsSnapshots } from "@/lib/diffMembers";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMemo } from "react";
 
 function ChangeTypeBadge({ type }: { type: string }) {
   const config: Record<string, { variant: "secondary" | "destructive"; icon: typeof Plus; label: string }> = {
@@ -54,20 +55,54 @@ export default function Export() {
     },
   });
 
-  const { data: changes = [], isLoading: changesLoading } = useQuery({
-    queryKey: ["last-import-changes", lastImport?.id],
+  const { data: snapshots = [], isLoading: snapshotsLoading } = useQuery({
+    queryKey: ["last-import-snapshots", lastImport?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_import_changes")
-        .select("*")
-        .eq("import_id", lastImport!.id)
-        .order("change_type")
-        .order("last_name");
-      if (error) throw error;
-      return data;
+      // Fetch all snapshots for this import (may exceed 1000)
+      let all: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("roster_member_snapshots")
+          .select("key_id, snapshot")
+          .eq("import_id", lastImport!.id)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
     },
     enabled: !!lastImport?.id,
   });
+
+  const localChanges = useMemo(() => {
+    if (snapshots.length === 0 || members.length === 0) return [];
+    return diffCurrentVsSnapshots(members, snapshots);
+  }, [members, snapshots]);
+
+  const addedCount = localChanges.filter(c => c.change_type === "added").length;
+  const modifiedMembers = new Set(localChanges.filter(c => c.change_type === "modified").map(c => c.key_id));
+  const modifiedCount = modifiedMembers.size;
+  const removedCount = localChanges.filter(c => c.change_type === "removed").length;
+
+  const changesLoading = membersLoading || snapshotsLoading;
+
+  // Format for export compatibility
+  const exportableChanges = localChanges.map(c => ({
+    id: `${c.key_id}-${c.field_name || c.change_type}`,
+    change_type: c.change_type,
+    key_id: c.key_id,
+    first_name: c.first_name,
+    last_name: c.last_name,
+    eaa_number: c.eaa_number,
+    field_name: c.field_name,
+    old_value: c.old_value,
+    new_value: c.new_value,
+  }));
 
   return (
     <div className="p-4 md:p-6 max-w-4xl space-y-6">
@@ -90,40 +125,44 @@ export default function Export() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Changes from Last Import</CardTitle>
+          <CardTitle className="text-base">Local Changes Since Last Import</CardTitle>
           <CardDescription>
             {lastImport
-              ? `${format(new Date(lastImport.imported_at), "MMM d, yyyy h:mm a")} · ${lastImport.file_name} · ${changes.length} change(s)`
+              ? `Comparing current database against import from ${format(new Date(lastImport.imported_at), "MMM d, yyyy h:mm a")} · ${lastImport.file_name}`
+              : snapshots.length === 0 && lastImport
+              ? "No snapshots found for last import. Run a new import to enable local change tracking."
               : "No imports found."}
           </CardDescription>
         </CardHeader>
         {lastImport && (
           <CardContent className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="outline" className="gap-2 w-full sm:w-auto min-h-[44px]" onClick={() => exportDiffToCsv(changes)} disabled={changesLoading || changes.length === 0}>
+              <Button variant="outline" className="gap-2 w-full sm:w-auto min-h-[44px]" onClick={() => exportDiffToCsv(exportableChanges)} disabled={changesLoading || localChanges.length === 0}>
                 <Download className="h-4 w-4" /> Export Changes CSV
               </Button>
-              <Button variant="outline" className="gap-2 w-full sm:w-auto min-h-[44px]" onClick={() => exportDiffToExcel(changes)} disabled={changesLoading || changes.length === 0}>
+              <Button variant="outline" className="gap-2 w-full sm:w-auto min-h-[44px]" onClick={() => exportDiffToExcel(exportableChanges)} disabled={changesLoading || localChanges.length === 0}>
                 <Download className="h-4 w-4" /> Export Changes Excel
               </Button>
             </div>
 
-            {lastImport && (
-              <div className="flex gap-4 text-sm flex-wrap">
-                <span className="inline-flex items-center gap-1 text-success font-medium"><Plus className="h-3 w-3" />+{lastImport.added_count ?? 0} added</span>
-                <span className="inline-flex items-center gap-1 text-info font-medium"><RefreshCw className="h-3 w-3" />{lastImport.modified_count ?? 0} modified</span>
-                <span className="inline-flex items-center gap-1 text-destructive font-medium"><Minus className="h-3 w-3" />{lastImport.removed_count ?? 0} removed</span>
-              </div>
-            )}
+            <div className="flex gap-4 text-sm flex-wrap">
+              <span className="inline-flex items-center gap-1 text-success font-medium"><Plus className="h-3 w-3" />+{addedCount} added</span>
+              <span className="inline-flex items-center gap-1 text-info font-medium"><RefreshCw className="h-3 w-3" />{modifiedCount} modified</span>
+              <span className="inline-flex items-center gap-1 text-destructive font-medium"><Minus className="h-3 w-3" />{removedCount} removed</span>
+            </div>
 
             {changesLoading ? (
-              <p className="text-muted-foreground text-sm">Loading changes...</p>
-            ) : changes.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No changes recorded for this import.</p>
+              <p className="text-muted-foreground text-sm">Computing changes...</p>
+            ) : localChanges.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                {snapshots.length === 0
+                  ? "No snapshots found. Run a new import to enable local change tracking."
+                  : "No local changes since last import."}
+              </p>
             ) : isMobile ? (
               <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {changes.map((c) => (
-                  <Card key={c.id}>
+                {localChanges.map((c, i) => (
+                  <Card key={`${c.key_id}-${c.field_name}-${i}`}>
                     <CardContent className="p-3 space-y-1">
                       <div className="flex items-center justify-between">
                         <p className="font-medium text-sm">{c.last_name}, {c.first_name}</p>
@@ -155,8 +194,8 @@ export default function Export() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {changes.map((c) => (
-                      <TableRow key={c.id}>
+                    {localChanges.map((c, i) => (
+                      <TableRow key={`${c.key_id}-${c.field_name}-${i}`}>
                         <TableCell><ChangeTypeBadge type={c.change_type} /></TableCell>
                         <TableCell className="font-medium">{c.last_name}, {c.first_name}</TableCell>
                         <TableCell>{c.eaa_number}</TableCell>

@@ -153,6 +153,38 @@ export type Database = {
         }
         Relationships: []
       }
+      roster_member_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          import_id: string
+          key_id: number
+          snapshot: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          import_id: string
+          key_id: number
+          snapshot: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          import_id?: string
+          key_id?: number
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_member_snapshots_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "roster_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roster_members: {
         Row: {
           address_private: boolean | null
