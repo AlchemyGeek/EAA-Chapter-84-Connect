@@ -338,7 +338,7 @@ export default function MemberHome() {
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "aviation_visible_in_directory", visible: checked })
               }
-              directoryToggleDisabled={toggleVisibility.isPending || isImpersonating}
+              directoryToggleDisabled={toggleVisibility.isPending}
             />
             <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
           </div>
