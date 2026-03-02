@@ -160,7 +160,7 @@ export default function MemberProfile() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 -mt-3 pb-10 space-y-4">
         {/* Photo gallery */}
-        {images.length > 1 && (
+        {images.length > 0 && (
           <Card className="overflow-hidden">
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-2">
@@ -169,11 +169,12 @@ export default function MemberProfile() {
                   Photos
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {images.slice(1).map((img) => (
-                  <div
+              <div className={`grid gap-2 ${images.length === 1 ? "grid-cols-1 max-w-xs" : images.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {images.map((img) => (
+                  <button
                     key={img.id}
-                    className="rounded-lg overflow-hidden bg-muted aspect-square"
+                    onClick={() => setLightboxUrl(getPublicUrl(img.storage_path))}
+                    className="rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <img
                       src={getPublicUrl(img.storage_path)}
@@ -181,12 +182,25 @@ export default function MemberProfile() {
                       className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                     />
-                  </div>
+                  </button>
                 ))}
               </div>
             </CardContent>
           </Card>
         )}
+
+        {/* Photo lightbox */}
+        <Dialog open={!!lightboxUrl} onOpenChange={() => setLightboxUrl(null)}>
+          <DialogContent className="max-w-3xl p-2 bg-black/90 border-0">
+            {lightboxUrl && (
+              <img
+                src={lightboxUrl}
+                alt="Enlarged photo"
+                className="w-full h-auto max-h-[80vh] object-contain rounded"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Contact Information */}
         {contactVisible && hasContactInfo && (
