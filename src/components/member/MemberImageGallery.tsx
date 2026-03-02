@@ -117,7 +117,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
   if (isLoading) return null;
   if (!editable && images.length === 0) return null;
 
-  const [open, setOpen] = useState(false);
+
 
   return (
     <Card>
