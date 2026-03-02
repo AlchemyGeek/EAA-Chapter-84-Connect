@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusDashboard } from "@/components/member/StatusDashboard";
 import { ReadOnlySection } from "@/components/member/ReadOnlySection";
+import { MemberImageGallery } from "@/components/member/MemberImageGallery";
 
 export default function MemberDetail() {
   const { keyId } = useParams();
