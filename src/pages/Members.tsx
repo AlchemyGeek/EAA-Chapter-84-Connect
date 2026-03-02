@@ -95,7 +95,7 @@ export default function Members() {
               {filtered.map((m) => (
                 <TableRow key={m.key_id}>
                   <TableCell>
-                    <Link to={`/members/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
+                    <Link to={`/directory/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
                       {m.first_name}{m.nickname ? ` (${m.nickname})` : ""} {m.last_name}
                     </Link>
                   </TableCell>

@@ -40,6 +40,8 @@ const App = () => (
           <Route element={<AppLayout />}>
             <Route path="/members" element={<Members />} />
             <Route path="/members/:keyId" element={<MemberDetail />} />
+          </Route>
+          <Route path="/directory/:keyId" element={<MemberProfile />} />
             <Route path="/import" element={<Import />} />
             <Route path="/imports" element={<ImportHistory />} />
             <Route path="/imports/:importId" element={<ImportReport />} />
