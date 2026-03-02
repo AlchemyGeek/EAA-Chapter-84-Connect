@@ -165,9 +165,10 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
         </div>
 
         {editable && (
-          <p className="text-xs text-muted-foreground mt-2">
-            {images.length}/{MAX_IMAGES} photos · Max 5MB each
-          </p>
+          <div className="text-xs text-muted-foreground mt-2 space-y-1">
+            <p>{images.length}/{MAX_IMAGES} photos · Max 5MB each</p>
+            <p>* Shown at the member's directory</p>
+          </div>
         )}
 
         <input
