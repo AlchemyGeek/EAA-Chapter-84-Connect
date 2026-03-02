@@ -320,12 +320,12 @@ export default function MemberHome() {
               fields={contactFieldDefs}
               data={member}
               onSave={handleSave}
-              disabled={isImpersonating}
+              disabled={false}
               directoryVisible={chapterData?.contact_visible_in_directory ?? true}
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "contact_visible_in_directory", visible: checked })
               }
-              directoryToggleDisabled={toggleVisibility.isPending || isImpersonating}
+              directoryToggleDisabled={toggleVisibility.isPending}
             />
             <EditableSection
               title="Aviation & Aircraft"
@@ -333,12 +333,12 @@ export default function MemberHome() {
               fields={aviationFieldDefs}
               data={member}
               onSave={handleSave}
-              disabled={isImpersonating}
+              disabled={false}
               directoryVisible={chapterData?.aviation_visible_in_directory ?? true}
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "aviation_visible_in_directory", visible: checked })
               }
-              directoryToggleDisabled={toggleVisibility.isPending || isImpersonating}
+              directoryToggleDisabled={toggleVisibility.isPending}
             />
             <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
           </div>
