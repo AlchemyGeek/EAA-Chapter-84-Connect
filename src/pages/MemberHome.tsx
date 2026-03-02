@@ -333,7 +333,7 @@ export default function MemberHome() {
               fields={aviationFieldDefs}
               data={member}
               onSave={handleSave}
-              disabled={isImpersonating}
+              disabled={false}
               directoryVisible={chapterData?.aviation_visible_in_directory ?? true}
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "aviation_visible_in_directory", visible: checked })
