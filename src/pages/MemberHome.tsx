@@ -342,6 +342,7 @@ export default function MemberHome() {
               directoryToggleDisabled={toggleVisibility.isPending}
             />
             <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
+            <MemberImageGallery keyId={member.key_id} editable={!isImpersonating} />
           </div>
         )}
 

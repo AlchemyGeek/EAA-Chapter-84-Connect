@@ -91,6 +91,7 @@ export default function MemberDetail() {
         <ReadOnlySection title="Aviation & Aircraft" fields={aviationFields} />
         <ReadOnlySection title="Volunteering" fields={volunteerFields} />
         <ReadOnlySection title="Compliance (EAA-managed)" fields={complianceFields} />
+        <MemberImageGallery keyId={member.key_id} />
       </div>
 
       {/* Services placeholder */}
