@@ -57,7 +57,7 @@ export default function Members() {
         /* Mobile: stacked cards */
         <div className="space-y-3">
           {filtered.map((m) => (
-            <Link key={m.key_id} to={`/members/${m.key_id}`} className="block min-h-0 min-w-0">
+            <Link key={m.key_id} to={`/directory/${m.key_id}`} className="block min-h-0 min-w-0">
               <Card className="hover:border-primary/30 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
