@@ -320,7 +320,7 @@ export default function MemberHome() {
               fields={contactFieldDefs}
               data={member}
               onSave={handleSave}
-              disabled={isImpersonating}
+              disabled={false}
               directoryVisible={chapterData?.contact_visible_in_directory ?? true}
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "contact_visible_in_directory", visible: checked })
