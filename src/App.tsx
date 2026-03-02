@@ -9,6 +9,7 @@ import MemberHome from "./pages/MemberHome";
 import AppLayout from "./components/AppLayout";
 import Members from "./pages/Members";
 import MemberDetail from "./pages/MemberDetail";
+import MemberProfile from "./pages/MemberProfile";
 import Import from "./pages/Import";
 import ImportHistory from "./pages/ImportHistory";
 import ImportReport from "./pages/ImportReport";
