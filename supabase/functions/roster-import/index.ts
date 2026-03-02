@@ -329,6 +329,22 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Save snapshots of all current members after import
+    const { data: allMembers } = await adminClient.from("roster_members").select("*");
+    if (allMembers && allMembers.length > 0) {
+      const snapshotRows = allMembers.map((m: any) => ({
+        import_id: importId,
+        key_id: m.key_id,
+        snapshot: m,
+      }));
+      const snapBatchSize = 100;
+      for (let i = 0; i < snapshotRows.length; i += snapBatchSize) {
+        await adminClient
+          .from("roster_member_snapshots")
+          .insert(snapshotRows.slice(i, i + snapBatchSize));
+      }
+    }
+
     // Update import record with counts
     await adminClient
       .from("roster_imports")
