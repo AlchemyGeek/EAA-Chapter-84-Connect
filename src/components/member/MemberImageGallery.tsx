@@ -120,7 +120,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Camera className="h-4 w-4 text-muted-foreground" />
-          Aircraft Photos
+          Member Photos (visible in members directory)
         </CardTitle>
       </CardHeader>
       <CardContent>
