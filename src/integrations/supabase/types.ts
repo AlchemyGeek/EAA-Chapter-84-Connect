@@ -67,6 +67,36 @@ export type Database = {
           },
         ]
       }
+      member_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          key_id: number
+          sort_order: number
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          key_id: number
+          sort_order?: number
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          key_id?: number
+          sort_order?: number
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       roster_import_changes: {
         Row: {
           change_type: string
