@@ -57,7 +57,7 @@ export default function Members() {
         /* Mobile: stacked cards */
         <div className="space-y-3">
           {filtered.map((m) => (
-            <Link key={m.key_id} to={`/members/${m.key_id}`} className="block min-h-0 min-w-0">
+            <Link key={m.key_id} to={`/directory/${m.key_id}`} className="block min-h-0 min-w-0">
               <Card className="hover:border-primary/30 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -95,7 +95,7 @@ export default function Members() {
               {filtered.map((m) => (
                 <TableRow key={m.key_id}>
                   <TableCell>
-                    <Link to={`/members/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
+                    <Link to={`/directory/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
                       {m.first_name}{m.nickname ? ` (${m.nickname})` : ""} {m.last_name}
                     </Link>
                   </TableCell>

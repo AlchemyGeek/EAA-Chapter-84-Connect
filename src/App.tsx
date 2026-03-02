@@ -9,6 +9,7 @@ import MemberHome from "./pages/MemberHome";
 import AppLayout from "./components/AppLayout";
 import Members from "./pages/Members";
 import MemberDetail from "./pages/MemberDetail";
+import MemberProfile from "./pages/MemberProfile";
 import Import from "./pages/Import";
 import ImportHistory from "./pages/ImportHistory";
 import ImportReport from "./pages/ImportReport";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/export" element={<Export />} />
             <Route path="/site-config" element={<SiteConfig />} />
           </Route>
+          <Route path="/directory/:keyId" element={<MemberProfile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
