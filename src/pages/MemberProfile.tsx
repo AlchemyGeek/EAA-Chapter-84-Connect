@@ -17,7 +17,6 @@ import {
   Plane,
   Wrench,
   Award,
-  Users,
   Camera,
   Globe,
 } from "lucide-react";
