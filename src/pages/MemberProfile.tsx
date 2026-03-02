@@ -141,34 +141,17 @@ export default function MemberProfile() {
             </Link>
           </Button>
 
-          <div className="flex items-end gap-4">
-            {/* Avatar / first image */}
-            {images.length > 0 ? (
-              <div className="shrink-0 h-20 w-20 md:h-24 md:w-24 rounded-xl overflow-hidden ring-2 ring-primary-foreground/20 shadow-lg">
-                <img
-                  src={getPublicUrl(images[0].storage_path)}
-                  alt={fullName}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="shrink-0 h-20 w-20 md:h-24 md:w-24 rounded-xl bg-primary-foreground/10 flex items-center justify-center ring-2 ring-primary-foreground/20">
-                <Users className="h-10 w-10 text-primary-foreground/40" />
-              </div>
-            )}
-
-            <div className="min-w-0 pb-1">
-              <h1 className="text-xl md:text-2xl font-bold text-primary-foreground truncate">
-                {fullName}
-              </h1>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className="text-primary-foreground/60 text-sm">
-                  EAA #{member.eaa_number || "—"}
-                </span>
-                <Badge className="bg-primary-foreground/15 text-primary-foreground border-0 text-xs">
-                  {member.member_type || "Member"}
-                </Badge>
-              </div>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold text-primary-foreground truncate">
+              {fullName}
+            </h1>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-primary-foreground/60 text-sm">
+                EAA #{member.eaa_number || "—"}
+              </span>
+              <Badge className="bg-primary-foreground/15 text-primary-foreground border-0 text-xs">
+                {member.member_type || "Member"}
+              </Badge>
             </div>
           </div>
         </div>
