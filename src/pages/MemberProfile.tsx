@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   Mail,
@@ -13,7 +17,6 @@ import {
   Plane,
   Wrench,
   Award,
-  Users,
   Camera,
   Globe,
 } from "lucide-react";
@@ -26,6 +29,7 @@ function getPublicUrl(path: string) {
 }
 
 export default function MemberProfile() {
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const { keyId } = useParams();
 
   const { data: member, isLoading: memberLoading } = useQuery({
@@ -136,34 +140,17 @@ export default function MemberProfile() {
             </Link>
           </Button>
 
-          <div className="flex items-end gap-4">
-            {/* Avatar / first image */}
-            {images.length > 0 ? (
-              <div className="shrink-0 h-20 w-20 md:h-24 md:w-24 rounded-xl overflow-hidden ring-2 ring-primary-foreground/20 shadow-lg">
-                <img
-                  src={getPublicUrl(images[0].storage_path)}
-                  alt={fullName}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="shrink-0 h-20 w-20 md:h-24 md:w-24 rounded-xl bg-primary-foreground/10 flex items-center justify-center ring-2 ring-primary-foreground/20">
-                <Users className="h-10 w-10 text-primary-foreground/40" />
-              </div>
-            )}
-
-            <div className="min-w-0 pb-1">
-              <h1 className="text-xl md:text-2xl font-bold text-primary-foreground truncate">
-                {fullName}
-              </h1>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className="text-primary-foreground/60 text-sm">
-                  EAA #{member.eaa_number || "—"}
-                </span>
-                <Badge className="bg-primary-foreground/15 text-primary-foreground border-0 text-xs">
-                  {member.member_type || "Member"}
-                </Badge>
-              </div>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold text-primary-foreground truncate">
+              {fullName}
+            </h1>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-primary-foreground/60 text-sm">
+                EAA #{member.eaa_number || "—"}
+              </span>
+              <Badge className="bg-primary-foreground/15 text-primary-foreground border-0 text-xs">
+                {member.member_type || "Member"}
+              </Badge>
             </div>
           </div>
         </div>
@@ -172,7 +159,7 @@ export default function MemberProfile() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 -mt-3 pb-10 space-y-4">
         {/* Photo gallery */}
-        {images.length > 1 && (
+        {images.length > 0 && (
           <Card className="overflow-hidden">
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-2">
@@ -181,11 +168,12 @@ export default function MemberProfile() {
                   Photos
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {images.slice(1).map((img) => (
-                  <div
+              <div className={`grid gap-2 ${images.length === 1 ? "grid-cols-1 max-w-xs" : images.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {images.map((img) => (
+                  <button
                     key={img.id}
-                    className="rounded-lg overflow-hidden bg-muted aspect-square"
+                    onClick={() => setLightboxUrl(getPublicUrl(img.storage_path))}
+                    className="rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <img
                       src={getPublicUrl(img.storage_path)}
@@ -193,12 +181,25 @@ export default function MemberProfile() {
                       className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                     />
-                  </div>
+                  </button>
                 ))}
               </div>
             </CardContent>
           </Card>
         )}
+
+        {/* Photo lightbox */}
+        <Dialog open={!!lightboxUrl} onOpenChange={() => setLightboxUrl(null)}>
+          <DialogContent className="max-w-3xl p-2 bg-black/90 border-0">
+            {lightboxUrl && (
+              <img
+                src={lightboxUrl}
+                alt="Enlarged photo"
+                className="w-full h-auto max-h-[80vh] object-contain rounded"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Contact Information */}
         {contactVisible && hasContactInfo && (
