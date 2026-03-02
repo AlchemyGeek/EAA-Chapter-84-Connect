@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -6,6 +6,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -24,8 +25,7 @@ export function useAuth() {
       }
     };
 
-    // Set up listener FIRST (before getSession) to avoid race conditions
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const handleSession = async (session: any) => {
       if (!mounted) return;
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -34,22 +34,32 @@ export function useAuth() {
       } else {
         setIsAdmin(false);
       }
-      setLoading(false);
-    });
-
-    // Then check initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        await checkAdmin(currentUser.id);
-      }
       if (mounted) setLoading(false);
-    });
+    };
+
+    // Set up listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        // Mark as initialized so getSession doesn't also set state
+        initializedRef.current = true;
+        await handleSession(session);
+      }
+    );
+
+    // Fallback: if onAuthStateChange hasn't fired after a short delay, use getSession
+    const fallbackTimer = setTimeout(() => {
+      if (!initializedRef.current && mounted) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!initializedRef.current) {
+            handleSession(session);
+          }
+        });
+      }
+    }, 100);
 
     return () => {
       mounted = false;
+      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, []);
