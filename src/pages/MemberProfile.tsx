@@ -30,6 +30,7 @@ function getPublicUrl(path: string) {
 }
 
 export default function MemberProfile() {
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const { keyId } = useParams();
 
   const { data: member, isLoading: memberLoading } = useQuery({
