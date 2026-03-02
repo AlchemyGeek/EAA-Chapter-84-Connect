@@ -54,12 +54,6 @@ export function useAuth() {
     };
   }, []);
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
   const signOut = async () => {
     await supabase.auth.signOut();
   };
