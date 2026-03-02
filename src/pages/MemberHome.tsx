@@ -356,24 +356,7 @@ export default function MemberHome() {
                 <span>Renew your membership to access chapter services and resources.</span>
               </div>
             ) : (
-              <>
-                <AdminLink to="/members" icon={Users} label="Member Directory" />
-                {siteLinks.map((link) => (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted min-h-[44px]"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      {link.name}
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </a>
-                ))}
-              </>
+              <AdminLink to="/members" icon={Users} label="Member Directory" />
             )}
           </CardContent>
         </Card>
