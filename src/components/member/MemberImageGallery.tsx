@@ -116,90 +116,102 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
   if (isLoading) return null;
   if (!editable && images.length === 0) return null;
 
+  const [open, setOpen] = useState(false);
+
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <Camera className="h-4 w-4 text-muted-foreground" />
-          Member Photos*
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-3">
-          {images.map((img) => (
-            <div key={img.id} className="relative group rounded-lg overflow-hidden border bg-muted aspect-square">
-              <img
-                src={getPublicUrl(img.storage_path)}
-                alt="Aircraft"
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              {editable && (
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-1.5 right-1.5 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setDeleteTarget({ id: img.id, path: img.storage_path })}
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center justify-between w-full px-6 py-3 text-left">
+            <span className="text-sm font-semibold flex items-center gap-2">
+              <Camera className="h-4 w-4 text-muted-foreground" />
+              Member Photos*
+              {images.length > 0 && (
+                <span className="text-xs font-normal text-muted-foreground">({images.length})</span>
+              )}
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 gap-3">
+              {images.map((img) => (
+                <div key={img.id} className="relative group rounded-lg overflow-hidden border bg-muted aspect-square">
+                  <img
+                    src={getPublicUrl(img.storage_path)}
+                    alt="Aircraft"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {editable && (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1.5 right-1.5 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setDeleteTarget({ id: img.id, path: img.storage_path })}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              {editable && images.length < MAX_IMAGES && (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1.5 aspect-square text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-50"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                  {uploading ? (
+                    <span className="text-xs animate-pulse">Uploading...</span>
+                  ) : (
+                    <>
+                      <Plus className="h-6 w-6" />
+                      <span className="text-xs">Add Photo</span>
+                    </>
+                  )}
+                </button>
               )}
             </div>
-          ))}
 
-          {editable && images.length < MAX_IMAGES && (
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1.5 aspect-square text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-50"
-            >
-              {uploading ? (
-                <span className="text-xs animate-pulse">Uploading...</span>
-              ) : (
-                <>
-                  <Plus className="h-6 w-6" />
-                  <span className="text-xs">Add Photo</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
+            {editable && (
+              <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                <p>{images.length}/{MAX_IMAGES} photos · Max 5MB each</p>
+                <p>* Shown at the member's directory</p>
+              </div>
+            )}
 
-        {editable && (
-          <div className="text-xs text-muted-foreground mt-2 space-y-1">
-            <p>{images.length}/{MAX_IMAGES} photos · Max 5MB each</p>
-            <p>* Shown at the member's directory</p>
-          </div>
-        )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
 
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-
-        <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Remove photo?</AlertDialogTitle>
-              <AlertDialogDescription>This will permanently delete this image.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (deleteTarget) deleteMutation.mutate(deleteTarget);
-                  setDeleteTarget(null);
-                }}
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardContent>
+            <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove photo?</AlertDialogTitle>
+                  <AlertDialogDescription>This will permanently delete this image.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (deleteTarget) deleteMutation.mutate(deleteTarget);
+                      setDeleteTarget(null);
+                    }}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }
