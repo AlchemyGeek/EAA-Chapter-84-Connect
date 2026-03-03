@@ -81,6 +81,18 @@ const DATE_FIELDS = new Set([
 
 const INTEGER_FIELDS = new Set(["key_id", "aptify_id"]);
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
 function parseHtmlTable(html: string): Record<string, string>[] {
   const rows: Record<string, string>[] = [];
 
@@ -105,7 +117,7 @@ function parseHtmlTable(html: string): Record<string, string>[] {
     const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
     let cm;
     while ((cm = tdRegex.exec(m[1])) !== null) {
-      cells.push(cm[1].replace(/<[^>]*>/g, "").replace(/&nbsp;/g, "").trim());
+      cells.push(decodeHtmlEntities(cm[1].replace(/<[^>]*>/g, "").trim()));
     }
     if (cells.length === 0) continue;
     const row: Record<string, string> = {};
