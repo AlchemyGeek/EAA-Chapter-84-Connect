@@ -111,9 +111,7 @@ export function ChapterLeadership() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapter-leadership"] });
       queryClient.invalidateQueries({ queryKey: ["leader-members"] });
-      setSelectedMember(null);
       setSelectedRole("");
-      setSearch("");
       toast({ title: "Leadership role assigned" });
     },
     onError: (err: Error) => {
