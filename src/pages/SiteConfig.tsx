@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChapterLeadership } from "@/components/admin/ChapterLeadership";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -199,6 +200,8 @@ export default function SiteConfig() {
             )}
           </CardContent>
         </Card>
+        {/* Chapter Leadership Section */}
+        <ChapterLeadership />
       </div>
 
       {/* Add/Edit Dialog */}

@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      chapter_leadership: {
+        Row: {
+          created_at: string
+          id: string
+          key_id: number
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_id: number
+          role: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_id?: number
+          role?: string
+        }
+        Relationships: []
+      }
       member_chapter_data: {
         Row: {
           application_status: string | null
