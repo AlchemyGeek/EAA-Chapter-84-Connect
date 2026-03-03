@@ -200,6 +200,8 @@ export default function SiteConfig() {
             )}
           </CardContent>
         </Card>
+        {/* Chapter Leadership Section */}
+        <ChapterLeadership />
       </div>
 
       {/* Add/Edit Dialog */}
