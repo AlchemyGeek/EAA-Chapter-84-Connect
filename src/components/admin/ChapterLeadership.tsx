@@ -221,7 +221,7 @@ export function ChapterLeadership() {
           </div>
         </div>
 
-        {/* Current assignments */}
+        {/* Current assignments - table layout */}
         {isLoading ? (
           <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
         ) : leadership.length === 0 ? (
@@ -229,25 +229,31 @@ export function ChapterLeadership() {
             No leadership roles assigned yet.
           </p>
         ) : (
-          <div className="space-y-3">
-            {Array.from(byRole.entries())
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([role, members]) => (
-                <div key={role}>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                    {role}
-                  </p>
-                  <div className="space-y-1">
-                    {members.map(({ entry, member }) => (
-                      <div
-                        key={entry.id}
-                        className="flex items-center justify-between rounded-md px-3 py-2 bg-muted/40 group"
-                      >
-                        <span className="text-sm font-medium">
-                          {member
-                            ? `${member.first_name} ${member.last_name}`
-                            : `Member #${entry.key_id}`}
-                        </span>
+          <div className="rounded-md border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Name</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Role</th>
+                  <th className="w-10 px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {leadership.map((entry) => {
+                  const member = memberMap.get(entry.key_id);
+                  return (
+                    <tr key={entry.id} className="group hover:bg-muted/30">
+                      <td className="px-3 py-2 font-medium">
+                        {member
+                          ? `${member.first_name} ${member.last_name}`
+                          : `Member #${entry.key_id}`}
+                      </td>
+                      <td className="px-3 py-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {entry.role}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -256,11 +262,12 @@ export function ChapterLeadership() {
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </CardContent>
