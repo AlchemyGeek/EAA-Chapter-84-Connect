@@ -27,6 +27,25 @@ export default function Members() {
     },
   });
 
+  const { data: leadership = [] } = useQuery({
+    queryKey: ["chapter-leadership"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chapter_leadership")
+        .select("key_id, role");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Build a map of key_id -> roles[]
+  const roleMap = new Map<number, string[]>();
+  for (const l of leadership) {
+    const list = roleMap.get(l.key_id) || [];
+    list.push(l.role);
+    roleMap.set(l.key_id, list);
+  }
+
   const filtered = members.filter((m) => {
     const q = search.toLowerCase();
     return (
