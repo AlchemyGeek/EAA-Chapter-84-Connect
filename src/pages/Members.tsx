@@ -109,8 +109,9 @@ export default function Members() {
              <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>EAA #</TableHead>
-                <TableHead>Type</TableHead>
+                 <TableHead>EAA #</TableHead>
+                 <TableHead>Membership</TableHead>
+                 <TableHead>Role</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
