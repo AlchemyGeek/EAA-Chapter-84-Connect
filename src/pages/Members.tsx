@@ -86,7 +86,7 @@ export default function Members() {
                         <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
                         <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
                         {(roleMap.get(m.key_id) || []).map((role) => (
-                          <Badge key={role} variant="outline" className="text-xs">{role}</Badge>
+                          <Badge key={role} className="text-xs bg-primary/15 text-primary border-primary/30">{role}</Badge>
                         ))}
                       </div>
                     </div>
@@ -127,7 +127,7 @@ export default function Members() {
                    <TableCell>
                      <div className="flex flex-wrap gap-1">
                        {(roleMap.get(m.key_id) || []).map((role) => (
-                         <Badge key={role} variant="outline" className="text-xs">{role}</Badge>
+                         <Badge key={role} className="text-xs bg-primary/15 text-primary border-primary/30">{role}</Badge>
                        ))}
                      </div>
                    </TableCell>
