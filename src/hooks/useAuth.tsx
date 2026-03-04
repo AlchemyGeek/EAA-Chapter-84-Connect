@@ -10,11 +10,16 @@ export function useAuth() {
 
   useEffect(() => {
     let mounted = true;
+    let initialized = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setUser(session?.user ?? null);
-      setLoading(false);
+
+      // Avoid redirect flicker: only resolve loading after initial getSession() finishes
+      if (initialized) {
+        setLoading(false);
+      }
     });
 
     supabase.auth
@@ -22,11 +27,13 @@ export function useAuth() {
       .then(({ data: { session } }) => {
         if (!mounted) return;
         setUser(session?.user ?? null);
+        initialized = true;
         setLoading(false);
       })
       .catch(() => {
         if (!mounted) return;
         setUser(null);
+        initialized = true;
         setLoading(false);
       });
 
