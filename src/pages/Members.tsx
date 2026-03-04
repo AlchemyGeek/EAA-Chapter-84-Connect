@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Members() {
   const [search, setSearch] = useState("");
+  const [roleOnly, setRoleOnly] = useState(false);
   const isMobile = useIsMobile();
 
   const { data: members = [], isLoading } = useQuery({
@@ -48,11 +50,11 @@ export default function Members() {
 
   const filtered = members.filter((m) => {
     const q = search.toLowerCase();
-    return (
-      !q ||
+    const nameMatch = !q ||
       m.first_name?.toLowerCase().includes(q) ||
-      m.last_name?.toLowerCase().includes(q)
-    );
+      m.last_name?.toLowerCase().includes(q);
+    const roleMatch = !roleOnly || roleMap.has(m.key_id);
+    return nameMatch && roleMatch;
   });
 
   return (
@@ -62,11 +64,14 @@ export default function Members() {
         <span className="text-sm text-muted-foreground">{filtered.length} members</span>
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="member-search" className="sr-only">Search members</Label>
-        <div className="relative max-w-sm">
+      <div className="flex items-center gap-4">
+        <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input id="member-search" placeholder="Search by name..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch id="role-filter" checked={roleOnly} onCheckedChange={setRoleOnly} />
+          <Label htmlFor="role-filter" className="text-sm cursor-pointer whitespace-nowrap">Role</Label>
         </div>
       </div>
 
