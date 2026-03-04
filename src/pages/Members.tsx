@@ -75,7 +75,7 @@ export default function Members() {
         </div>
         <div className="flex items-center gap-2">
           <Switch id="role-filter" checked={roleOnly} onCheckedChange={setRoleOnly} />
-          <Label htmlFor="role-filter" className="text-sm cursor-pointer whitespace-nowrap">Role</Label>
+          <Label htmlFor="role-filter" className="text-sm cursor-pointer whitespace-nowrap">Officer</Label>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export default function Members() {
                 <TableHead>Name</TableHead>
                  <TableHead>EAA #</TableHead>
                  <TableHead>Membership</TableHead>
-                 <TableHead>Role</TableHead>
+                 <TableHead>Officer</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
