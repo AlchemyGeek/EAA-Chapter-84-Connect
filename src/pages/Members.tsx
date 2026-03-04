@@ -27,6 +27,25 @@ export default function Members() {
     },
   });
 
+  const { data: leadership = [] } = useQuery({
+    queryKey: ["chapter-leadership"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chapter_leadership")
+        .select("key_id, role");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Build a map of key_id -> roles[]
+  const roleMap = new Map<number, string[]>();
+  for (const l of leadership) {
+    const list = roleMap.get(l.key_id) || [];
+    list.push(l.role);
+    roleMap.set(l.key_id, list);
+  }
+
   const filtered = members.filter((m) => {
     const q = search.toLowerCase();
     return (
@@ -66,6 +85,9 @@ export default function Members() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
                         <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
+                        {(roleMap.get(m.key_id) || []).map((role) => (
+                          <Badge key={role} variant="outline" className="text-xs">{role}</Badge>
+                        ))}
                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
@@ -87,8 +109,9 @@ export default function Members() {
              <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>EAA #</TableHead>
-                <TableHead>Type</TableHead>
+                 <TableHead>EAA #</TableHead>
+                 <TableHead>Membership</TableHead>
+                 <TableHead>Role</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -99,13 +122,20 @@ export default function Members() {
                       {m.first_name}{m.nickname ? ` (${m.nickname})` : ""} {m.last_name}
                     </Link>
                   </TableCell>
-                  <TableCell>{m.eaa_number || "—"}</TableCell>
-                  <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
+                   <TableCell>{m.eaa_number || "—"}</TableCell>
+                   <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
+                   <TableCell>
+                     <div className="flex flex-wrap gap-1">
+                       {(roleMap.get(m.key_id) || []).map((role) => (
+                         <Badge key={role} variant="outline" className="text-xs">{role}</Badge>
+                       ))}
+                     </div>
+                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                     {search ? "No members match your search." : "No members yet. Import a roster to get started."}
                   </TableCell>
                 </TableRow>
