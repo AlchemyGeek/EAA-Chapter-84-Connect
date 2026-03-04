@@ -41,7 +41,10 @@ export function useAuth() {
 
     const checkAdmin = async () => {
       if (!user) {
-        if (mounted) setIsAdmin(false);
+        if (mounted) {
+          setIsAdmin(false);
+          setAdminLoading(false);
+        }
         return;
       }
 
@@ -53,12 +56,19 @@ export function useAuth() {
           .eq("role", "admin")
           .maybeSingle();
 
-        if (mounted) setIsAdmin(!!data);
+        if (mounted) {
+          setIsAdmin(!!data);
+          setAdminLoading(false);
+        }
       } catch {
-        if (mounted) setIsAdmin(false);
+        if (mounted) {
+          setIsAdmin(false);
+          setAdminLoading(false);
+        }
       }
     };
 
+    setAdminLoading(true);
     checkAdmin();
 
     return () => {
