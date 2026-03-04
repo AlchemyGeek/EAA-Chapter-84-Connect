@@ -64,11 +64,14 @@ export default function Members() {
         <span className="text-sm text-muted-foreground">{filtered.length} members</span>
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="member-search" className="sr-only">Search members</Label>
-        <div className="relative max-w-sm">
+      <div className="flex items-center gap-4">
+        <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input id="member-search" placeholder="Search by name..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch id="role-filter" checked={roleOnly} onCheckedChange={setRoleOnly} />
+          <Label htmlFor="role-filter" className="text-sm cursor-pointer whitespace-nowrap">Role</Label>
         </div>
       </div>
 
