@@ -70,6 +70,7 @@ export function useAuth() {
     return () => {
       mounted = false;
       clearTimeout(fallbackTimer);
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
