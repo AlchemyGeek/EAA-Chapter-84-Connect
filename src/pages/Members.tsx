@@ -122,8 +122,15 @@ export default function Members() {
                       {m.first_name}{m.nickname ? ` (${m.nickname})` : ""} {m.last_name}
                     </Link>
                   </TableCell>
-                  <TableCell>{m.eaa_number || "—"}</TableCell>
-                  <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
+                   <TableCell>{m.eaa_number || "—"}</TableCell>
+                   <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
+                   <TableCell>
+                     <div className="flex flex-wrap gap-1">
+                       {(roleMap.get(m.key_id) || []).map((role) => (
+                         <Badge key={role} variant="outline" className="text-xs">{role}</Badge>
+                       ))}
+                     </div>
+                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
