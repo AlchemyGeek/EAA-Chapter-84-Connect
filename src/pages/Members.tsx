@@ -120,7 +120,7 @@ export default function Members() {
                 <TableHead>Name</TableHead>
                  <TableHead>EAA #</TableHead>
                  <TableHead>Membership</TableHead>
-                 <TableHead>Role</TableHead>
+                 <TableHead>Officer</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
