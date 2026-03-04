@@ -18,6 +18,8 @@ export default function Members() {
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["members"],
+    networkMode: "always",
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
@@ -31,6 +33,8 @@ export default function Members() {
 
   const { data: leadership = [] } = useQuery({
     queryKey: ["chapter-leadership"],
+    networkMode: "always",
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chapter_leadership")
