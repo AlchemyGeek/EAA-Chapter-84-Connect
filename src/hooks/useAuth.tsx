@@ -80,5 +80,5 @@ export function useAuth() {
     await supabase.auth.signOut();
   };
 
-  return { user, loading, isAdmin, signOut };
+  return { user, loading: loading || adminLoading, isAdmin, signOut };
 }
