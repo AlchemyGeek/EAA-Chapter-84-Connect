@@ -6,6 +6,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -40,7 +41,10 @@ export function useAuth() {
 
     const checkAdmin = async () => {
       if (!user) {
-        if (mounted) setIsAdmin(false);
+        if (mounted) {
+          setIsAdmin(false);
+          setAdminLoading(false);
+        }
         return;
       }
 
@@ -52,12 +56,19 @@ export function useAuth() {
           .eq("role", "admin")
           .maybeSingle();
 
-        if (mounted) setIsAdmin(!!data);
+        if (mounted) {
+          setIsAdmin(!!data);
+          setAdminLoading(false);
+        }
       } catch {
-        if (mounted) setIsAdmin(false);
+        if (mounted) {
+          setIsAdmin(false);
+          setAdminLoading(false);
+        }
       }
     };
 
+    setAdminLoading(true);
     checkAdmin();
 
     return () => {
@@ -69,5 +80,5 @@ export function useAuth() {
     await supabase.auth.signOut();
   };
 
-  return { user, loading, isAdmin, signOut };
+  return { user, loading: loading || adminLoading, isAdmin, signOut };
 }
