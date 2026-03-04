@@ -50,11 +50,11 @@ export default function Members() {
 
   const filtered = members.filter((m) => {
     const q = search.toLowerCase();
-    return (
-      !q ||
+    const nameMatch = !q ||
       m.first_name?.toLowerCase().includes(q) ||
-      m.last_name?.toLowerCase().includes(q)
-    );
+      m.last_name?.toLowerCase().includes(q);
+    const roleMatch = !roleOnly || roleMap.has(m.key_id);
+    return nameMatch && roleMatch;
   });
 
   return (
