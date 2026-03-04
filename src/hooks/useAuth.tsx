@@ -53,13 +53,24 @@ export function useAuth() {
           if (!initializedRef.current) {
             handleSession(session);
           }
+        }).catch(() => {
+          if (mounted) setLoading(false);
         });
       }
     }, 100);
 
+    // Safety timeout: force loading to false after 3 seconds to prevent infinite loading
+    const safetyTimer = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("Auth loading timed out, forcing resolution");
+        setLoading(false);
+      }
+    }, 3000);
+
     return () => {
       mounted = false;
       clearTimeout(fallbackTimer);
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
