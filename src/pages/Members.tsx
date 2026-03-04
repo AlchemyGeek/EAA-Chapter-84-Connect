@@ -13,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Members() {
   const [search, setSearch] = useState("");
+  const [roleOnly, setRoleOnly] = useState(false);
   const isMobile = useIsMobile();
 
   const { data: members = [], isLoading } = useQuery({
