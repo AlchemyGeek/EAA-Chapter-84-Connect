@@ -115,7 +115,7 @@ export default function MembershipStatistics() {
     return { month, total: cumulative };
   });
 
-  const chartData = MONTHS.map((month, i) => ({ month, renewed: monthCounts[i] }));
+  const chartData = MONTHS.map((month, i) => ({ month, renewed: i > lastImportMonth ? null : monthCounts[i] }));
 
   if (isLoading) {
     return (
