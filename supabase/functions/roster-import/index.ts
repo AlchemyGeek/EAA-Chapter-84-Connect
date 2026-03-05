@@ -158,6 +158,12 @@ function mapRow(rawRow: Record<string, string>): Record<string, any> {
 // Fields to skip when diffing
 const SKIP_DIFF = new Set(["created_at", "updated_at", "last_import_id"]);
 
+function normalizeForDiff(val: any, field: string): string {
+  if (val == null || val === "") return "";
+  if (BOOLEAN_FIELDS.has(field)) return val ? "true" : "false";
+  return String(val);
+}
+
 function diffRecord(
   existing: Record<string, any>,
   incoming: Record<string, any>
@@ -166,8 +172,8 @@ function diffRecord(
   for (const [key, newVal] of Object.entries(incoming)) {
     if (SKIP_DIFF.has(key)) continue;
     const oldVal = existing[key];
-    const oldStr = oldVal == null ? "" : String(oldVal);
-    const newStr = newVal == null ? "" : String(newVal);
+    const oldStr = normalizeForDiff(oldVal, key);
+    const newStr = normalizeForDiff(newVal, key);
     if (oldStr !== newStr) {
       changes.push({ field: key, oldVal: oldStr, newVal: newStr });
     }
