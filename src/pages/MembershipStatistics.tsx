@@ -222,6 +222,30 @@ export default function MembershipStatistics() {
         ))}
       </div>
 
+      {/* Retention Detail */}
+      <div className="flex justify-end -mt-3">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <Info className="h-3.5 w-3.5" />
+              How is retention calculated?
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 text-sm space-y-2" side="bottom" align="end">
+            <p className="font-semibold">Retention Rate: {retentionRate}%</p>
+            <p className="text-muted-foreground">
+              Of <span className="font-medium text-foreground">{lastYearBase}</span> members active last year,{" "}
+              <span className="font-medium text-foreground">{retained}</span> have renewed beyond {currentYear}.
+            </p>
+            <div className="border-t pt-2 text-muted-foreground text-xs space-y-1">
+              <p><strong>Last year's base:</strong> Members added before {currentYear} whose membership extended into {currentYear - 1} or later.</p>
+              <p><strong>Retained:</strong> Members from that base whose expiration extends beyond {currentYear}.</p>
+              <p><strong>Formula:</strong> Retained ÷ Last Year Base × 100</p>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
       {/* Renewals Chart */}
       <Card>
         <CardHeader className="pb-2">
