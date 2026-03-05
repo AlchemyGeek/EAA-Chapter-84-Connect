@@ -130,6 +130,7 @@ function parseHtmlTable(html: string): Record<string, string>[] {
 function convertValue(dbCol: string, val: string): any {
   if (!val || val === "") return null;
   if (BOOLEAN_FIELDS.has(dbCol)) {
+    if (!val || val === "") return false;
     return val === "True" || val === "true" || val === "1" || val === "Yes";
   }
   if (DATE_FIELDS.has(dbCol)) {
