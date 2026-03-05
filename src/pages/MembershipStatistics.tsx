@@ -115,16 +115,21 @@ export default function MembershipStatistics() {
   }).length;
 
   // Retention KPI
-  // Last year base: members whose expiration is this year (their last-year membership expires in currentYear)
+  // Last year base: members with expiration >= currentYear, minus new members added this year
   const lastYearBase = members.filter((m) => {
     if (!m.expiration_date) return false;
-    return new Date(m.expiration_date).getFullYear() === currentYear;
+    if (new Date(m.expiration_date).getFullYear() < currentYear) return false;
+    // Exclude new members added this year
+    if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
+    return true;
   }).length;
 
-  // Retained: members who renewed beyond current year (expiration > currentYear)
+  // Retained: from that base, those whose expiration extends beyond current year
   const retained = members.filter((m) => {
     if (!m.expiration_date) return false;
-    return new Date(m.expiration_date).getFullYear() > currentYear;
+    if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
+    if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
+    return true;
   }).length;
 
   const retentionRate = lastYearBase > 0 ? Math.round((retained / lastYearBase) * 100) : 0;
