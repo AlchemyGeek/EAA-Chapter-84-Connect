@@ -25,6 +25,13 @@ const chartConfig = {
   },
 };
 
+const standingChartConfig = {
+  total: {
+    label: "Good Standing",
+    color: "hsl(var(--chart-2, 142 71% 45%))",
+  },
+};
+
 export default function MembershipStatistics() {
   const currentYear = new Date().getFullYear();
 
