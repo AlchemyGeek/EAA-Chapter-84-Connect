@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from "recharts";
-import { Users, UserCheck, UserX, UserPlus, AlertTriangle, ChevronDown } from "lucide-react";
+import { Users, UserCheck, UserX, UserPlus, AlertTriangle, ChevronDown, RefreshCw } from "lucide-react";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -113,6 +113,24 @@ export default function MembershipStatistics() {
     return false;
   }).length;
 
+  // Retention KPI
+  // Last year base: members added before this year whose expiration was at least last year (active last year)
+  const lastYearBase = members.filter((m) => {
+    if (!m.date_added || !m.expiration_date) return false;
+    if (new Date(m.date_added).getFullYear() >= currentYear) return false;
+    return new Date(m.expiration_date).getFullYear() >= currentYear - 1;
+  }).length;
+
+  // Retained: subset of last year base whose expiration extends beyond current year
+  const retained = members.filter((m) => {
+    if (!m.date_added || !m.expiration_date) return false;
+    if (new Date(m.date_added).getFullYear() >= currentYear) return false;
+    if (new Date(m.expiration_date).getFullYear() < currentYear - 1) return false;
+    return new Date(m.expiration_date).getFullYear() > currentYear;
+  }).length;
+
+  const retentionRate = lastYearBase > 0 ? Math.round((retained / lastYearBase) * 100) : 0;
+
   // Chart data — renewals by month from UDF1
   const monthCounts = new Array(12).fill(0);
   members.forEach((m) => {
@@ -183,6 +201,7 @@ export default function MembershipStatistics() {
     { label: "Yet to Renew", value: yetToRenew, icon: Users, color: "text-amber-600" },
     { label: "New This Year", value: newThisYear, icon: UserPlus, color: "text-blue-600" },
     { label: "Inactive", value: inactive, icon: UserX, color: "text-destructive" },
+    { label: "Retention", value: `${retentionRate}%`, icon: RefreshCw, color: "text-primary" },
   ];
 
   return (
@@ -190,7 +209,7 @@ export default function MembershipStatistics() {
       <h1 className="text-2xl font-bold tracking-tight">Membership Statistics</h1>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
             <CardContent className="p-4 flex flex-col items-center text-center gap-1">
