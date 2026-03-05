@@ -110,6 +110,7 @@ export default function MembershipStatistics() {
   }).length;
 
   const standingData = MONTHS.map((month, i) => {
+    if (i > lastImportMonth) return { month, total: null };
     const cumulative = baseGoodStanding + monthCounts.slice(0, i + 1).reduce((a, b) => a + b, 0);
     return { month, total: cumulative };
   });
