@@ -107,6 +107,10 @@ export default function Import() {
 
       setResult(data);
       setConfirmText("");
+      // Invalidate cached queries so the local-changes check uses fresh post-import data
+      await queryClient.invalidateQueries({ queryKey: ["members-full"] });
+      await queryClient.invalidateQueries({ queryKey: ["last-import"] });
+      await queryClient.invalidateQueries({ queryKey: ["last-import-snapshots"] });
       toast({ title: "Import successful", description: `${data.record_count} records processed.` });
     } catch (error: any) {
       toast({ title: "Import failed", description: error.message, variant: "destructive" });
