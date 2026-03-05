@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from "recharts";
-import { Users, UserCheck, UserX, UserPlus } from "lucide-react";
+import { Users, UserCheck, UserX, UserPlus, AlertTriangle, ChevronDown } from "lucide-react";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -47,7 +49,7 @@ export default function MembershipStatistics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("current_standing, expiration_date, date_added, udf1_text");
+        .select("first_name, last_name, current_standing, expiration_date, date_added, udf1_text");
       if (error) throw error;
       return data;
     },
@@ -226,6 +228,74 @@ export default function MembershipStatistics() {
           </ChartContainer>
         </CardContent>
       </Card>
+
+      {/* Flagged Payment Entries */}
+      <FlaggedPaymentEntries members={members} />
     </div>
+  );
+}
+
+type MemberRow = { first_name: string | null; last_name: string | null; udf1_text: string | null };
+
+function FlaggedPaymentEntries({ members }: { members: MemberRow[] }) {
+  const [open, setOpen] = useState(false);
+  const today = new Date();
+
+  const flagged: { name: string; entry: string; reason: string }[] = [];
+
+  members.forEach((m) => {
+    const raw = m.udf1_text;
+    if (!raw || !raw.trim()) return;
+
+    const name = [m.first_name, m.last_name].filter(Boolean).join(" ") || "Unknown";
+    const parsed = parseUdf1PaymentDate(raw);
+
+    if (!parsed) {
+      flagged.push({ name, entry: raw, reason: "Malformed date — could not parse" });
+    } else if (parsed > today) {
+      flagged.push({ name, entry: raw, reason: "Date is in the future" });
+    }
+  });
+
+  if (flagged.length === 0) return null;
+
+  return (
+    <Card>
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger className="w-full">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              Flagged Payment Entries ({flagged.length})
+            </CardTitle>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0">
+            <div className="border rounded-md overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left px-3 py-2 font-medium">Member</th>
+                    <th className="text-left px-3 py-2 font-medium">Payment Entry</th>
+                    <th className="text-left px-3 py-2 font-medium">Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flagged.map((f, i) => (
+                    <tr key={i} className="border-b last:border-0">
+                      <td className="px-3 py-2">{f.name}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{f.entry}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{f.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }
