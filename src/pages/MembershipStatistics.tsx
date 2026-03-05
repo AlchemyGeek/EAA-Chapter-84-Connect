@@ -209,7 +209,7 @@ export default function MembershipStatistics() {
       <h1 className="text-2xl font-bold tracking-tight">Membership Statistics</h1>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
             <CardContent className="p-4 flex flex-col items-center text-center gap-1">
