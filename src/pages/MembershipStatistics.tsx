@@ -149,6 +149,26 @@ export default function MembershipStatistics() {
           </ChartContainer>
         </CardContent>
       </Card>
+
+      {/* Good Standing Over Time Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">
+            Members in Good Standing Over Time — {currentYear}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={standingChartConfig} className="h-[300px] w-full">
+            <LineChart data={standingData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line type="monotone" dataKey="total" stroke="var(--color-total)" strokeWidth={2} dot={{ r: 4 }} />
+            </LineChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 }
