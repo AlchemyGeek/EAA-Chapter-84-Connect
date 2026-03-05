@@ -32,6 +32,13 @@ const standingChartConfig = {
   },
 };
 
+const newMembersChartConfig = {
+  newMembers: {
+    label: "New Members",
+    color: "hsl(var(--chart-3, 221 83% 53%))",
+  },
+};
+
 export default function MembershipStatistics() {
   const currentYear = new Date().getFullYear();
 
@@ -117,6 +124,17 @@ export default function MembershipStatistics() {
 
   const chartData = MONTHS.map((month, i) => ({ month, renewed: i > lastImportMonth ? null : monthCounts[i] }));
 
+  // New members by month
+  const newMemberMonthCounts = new Array(12).fill(0);
+  members.forEach((m) => {
+    if (!m.date_added) return;
+    const d = new Date(m.date_added);
+    if (d.getFullYear() === currentYear) {
+      newMemberMonthCounts[d.getMonth()]++;
+    }
+  });
+  const newMembersData = MONTHS.map((month, i) => ({ month, newMembers: i > lastImportMonth ? null : newMemberMonthCounts[i] }));
+
   if (isLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
@@ -185,6 +203,26 @@ export default function MembershipStatistics() {
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line type="monotone" dataKey="total" stroke="var(--color-total)" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* New Members by Month Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">
+            New Members by Month — {currentYear}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={newMembersChartConfig} className="h-[300px] w-full">
+            <BarChart data={newMembersData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="newMembers" fill="var(--color-newMembers)" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ChartContainer>
         </CardContent>
       </Card>
