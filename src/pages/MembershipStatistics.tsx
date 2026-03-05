@@ -262,6 +262,26 @@ export default function MembershipStatistics() {
         </CardContent>
       </Card>
 
+      {/* Inactive Members Over Time Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">
+            Inactive Members Over Time — {currentYear}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={inactiveChartConfig} className="h-[300px] w-full">
+            <LineChart data={inactiveByMonth}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line type="monotone" dataKey="inactive" stroke="var(--color-inactive)" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+            </LineChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
       {/* Flagged Payment Entries */}
       <FlaggedPaymentEntries members={members} />
     </div>
