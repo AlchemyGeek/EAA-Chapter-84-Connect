@@ -236,12 +236,12 @@ export default function MembershipStatistics() {
           <PopoverContent className="w-80 text-sm space-y-2" side="bottom" align="end">
             <p className="font-semibold">Retention Rate: {retentionRate}%</p>
             <p className="text-muted-foreground">
-              Of <span className="font-medium text-foreground">{lastYearBase}</span> members with expiration in {currentYear} (last year's membership),{" "}
+              Of <span className="font-medium text-foreground">{lastYearBase}</span> members from last year,{" "}
               <span className="font-medium text-foreground">{retained}</span> have renewed beyond {currentYear}.
             </p>
             <div className="border-t pt-2 text-muted-foreground text-xs space-y-1">
-              <p><strong>Last year's base:</strong> Members whose membership expires in {currentYear} (i.e., they were active last year).</p>
-              <p><strong>Retained:</strong> Members whose expiration extends beyond {currentYear} (renewed).</p>
+              <p><strong>Last year's base:</strong> Members with expiration in {currentYear} or beyond, excluding new members added in {currentYear}.</p>
+              <p><strong>Retained:</strong> Members from that base whose expiration extends beyond {currentYear}.</p>
               <p><strong>Formula:</strong> Retained ÷ Last Year Base × 100</p>
             </div>
           </PopoverContent>
