@@ -33,7 +33,7 @@ export default function MembershipStatistics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("current_standing, expiration_date, date_added, udf1");
+        .select("current_standing, expiration_date, date_added, udf1_text");
       if (error) throw error;
       return data;
     },
@@ -66,7 +66,7 @@ export default function MembershipStatistics() {
   // Chart data — renewals by month from UDF1
   const monthCounts = new Array(12).fill(0);
   members.forEach((m) => {
-    const date = parseUdf1PaymentDate(m.udf1);
+    const date = parseUdf1PaymentDate(m.udf1_text);
     if (date && date.getFullYear() === currentYear) {
       monthCounts[date.getMonth()]++;
     }
