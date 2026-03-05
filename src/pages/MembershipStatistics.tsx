@@ -115,18 +115,15 @@ export default function MembershipStatistics() {
   }).length;
 
   // Retention KPI
-  // Last year base: members added before this year whose expiration was at least last year (active last year)
+  // Last year base: members whose expiration is this year (their last-year membership expires in currentYear)
   const lastYearBase = members.filter((m) => {
-    if (!m.date_added || !m.expiration_date) return false;
-    if (new Date(m.date_added).getFullYear() >= currentYear) return false;
-    return new Date(m.expiration_date).getFullYear() >= currentYear - 1;
+    if (!m.expiration_date) return false;
+    return new Date(m.expiration_date).getFullYear() === currentYear;
   }).length;
 
-  // Retained: subset of last year base whose expiration extends beyond current year
+  // Retained: members who renewed beyond current year (expiration > currentYear)
   const retained = members.filter((m) => {
-    if (!m.date_added || !m.expiration_date) return false;
-    if (new Date(m.date_added).getFullYear() >= currentYear) return false;
-    if (new Date(m.expiration_date).getFullYear() < currentYear - 1) return false;
+    if (!m.expiration_date) return false;
     return new Date(m.expiration_date).getFullYear() > currentYear;
   }).length;
 
@@ -234,12 +231,12 @@ export default function MembershipStatistics() {
           <PopoverContent className="w-80 text-sm space-y-2" side="bottom" align="end">
             <p className="font-semibold">Retention Rate: {retentionRate}%</p>
             <p className="text-muted-foreground">
-              Of <span className="font-medium text-foreground">{lastYearBase}</span> members active last year,{" "}
+              Of <span className="font-medium text-foreground">{lastYearBase}</span> members with expiration in {currentYear} (last year's membership),{" "}
               <span className="font-medium text-foreground">{retained}</span> have renewed beyond {currentYear}.
             </p>
             <div className="border-t pt-2 text-muted-foreground text-xs space-y-1">
-              <p><strong>Last year's base:</strong> Members added before {currentYear} whose membership extended into {currentYear - 1} or later.</p>
-              <p><strong>Retained:</strong> Members from that base whose expiration extends beyond {currentYear}.</p>
+              <p><strong>Last year's base:</strong> Members whose membership expires in {currentYear} (i.e., they were active last year).</p>
+              <p><strong>Retained:</strong> Members whose expiration extends beyond {currentYear} (renewed).</p>
               <p><strong>Formula:</strong> Retained ÷ Last Year Base × 100</p>
             </div>
           </PopoverContent>
