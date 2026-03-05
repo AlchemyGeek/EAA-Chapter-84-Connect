@@ -46,6 +46,24 @@ export default function MembershipStatistics() {
     },
   });
 
+  const { data: lastImport } = useQuery({
+    queryKey: ["membership-stats-last-import"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_imports")
+        .select("imported_at")
+        .order("imported_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const lastImportMonth = lastImport?.imported_at
+    ? new Date(lastImport.imported_at).getMonth()
+    : new Date().getMonth();
+
   // KPIs
   const goodStanding = members.filter((m) => {
     if (m.current_standing !== "Active") return false;
@@ -92,6 +110,7 @@ export default function MembershipStatistics() {
   }).length;
 
   const standingData = MONTHS.map((month, i) => {
+    if (i > lastImportMonth) return { month, total: null };
     const cumulative = baseGoodStanding + monthCounts.slice(0, i + 1).reduce((a, b) => a + b, 0);
     return { month, total: cumulative };
   });
