@@ -124,6 +124,17 @@ export default function MembershipStatistics() {
 
   const chartData = MONTHS.map((month, i) => ({ month, renewed: i > lastImportMonth ? null : monthCounts[i] }));
 
+  // New members by month
+  const newMemberMonthCounts = new Array(12).fill(0);
+  members.forEach((m) => {
+    if (!m.date_added) return;
+    const d = new Date(m.date_added);
+    if (d.getFullYear() === currentYear) {
+      newMemberMonthCounts[d.getMonth()]++;
+    }
+  });
+  const newMembersData = MONTHS.map((month, i) => ({ month, newMembers: i > lastImportMonth ? null : newMemberMonthCounts[i] }));
+
   if (isLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
