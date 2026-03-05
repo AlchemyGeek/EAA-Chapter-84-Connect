@@ -79,6 +79,23 @@ export default function MembershipStatistics() {
     }
   });
 
+  // Cumulative good standing over months
+  // Base = members already good standing without a UDF1 payment this year
+  // Each month adds renewals from that month
+  const baseGoodStanding = members.filter((m) => {
+    if (m.current_standing !== "Active") return false;
+    if (!m.expiration_date) return false;
+    if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
+    // Exclude those who renewed this year (they'll be added month by month)
+    const payDate = parseUdf1PaymentDate(m.udf1_text);
+    return !(payDate && payDate.getFullYear() === currentYear);
+  }).length;
+
+  const standingData = MONTHS.map((month, i) => {
+    const cumulative = baseGoodStanding + monthCounts.slice(0, i + 1).reduce((a, b) => a + b, 0);
+    return { month, total: cumulative };
+  });
+
   const chartData = MONTHS.map((month, i) => ({ month, renewed: monthCounts[i] }));
 
   if (isLoading) {
