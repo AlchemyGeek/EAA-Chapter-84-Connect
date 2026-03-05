@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/select";
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
-  Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle,
+  Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3,
 } from "lucide-react";
+import { useIsOfficer } from "@/hooks/useIsOfficer";
 import {
   Dialog,
   DialogContent,
