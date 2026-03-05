@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ export default function Import() {
   const [confirmText, setConfirmText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Fetch current members
@@ -106,6 +107,10 @@ export default function Import() {
 
       setResult(data);
       setConfirmText("");
+      // Invalidate cached queries so the local-changes check uses fresh post-import data
+      await queryClient.invalidateQueries({ queryKey: ["members-full"] });
+      await queryClient.invalidateQueries({ queryKey: ["last-import"] });
+      await queryClient.invalidateQueries({ queryKey: ["last-import-snapshots"] });
       toast({ title: "Import successful", description: `${data.record_count} records processed.` });
     } catch (error: any) {
       toast({ title: "Import failed", description: error.message, variant: "destructive" });
