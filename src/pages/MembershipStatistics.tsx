@@ -206,6 +206,26 @@ export default function MembershipStatistics() {
           </ChartContainer>
         </CardContent>
       </Card>
+
+      {/* New Members by Month Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">
+            New Members by Month — {currentYear}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={newMembersChartConfig} className="h-[300px] w-full">
+            <BarChart data={newMembersData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="newMembers" fill="var(--color-newMembers)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 }
