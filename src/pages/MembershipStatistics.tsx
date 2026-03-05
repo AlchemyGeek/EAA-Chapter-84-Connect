@@ -201,6 +201,7 @@ export default function MembershipStatistics() {
     { label: "Yet to Renew", value: yetToRenew, icon: Users, color: "text-amber-600" },
     { label: "New This Year", value: newThisYear, icon: UserPlus, color: "text-blue-600" },
     { label: "Inactive", value: inactive, icon: UserX, color: "text-destructive" },
+    { label: "Retention", value: `${retentionRate}%`, icon: RefreshCw, color: "text-primary" },
   ];
 
   return (
