@@ -41,6 +41,13 @@ const newMembersChartConfig = {
   },
 };
 
+const inactiveChartConfig = {
+  inactive: {
+    label: "Inactive Members",
+    color: "hsl(var(--destructive))",
+  },
+};
+
 export default function MembershipStatistics() {
   const currentYear = new Date().getFullYear();
 
