@@ -41,6 +41,13 @@ const newMembersChartConfig = {
   },
 };
 
+const inactiveChartConfig = {
+  inactive: {
+    label: "Inactive Members",
+    color: "hsl(var(--destructive))",
+  },
+};
+
 export default function MembershipStatistics() {
   const currentYear = new Date().getFullYear();
 
@@ -66,6 +73,15 @@ export default function MembershipStatistics() {
         .maybeSingle();
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: inactiveByImport = [] } = useQuery({
+    queryKey: ["membership-stats-inactive-by-import"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("inactive_members_by_import");
+      if (error) throw error;
+      return data as { imported_at: string; total_members: number; inactive_count: number }[];
     },
   });
 
@@ -136,6 +152,23 @@ export default function MembershipStatistics() {
     }
   });
   const newMembersData = MONTHS.map((month, i) => ({ month, newMembers: i > lastImportMonth ? null : newMemberMonthCounts[i] }));
+
+  // Inactive members over time from snapshot data
+  // Group by month, take the latest import per month
+  const inactiveByMonth = (() => {
+    const monthMap = new Map<string, { inactive: number }>();
+    inactiveByImport.forEach((row) => {
+      const d = new Date(row.imported_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+      // Latest import per month wins (data is ordered by imported_at)
+      monthMap.set(key, { inactive: Number(row.inactive_count) });
+    });
+    return MONTHS.map((month, i) => {
+      const key = `${currentYear}-${String(i).padStart(2, "0")}`;
+      const entry = monthMap.get(key);
+      return { month, inactive: entry ? entry.inactive : null };
+    });
+  })();
 
   if (isLoading) {
     return (
@@ -225,6 +258,26 @@ export default function MembershipStatistics() {
               <ChartTooltip content={<ChartTooltipContent />} />
               <Bar dataKey="newMembers" fill="var(--color-newMembers)" radius={[4, 4, 0, 0]} />
             </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Inactive Members Over Time Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">
+            Inactive Members Over Time — {currentYear}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={inactiveChartConfig} className="h-[300px] w-full">
+            <LineChart data={inactiveByMonth}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line type="monotone" dataKey="inactive" stroke="var(--color-inactive)" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+            </LineChart>
           </ChartContainer>
         </CardContent>
       </Card>

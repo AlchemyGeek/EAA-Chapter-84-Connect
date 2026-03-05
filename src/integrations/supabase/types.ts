@@ -488,6 +488,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      inactive_members_by_import: {
+        Args: never
+        Returns: {
+          imported_at: string
+          inactive_count: number
+          total_members: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "member"
