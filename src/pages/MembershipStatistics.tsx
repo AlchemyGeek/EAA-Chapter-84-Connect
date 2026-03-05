@@ -153,6 +153,23 @@ export default function MembershipStatistics() {
   });
   const newMembersData = MONTHS.map((month, i) => ({ month, newMembers: i > lastImportMonth ? null : newMemberMonthCounts[i] }));
 
+  // Inactive members over time from snapshot data
+  // Group by month, take the latest import per month
+  const inactiveByMonth = (() => {
+    const monthMap = new Map<string, { inactive: number }>();
+    inactiveByImport.forEach((row) => {
+      const d = new Date(row.imported_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+      // Latest import per month wins (data is ordered by imported_at)
+      monthMap.set(key, { inactive: Number(row.inactive_count) });
+    });
+    return MONTHS.map((month, i) => {
+      const key = `${currentYear}-${String(i).padStart(2, "0")}`;
+      const entry = monthMap.get(key);
+      return { month, inactive: entry ? entry.inactive : null };
+    });
+  })();
+
   if (isLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
