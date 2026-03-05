@@ -19,6 +19,7 @@ export default function Import() {
   const [confirmText, setConfirmText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Fetch current members
