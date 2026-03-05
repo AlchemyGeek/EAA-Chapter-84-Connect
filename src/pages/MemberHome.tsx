@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/select";
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
-  Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle,
+  Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3,
 } from "lucide-react";
+import { useIsOfficer } from "@/hooks/useIsOfficer";
 import {
   Dialog,
   DialogContent,
@@ -128,6 +129,7 @@ export default function MemberHome() {
     },
   });
 
+  const { isOfficer } = useIsOfficer(activeKeyId);
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
@@ -362,6 +364,21 @@ export default function MemberHome() {
             )}
           </CardContent>
         </Card>
+
+        {/* Officer Services */}
+        {isOfficer && !isInactive && (
+          <Card className="border-accent/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-accent" />
+                Officer Services
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Admin tools */}
         {isAdmin && !isInactive && (
