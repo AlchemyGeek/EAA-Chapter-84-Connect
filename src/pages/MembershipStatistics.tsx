@@ -228,6 +228,9 @@ export default function MembershipStatistics() {
           </ChartContainer>
         </CardContent>
       </Card>
+
+      {/* Flagged Payment Entries */}
+      <FlaggedPaymentEntries members={members} />
     </div>
   );
 }
