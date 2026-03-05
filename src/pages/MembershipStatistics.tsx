@@ -76,6 +76,15 @@ export default function MembershipStatistics() {
     },
   });
 
+  const { data: inactiveByImport = [] } = useQuery({
+    queryKey: ["membership-stats-inactive-by-import"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("inactive_members_by_import");
+      if (error) throw error;
+      return data as { imported_at: string; total_members: number; inactive_count: number }[];
+    },
+  });
+
   const lastImportMonth = lastImport?.imported_at
     ? new Date(lastImport.imported_at).getMonth()
     : new Date().getMonth();
