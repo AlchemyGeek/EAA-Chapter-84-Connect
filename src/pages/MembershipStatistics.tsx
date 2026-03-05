@@ -33,7 +33,7 @@ export default function MembershipStatistics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("current_standing, expiration_date, date_added, udf1");
+        .select("current_standing, expiration_date, date_added, udf1_text");
       if (error) throw error;
       return data;
     },
