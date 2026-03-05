@@ -46,6 +46,7 @@ const App = () => (
             <Route path="/imports/:importId" element={<ImportReport />} />
             <Route path="/export" element={<Export />} />
             <Route path="/site-config" element={<SiteConfig />} />
+            <Route path="/membership-stats" element={<MembershipStatistics />} />
           </Route>
           <Route path="/directory/:keyId" element={<MemberProfile />} />
           <Route path="*" element={<NotFound />} />
