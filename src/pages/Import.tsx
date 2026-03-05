@@ -113,6 +113,7 @@ export default function Import() {
       await queryClient.invalidateQueries({ queryKey: ["last-import-snapshots"] });
       await queryClient.invalidateQueries({ queryKey: ["membership-stats-members"] });
       await queryClient.invalidateQueries({ queryKey: ["membership-stats-last-import"] });
+      await queryClient.invalidateQueries({ queryKey: ["membership-stats-inactive-by-import"] });
       toast({ title: "Import successful", description: `${data.record_count} records processed.` });
     } catch (error: any) {
       toast({ title: "Import failed", description: error.message, variant: "destructive" });
