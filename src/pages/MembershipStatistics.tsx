@@ -113,6 +113,24 @@ export default function MembershipStatistics() {
     return false;
   }).length;
 
+  // Retention KPI
+  // Last year base: members added before this year whose expiration was at least last year (active last year)
+  const lastYearBase = members.filter((m) => {
+    if (!m.date_added || !m.expiration_date) return false;
+    if (new Date(m.date_added).getFullYear() >= currentYear) return false;
+    return new Date(m.expiration_date).getFullYear() >= currentYear - 1;
+  }).length;
+
+  // Retained: subset of last year base whose expiration extends beyond current year
+  const retained = members.filter((m) => {
+    if (!m.date_added || !m.expiration_date) return false;
+    if (new Date(m.date_added).getFullYear() >= currentYear) return false;
+    if (new Date(m.expiration_date).getFullYear() < currentYear - 1) return false;
+    return new Date(m.expiration_date).getFullYear() > currentYear;
+  }).length;
+
+  const retentionRate = lastYearBase > 0 ? Math.round((retained / lastYearBase) * 100) : 0;
+
   // Chart data — renewals by month from UDF1
   const monthCounts = new Array(12).fill(0);
   members.forEach((m) => {
