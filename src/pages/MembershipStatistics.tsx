@@ -235,7 +235,7 @@ export default function MembershipStatistics() {
   );
 }
 
-type MemberRow = { first_name: string | null; last_name: string | null; udf1_text: string | null };
+type MemberRow = { first_name: string | null; last_name: string | null; udf1_text: string | null; current_standing: string | null; expiration_date: string | null };
 
 function FlaggedPaymentEntries({ members }: { members: MemberRow[] }) {
   const [open, setOpen] = useState(false);
@@ -244,6 +244,10 @@ function FlaggedPaymentEntries({ members }: { members: MemberRow[] }) {
   const flagged: { name: string; entry: string; reason: string }[] = [];
 
   members.forEach((m) => {
+    // Skip inactive members
+    if (m.current_standing !== "Active") return;
+    if (m.expiration_date && new Date(m.expiration_date) < new Date()) return;
+
     const raw = m.udf1_text;
     if (!raw || !raw.trim()) return;
 
