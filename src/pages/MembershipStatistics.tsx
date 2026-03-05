@@ -32,6 +32,13 @@ const standingChartConfig = {
   },
 };
 
+const newMembersChartConfig = {
+  newMembers: {
+    label: "New Members",
+    color: "hsl(var(--chart-3, 221 83% 53%))",
+  },
+};
+
 export default function MembershipStatistics() {
   const currentYear = new Date().getFullYear();
 
