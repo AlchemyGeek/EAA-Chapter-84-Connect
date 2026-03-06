@@ -95,6 +95,7 @@ export function StatusDashboard({
   expirationDate,
   memberType,
   eaaNumber,
+  officerRole,
 }: StatusDashboardProps) {
   const { status, message } = computeStatus(currentStanding, expirationDate);
   const config = statusConfig[status];
