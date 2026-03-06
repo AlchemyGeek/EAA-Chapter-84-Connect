@@ -35,6 +35,51 @@ export type Database = {
         }
         Relationships: []
       }
+      dues_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          exported: boolean
+          id: string
+          key_id: number
+          method: string
+          method_code: string
+          new_expiration_date: string
+          old_expiration_date: string | null
+          old_standing: string | null
+          payment_date: string
+          recorded_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          exported?: boolean
+          id?: string
+          key_id: number
+          method: string
+          method_code: string
+          new_expiration_date: string
+          old_expiration_date?: string | null
+          old_standing?: string | null
+          payment_date?: string
+          recorded_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          exported?: boolean
+          id?: string
+          key_id?: number
+          method?: string
+          method_code?: string
+          new_expiration_date?: string
+          old_expiration_date?: string | null
+          old_standing?: string | null
+          payment_date?: string
+          recorded_by?: string | null
+        }
+        Relationships: []
+      }
       member_chapter_data: {
         Row: {
           application_status: string | null
