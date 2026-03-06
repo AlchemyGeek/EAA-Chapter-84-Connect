@@ -116,6 +116,11 @@ export function StatusDashboard({
                   {memberType}
                 </Badge>
               )}
+              {officerRole && (
+                <Badge className="text-xs bg-accent text-accent-foreground">
+                  {officerRole}
+                </Badge>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">{message}</p>
             {eaaNumber && (
