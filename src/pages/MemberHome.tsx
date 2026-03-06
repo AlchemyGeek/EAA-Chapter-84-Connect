@@ -129,7 +129,7 @@ export default function MemberHome() {
     },
   });
 
-  const { isOfficer } = useIsOfficer(activeKeyId);
+  const { isOfficer, role: officerRole } = useIsOfficer(activeKeyId);
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
@@ -271,6 +271,7 @@ export default function MemberHome() {
             expirationDate={member.expiration_date}
             memberType={member.member_type}
             eaaNumber={member.eaa_number}
+            officerRole={officerRole}
           />
         ) : (
           <Card className="border-amber-200">

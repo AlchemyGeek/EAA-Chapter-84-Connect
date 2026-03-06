@@ -87,6 +87,7 @@ interface StatusDashboardProps {
   expirationDate: string | null;
   memberType: string | null;
   eaaNumber: string | null;
+  officerRole?: string | null;
 }
 
 export function StatusDashboard({
@@ -94,6 +95,7 @@ export function StatusDashboard({
   expirationDate,
   memberType,
   eaaNumber,
+  officerRole,
 }: StatusDashboardProps) {
   const { status, message } = computeStatus(currentStanding, expirationDate);
   const config = statusConfig[status];
@@ -112,6 +114,11 @@ export function StatusDashboard({
               {memberType && (
                 <Badge variant="secondary" className="text-xs">
                   {memberType}
+                </Badge>
+              )}
+              {officerRole && (
+                <Badge className="text-xs bg-accent text-accent-foreground">
+                  {officerRole}
                 </Badge>
               )}
             </div>
