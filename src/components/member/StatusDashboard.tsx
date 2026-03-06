@@ -87,6 +87,7 @@ interface StatusDashboardProps {
   expirationDate: string | null;
   memberType: string | null;
   eaaNumber: string | null;
+  officerRole?: string | null;
 }
 
 export function StatusDashboard({
