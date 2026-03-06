@@ -210,7 +210,14 @@ export default function MembershipStatistics() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Membership Statistics</h1>
+      <div className="flex items-baseline justify-between flex-wrap gap-2">
+        <h1 className="text-2xl font-bold tracking-tight">Membership Statistics</h1>
+        {lastImport?.imported_at && (
+          <span className="text-xs text-muted-foreground">
+            Last import: {new Date(lastImport.imported_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+          </span>
+        )}
+      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
