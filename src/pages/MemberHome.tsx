@@ -129,7 +129,7 @@ export default function MemberHome() {
     },
   });
 
-  const { isOfficer } = useIsOfficer(activeKeyId);
+  const { isOfficer, role: officerRole } = useIsOfficer(activeKeyId);
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
