@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      chapter_fees: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chapter_leadership: {
         Row: {
           created_at: string
