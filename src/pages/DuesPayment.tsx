@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck } from "lucide-react";
+import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,7 +36,6 @@ const PAYMENT_METHODS = [
   { label: "Check", code: "check" },
   { label: "PayPal", code: "pp" },
   { label: "Square", code: "sq" },
-  { label: "Credit Card", code: "credit" },
 ] as const;
 
 function getSecondTuesdayOfMarch(year: number): Date {
@@ -186,6 +185,10 @@ export default function DuesPayment() {
       const newExpStr = format(newExpiration, "yyyy-MM-dd");
 
       // 1. Insert payment record
+      const recorderName = currentUserMember
+        ? `${currentUserMember.first_name} ${currentUserMember.last_name}`
+        : user?.email ?? "Unknown";
+
       const { error: payErr } = await supabase
         .from("dues_payments" as any)
         .insert({
@@ -198,6 +201,7 @@ export default function DuesPayment() {
           old_expiration_date: selectedMember.expiration_date,
           old_standing: selectedMember.current_standing,
           recorded_by: user?.id,
+          recorded_by_name: recorderName,
         } as any);
       if (payErr) throw payErr;
 
@@ -248,6 +252,11 @@ export default function DuesPayment() {
       queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
     },
   });
+  // Find current user's member name for recording
+  const currentUserMember = useMemo(() => {
+    if (!user?.email) return null;
+    return allMembers.find((m) => m.email?.toLowerCase() === user.email!.toLowerCase()) ?? null;
+  }, [user?.email, allMembers]);
 
   if (authLoading) {
     return <div className="flex min-h-screen items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>;
@@ -259,9 +268,16 @@ export default function DuesPayment() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Membership Due Payment</h1>
-          <p className="text-sm text-muted-foreground mt-1">Record chapter membership payments and update member status.</p>
+        <div className="flex items-center gap-3">
+          <Link to="/home">
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Membership Due Payment</h1>
+            <p className="text-sm text-muted-foreground mt-1">Record chapter membership payments and update member status.</p>
+          </div>
         </div>
 
         {/* Member Search */}
@@ -500,6 +516,9 @@ export default function DuesPayment() {
                           <span>{p.method} · {format(new Date(p.payment_date), "MMM d, yyyy")}</span>
                           <span>→ {format(new Date(p.new_expiration_date), "MMM d, yyyy")}</span>
                         </div>
+                        {(p as any).recorded_by_name && (
+                          <p className="text-xs text-muted-foreground">Received by: {(p as any).recorded_by_name}</p>
+                        )}
                       </CardContent>
                     </Card>
                   );
@@ -515,6 +534,7 @@ export default function DuesPayment() {
                       <TableHead>Amount</TableHead>
                       <TableHead>Method</TableHead>
                       <TableHead>New Expiration</TableHead>
+                      <TableHead>Received By</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -529,6 +549,7 @@ export default function DuesPayment() {
                           <TableCell>${Number(p.amount).toFixed(2)}</TableCell>
                           <TableCell>{p.method}</TableCell>
                           <TableCell>{format(new Date(p.new_expiration_date), "MMM d, yyyy")}</TableCell>
+                          <TableCell className="text-muted-foreground">{(p as any).recorded_by_name || "—"}</TableCell>
                         </TableRow>
                       );
                     })}

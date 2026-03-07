@@ -1,0 +1,1 @@
+ALTER TABLE public.dues_payments ADD COLUMN recorded_by_name text;
