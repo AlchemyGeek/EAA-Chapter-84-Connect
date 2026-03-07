@@ -125,6 +125,11 @@ export default function Export() {
             After entering exported changes into the EAA Roster Tool, mark the data as synced.
             This also marks all recent dues payments as exported.
           </CardDescription>
+          {lastSyncedAt && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Last synced: {format(new Date(lastSyncedAt), "MMM d, yyyy h:mm a")}
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <Button
