@@ -516,6 +516,9 @@ export default function DuesPayment() {
                           <span>{p.method} · {format(new Date(p.payment_date), "MMM d, yyyy")}</span>
                           <span>→ {format(new Date(p.new_expiration_date), "MMM d, yyyy")}</span>
                         </div>
+                        {(p as any).recorded_by_name && (
+                          <p className="text-xs text-muted-foreground">Received by: {(p as any).recorded_by_name}</p>
+                        )}
                       </CardContent>
                     </Card>
                   );
