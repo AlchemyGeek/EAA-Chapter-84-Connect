@@ -145,6 +145,9 @@ export default function Export() {
                 if (error) throw error;
 
                 queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
+                const now = new Date().toISOString();
+                localStorage.setItem("lastExportSyncAt", now);
+                setLastSyncedAt(now);
                 toast({
                   title: "Data marked as synced",
                   description: "All pending dues payments have been marked as exported.",
