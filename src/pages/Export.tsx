@@ -30,6 +30,9 @@ export default function Export() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
+    () => localStorage.getItem("lastExportSyncAt")
+  );
 
   const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: ["members-full"],
@@ -122,6 +125,11 @@ export default function Export() {
             After entering exported changes into the EAA Roster Tool, mark the data as synced.
             This also marks all recent dues payments as exported.
           </CardDescription>
+          {lastSyncedAt && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Last synced: {format(new Date(lastSyncedAt), "MMM d, yyyy h:mm a")}
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <Button
@@ -137,6 +145,9 @@ export default function Export() {
                 if (error) throw error;
 
                 queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
+                const now = new Date().toISOString();
+                localStorage.setItem("lastExportSyncAt", now);
+                setLastSyncedAt(now);
                 toast({
                   title: "Data marked as synced",
                   description: "All pending dues payments have been marked as exported.",
