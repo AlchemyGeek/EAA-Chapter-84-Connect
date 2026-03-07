@@ -16,6 +16,7 @@ import ImportReport from "./pages/ImportReport";
 import Export from "./pages/Export";
 import SiteConfig from "./pages/SiteConfig";
 import MembershipStatistics from "./pages/MembershipStatistics";
+import DuesPayment from "./pages/DuesPayment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/membership-stats" element={<MembershipStatistics />} />
           </Route>
           <Route path="/directory/:keyId" element={<MemberProfile />} />
+          <Route path="/dues-payment" element={<DuesPayment />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

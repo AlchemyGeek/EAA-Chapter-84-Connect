@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
-  Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3,
+  Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, DollarSign,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import {
@@ -377,6 +377,7 @@ export default function MemberHome() {
             </CardHeader>
             <CardContent className="space-y-1">
               <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
+              <AdminLink to="/dues-payment" icon={DollarSign} label="Membership Due Payment" />
             </CardContent>
           </Card>
         )}
