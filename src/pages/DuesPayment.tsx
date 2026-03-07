@@ -534,6 +534,7 @@ export default function DuesPayment() {
                       <TableHead>Amount</TableHead>
                       <TableHead>Method</TableHead>
                       <TableHead>New Expiration</TableHead>
+                      <TableHead>Received By</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
