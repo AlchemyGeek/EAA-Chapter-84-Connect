@@ -103,8 +103,33 @@ export default function DuesPayment() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [paymentDate, setPaymentDate] = useState<Date>(new Date());
   const [amount, setAmount] = useState("");
+  const [amountInitialized, setAmountInitialized] = useState(false);
   const [method, setMethod] = useState("");
   const [filterMode, setFilterMode] = useState<"recent" | "all">("recent");
+
+  // Fetch fees to get default annual amount
+  const { data: fees = [] } = useQuery({
+    queryKey: ["chapter-fees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chapter_fees" as any)
+        .select("*")
+        .order("sort_order");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  // Set default amount from Annual fee once loaded
+  if (!amountInitialized && fees.length > 0) {
+    const annualFee = fees.find((f: any) =>
+      f.name.toLowerCase().includes("annual")
+    );
+    if (annualFee) {
+      setAmount(String(annualFee.amount));
+      setAmountInitialized(true);
+    }
+  }
 
   // Fetch all members for search
   const { data: allMembers = [] } = useQuery({
