@@ -549,6 +549,7 @@ export default function DuesPayment() {
                           <TableCell>${Number(p.amount).toFixed(2)}</TableCell>
                           <TableCell>{p.method}</TableCell>
                           <TableCell>{format(new Date(p.new_expiration_date), "MMM d, yyyy")}</TableCell>
+                          <TableCell className="text-muted-foreground">{(p as any).recorded_by_name || "—"}</TableCell>
                         </TableRow>
                       );
                     })}
