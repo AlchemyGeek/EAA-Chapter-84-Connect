@@ -28,6 +28,8 @@ function ChangeTypeBadge({ type }: { type: string }) {
 
 export default function Export() {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
 
   const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: ["members-full"],
