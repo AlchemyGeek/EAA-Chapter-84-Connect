@@ -16,6 +16,7 @@ import ImportReport from "./pages/ImportReport";
 import Export from "./pages/Export";
 import SiteConfig from "./pages/SiteConfig";
 import MembershipStatistics from "./pages/MembershipStatistics";
+import DuesPayment from "./pages/DuesPayment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
