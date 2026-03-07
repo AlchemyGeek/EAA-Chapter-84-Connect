@@ -377,7 +377,7 @@ export default function MemberHome() {
             </CardHeader>
             <CardContent className="space-y-1">
               <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
-              <AdminLink to="/dues-payment" icon={DollarSign} label="Membership Due Payment" />
+              <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Due Payment" />
             </CardContent>
           </Card>
         )}
