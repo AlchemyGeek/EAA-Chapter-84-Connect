@@ -1,15 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Plus, RefreshCw, Minus } from "lucide-react";
+import { Download, Plus, RefreshCw, Minus, CheckCircle2 } from "lucide-react";
 import { exportMembersToExcel, exportMembersToCsv, exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
 import { diffCurrentVsSnapshots } from "@/lib/diffMembers";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 function ChangeTypeBadge({ type }: { type: string }) {
   const config: Record<string, { variant: "secondary" | "destructive"; icon: typeof Plus; label: string }> = {
@@ -27,6 +28,8 @@ function ChangeTypeBadge({ type }: { type: string }) {
 
 export default function Export() {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
 
   const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: ["members-full"],
@@ -210,6 +213,49 @@ export default function Export() {
             )}
           </CardContent>
         )}
+      </Card>
+
+      {/* Mark Synced Section */}
+      <Card className="border-accent/30">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-accent" />
+            Sync Status
+          </CardTitle>
+          <CardDescription>
+            After entering exported changes into the EAA Roster Tool, mark the data as synced.
+            This also marks all recent dues payments as exported.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            className="gap-2 min-h-[44px]"
+            disabled={syncing}
+            onClick={async () => {
+              setSyncing(true);
+              try {
+                const { error } = await supabase
+                  .from("dues_payments" as any)
+                  .update({ exported: true } as any)
+                  .eq("exported", false);
+                if (error) throw error;
+
+                queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
+                toast({
+                  title: "Data marked as synced",
+                  description: "All pending dues payments have been marked as exported.",
+                });
+              } catch (err: any) {
+                toast({ title: "Error", description: err.message, variant: "destructive" });
+              } finally {
+                setSyncing(false);
+              }
+            }}
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            {syncing ? "Syncing..." : "Mark Data Synced with EAA Roster Tool"}
+          </Button>
+        </CardContent>
       </Card>
     </div>
   );
