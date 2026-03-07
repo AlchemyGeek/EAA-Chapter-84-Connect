@@ -36,7 +36,6 @@ const PAYMENT_METHODS = [
   { label: "Check", code: "check" },
   { label: "PayPal", code: "pp" },
   { label: "Square", code: "sq" },
-  { label: "Credit Card", code: "credit" },
 ] as const;
 
 function getSecondTuesdayOfMarch(year: number): Date {
