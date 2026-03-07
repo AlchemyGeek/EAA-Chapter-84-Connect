@@ -247,6 +247,11 @@ export default function DuesPayment() {
       queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
     },
   });
+  // Find current user's member name for recording
+  const currentUserMember = useMemo(() => {
+    if (!user?.email) return null;
+    return allMembers.find((m) => m.email?.toLowerCase() === user.email!.toLowerCase()) ?? null;
+  }, [user?.email, allMembers]);
 
   if (authLoading) {
     return <div className="flex min-h-screen items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>;
@@ -254,12 +259,6 @@ export default function DuesPayment() {
   if (!user) return <Navigate to="/auth" replace />;
 
   const recentCount = payments.filter((p) => !p.exported).length;
-
-  // Find current user's member name for recording
-  const currentUserMember = useMemo(() => {
-    if (!user?.email) return null;
-    return allMembers.find((m) => m.email?.toLowerCase() === user.email!.toLowerCase()) ?? null;
-  }, [user?.email, allMembers]);
 
   return (
     <div className="min-h-screen bg-background">
