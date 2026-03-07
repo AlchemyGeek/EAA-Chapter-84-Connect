@@ -26,7 +26,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Search, CheckCircle, DollarSign, PackageCheck } from "lucide-react";
+import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -362,7 +362,7 @@ export default function DuesPayment() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+                <CircleDollarSign className="h-4 w-4" />
                 Payment Details
               </CardTitle>
             </CardHeader>
