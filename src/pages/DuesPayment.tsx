@@ -185,6 +185,10 @@ export default function DuesPayment() {
       const newExpStr = format(newExpiration, "yyyy-MM-dd");
 
       // 1. Insert payment record
+      const recorderName = currentUserMember
+        ? `${currentUserMember.first_name} ${currentUserMember.last_name}`
+        : user?.email ?? "Unknown";
+
       const { error: payErr } = await supabase
         .from("dues_payments" as any)
         .insert({
@@ -197,6 +201,7 @@ export default function DuesPayment() {
           old_expiration_date: selectedMember.expiration_date,
           old_standing: selectedMember.current_standing,
           recorded_by: user?.id,
+          recorded_by_name: recorderName,
         } as any);
       if (payErr) throw payErr;
 
