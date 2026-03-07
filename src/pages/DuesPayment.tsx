@@ -255,12 +255,25 @@ export default function DuesPayment() {
 
   const recentCount = payments.filter((p) => !p.exported).length;
 
+  // Find current user's member name for recording
+  const currentUserMember = useMemo(() => {
+    if (!user?.email) return null;
+    return allMembers.find((m) => m.email?.toLowerCase() === user.email!.toLowerCase()) ?? null;
+  }, [user?.email, allMembers]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Membership Due Payment</h1>
-          <p className="text-sm text-muted-foreground mt-1">Record chapter membership payments and update member status.</p>
+        <div className="flex items-center gap-3">
+          <Link to="/home">
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Membership Due Payment</h1>
+            <p className="text-sm text-muted-foreground mt-1">Record chapter membership payments and update member status.</p>
+          </div>
         </div>
 
         {/* Member Search */}

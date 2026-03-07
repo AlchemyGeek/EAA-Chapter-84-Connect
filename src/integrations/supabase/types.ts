@@ -49,6 +49,7 @@ export type Database = {
           old_standing: string | null
           payment_date: string
           recorded_by: string | null
+          recorded_by_name: string | null
         }
         Insert: {
           amount: number
@@ -63,6 +64,7 @@ export type Database = {
           old_standing?: string | null
           payment_date?: string
           recorded_by?: string | null
+          recorded_by_name?: string | null
         }
         Update: {
           amount?: number
@@ -77,6 +79,7 @@ export type Database = {
           old_standing?: string | null
           payment_date?: string
           recorded_by?: string | null
+          recorded_by_name?: string | null
         }
         Relationships: []
       }
