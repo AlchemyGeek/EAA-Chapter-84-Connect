@@ -26,7 +26,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck, ArrowLeft } from "lucide-react";
+import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck, ArrowLeft, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -367,6 +367,18 @@ export default function DuesPayment() {
                       </span>
                     </div>
                   </div>
+                  {/* Warning if member is already current for next year */}
+                  {selectedMember.expiration_date &&
+                    new Date(selectedMember.expiration_date).getFullYear() > new Date().getFullYear() && (
+                    <div className="flex items-start gap-2 rounded-md bg-accent/10 border border-accent/30 px-3 py-2 mt-2">
+                      <AlertTriangle className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                      <p className="text-xs text-accent font-medium">
+                        This member's chapter membership is already paid through{" "}
+                        {format(new Date(selectedMember.expiration_date), "MMM d, yyyy")}.
+                        Proceeding will extend their membership further.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
