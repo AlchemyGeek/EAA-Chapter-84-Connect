@@ -367,7 +367,7 @@ export default function MemberHome() {
         </Card>
 
         {/* Officer Services */}
-        {isOfficer && !isInactive && (
+        {(isOfficer || isOfficerOrAbove) && !isInactive && (
           <Card className="border-accent/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
