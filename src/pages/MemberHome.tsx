@@ -379,7 +379,14 @@ export default function MemberHome() {
               }
               directoryToggleDisabled={toggleVisibility.isPending}
             />
-            <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
+            <EditableSection
+              title="EAA Volunteering"
+              icon={Award}
+              fields={volunteerFieldDefs}
+              data={member}
+              onSave={handleSave}
+              disabled={false}
+            />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating} />
           </div>
         )}

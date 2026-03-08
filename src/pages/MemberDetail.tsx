@@ -89,7 +89,7 @@ export default function MemberDetail() {
       <div className="space-y-2">
         <ReadOnlySection title="Contact Information" fields={contactFields} />
         <ReadOnlySection title="Aviation & Aircraft" fields={aviationFields} />
-        <ReadOnlySection title="Volunteering" fields={volunteerFields} />
+        <ReadOnlySection title="EAA Volunteering" fields={volunteerFields} />
         <ReadOnlySection title="Compliance (EAA-managed)" fields={complianceFields} />
         <MemberImageGallery keyId={member.key_id} />
       </div>
