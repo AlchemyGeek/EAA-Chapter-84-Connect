@@ -154,6 +154,7 @@ export type Database = {
           pending_roster_update: boolean | null
           updated_at: string
           volunteer_notes: string | null
+          volunteering_visible_in_directory: boolean
         }
         Insert: {
           application_status?: string | null
@@ -168,6 +169,7 @@ export type Database = {
           pending_roster_update?: boolean | null
           updated_at?: string
           volunteer_notes?: string | null
+          volunteering_visible_in_directory?: boolean
         }
         Update: {
           application_status?: string | null
@@ -182,6 +184,7 @@ export type Database = {
           pending_roster_update?: boolean | null
           updated_at?: string
           volunteer_notes?: string | null
+          volunteering_visible_in_directory?: boolean
         }
         Relationships: [
           {
