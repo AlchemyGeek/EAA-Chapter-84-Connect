@@ -53,7 +53,7 @@ export default function MemberProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("member_chapter_data")
-        .select("contact_visible_in_directory, aviation_visible_in_directory")
+        .select("contact_visible_in_directory, aviation_visible_in_directory, volunteering_visible_in_directory")
         .eq("key_id", Number(keyId))
         .maybeSingle();
       if (error) throw error;
@@ -77,6 +77,7 @@ export default function MemberProfile() {
 
   const contactVisible = chapterData?.contact_visible_in_directory ?? true;
   const aviationVisible = chapterData?.aviation_visible_in_directory ?? true;
+  const volunteeringVisible = (chapterData as any)?.volunteering_visible_in_directory ?? true;
 
   if (memberLoading) {
     return (
@@ -117,8 +118,6 @@ export default function MemberProfile() {
     member.young_eagle_volunteer && "Young Eagle Volunteer",
     member.eagle_pilot && "Eagle Pilot",
     member.eagle_flight_volunteer && "Eagle Flight Volunteer",
-    member.imc && "IMC Club",
-    member.vmc && "VMC Club",
   ].filter(Boolean) as string[];
 
   const hasContactInfo = member.email || member.cell_phone || member.home_phone || address;
@@ -281,13 +280,13 @@ export default function MemberProfile() {
         )}
 
         {/* Volunteering badges */}
-        {volunteerBadges.length > 0 && (
+        {volunteeringVisible && volunteerBadges.length > 0 && (
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Globe className="h-4 w-4 text-secondary" />
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Volunteering
+                  EAA Volunteering
                 </h2>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -306,7 +305,7 @@ export default function MemberProfile() {
         )}
 
         {/* No shared info fallback */}
-        {!contactVisible && !aviationVisible && images.length === 0 && volunteerBadges.length === 0 && (
+        {!contactVisible && !aviationVisible && images.length === 0 && (!volunteeringVisible || volunteerBadges.length === 0) && (
           <Card>
             <CardContent className="p-8 text-center">
               <p className="text-sm text-muted-foreground">

@@ -51,8 +51,6 @@ export default function MemberDetail() {
     { label: "Young Eagle Volunteer", value: member.young_eagle_volunteer },
     { label: "Eagle Pilot", value: member.eagle_pilot },
     { label: "Eagle Flight Volunteer", value: member.eagle_flight_volunteer },
-    { label: "IMC Club", value: member.imc },
-    { label: "VMC Club", value: member.vmc },
   ];
 
   const complianceFields = [

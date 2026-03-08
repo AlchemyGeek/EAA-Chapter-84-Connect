@@ -1,0 +1,1 @@
+ALTER TABLE public.member_chapter_data ADD COLUMN volunteering_visible_in_directory boolean NOT NULL DEFAULT true;

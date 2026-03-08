@@ -111,7 +111,7 @@ export default function MemberHome() {
   });
 
   const toggleVisibility = useMutation({
-    mutationFn: async ({ field, visible }: { field: "contact_visible_in_directory" | "aviation_visible_in_directory"; visible: boolean }) => {
+    mutationFn: async ({ field, visible }: { field: "contact_visible_in_directory" | "aviation_visible_in_directory" | "volunteering_visible_in_directory"; visible: boolean }) => {
       if (chapterData) {
         const { error } = await supabase
           .from("member_chapter_data")
@@ -220,8 +220,6 @@ export default function MemberHome() {
     { label: "Young Eagle Volunteer", key: "young_eagle_volunteer", type: "boolean" },
     { label: "Eagle Pilot", key: "eagle_pilot", type: "boolean" },
     { label: "Eagle Flight Volunteer", key: "eagle_flight_volunteer", type: "boolean" },
-    { label: "IMC Club", key: "imc", type: "boolean" },
-    { label: "VMC Club", key: "vmc", type: "boolean" },
   ];
 
 
@@ -386,6 +384,11 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={false}
+              directoryVisible={chapterData?.volunteering_visible_in_directory ?? true}
+              onDirectoryVisibleChange={(checked) =>
+                toggleVisibility.mutate({ field: "volunteering_visible_in_directory", visible: checked })
+              }
+              directoryToggleDisabled={toggleVisibility.isPending}
             />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating} />
           </div>
