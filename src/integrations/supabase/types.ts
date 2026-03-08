@@ -193,6 +193,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_user_roles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       roster_import_changes: {
         Row: {
           change_type: string
@@ -578,6 +599,10 @@ export type Database = {
           inactive_count: number
           total_members: number
         }[]
+      }
+      promote_pending_roles: {
+        Args: { _email: string; _user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
