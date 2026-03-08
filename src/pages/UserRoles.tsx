@@ -301,6 +301,10 @@ export default function UserRoles() {
           ) : (
             <div className="space-y-2">
               {roleAssignments.map((ra) => {
+                const email = userEmailMap[ra.user_id];
+                const member = email
+                  ? allMembers.find((m) => m.email?.toLowerCase() === email.toLowerCase())
+                  : null;
                 return (
                   <div
                     key={ra.id}
@@ -310,9 +314,16 @@ export default function UserRoles() {
                       <Badge variant={roleBadgeVariant(ra.role)}>
                         {roleLabel(ra.role)}
                       </Badge>
-                      <span className="text-xs text-muted-foreground font-mono truncate">
-                        {ra.user_id.slice(0, 8)}…
+                      <span className="text-sm truncate">
+                        {member
+                          ? `${member.last_name}, ${member.first_name}`
+                          : email ?? ra.user_id.slice(0, 8) + "…"}
                       </span>
+                      {member && (
+                        <span className="text-xs text-muted-foreground">
+                          EAA #{member.eaa_number}
+                        </span>
+                      )}
                     </div>
                     <Button
                       variant="ghost"
