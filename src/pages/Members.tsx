@@ -128,7 +128,7 @@ export default function Members() {
                 <TableRow key={m.key_id}>
                   <TableCell>
                     <Link to={`/directory/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
-                      {m.first_name}{m.nickname ? ` (${m.nickname})` : ""} {m.last_name}
+                      {m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}
                     </Link>
                   </TableCell>
                    <TableCell>{m.eaa_number || "—"}</TableCell>
