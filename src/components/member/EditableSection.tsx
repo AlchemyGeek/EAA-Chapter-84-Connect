@@ -103,7 +103,7 @@ export function EditableSection({
                 {fields.map((f) => (
                   <div key={f.key}>
                     <dt className="text-xs text-muted-foreground">{f.label}</dt>
-                    <dd className="text-sm font-medium">{formatValue(data[f.key])}</dd>
+                    <dd className="text-sm font-medium">{formatValue(data[f.key], f.type)}</dd>
                   </div>
                 ))}
               </dl>
