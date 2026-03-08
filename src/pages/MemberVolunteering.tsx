@@ -310,9 +310,9 @@ function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, a
                 {isImpersonating ? "This member has applied" : "You have applied for this opportunity"}
               </div>
             ) : canApply ? (
-              <Button size="sm" onClick={onApply} disabled={applying || isImpersonating}>
+              <Button size="sm" onClick={onApply} disabled={applying}>
                 <HandHelping className="h-4 w-4 mr-1.5" />
-                {isImpersonating ? "Apply to Volunteer (view only)" : applying ? "Applying..." : "Apply to Volunteer"}
+                {applying ? "Applying..." : isImpersonating ? "Apply on Behalf" : "Apply to Volunteer"}
               </Button>
             ) : null}
           </div>
