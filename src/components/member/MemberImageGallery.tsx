@@ -210,9 +210,9 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </CardContent>
+          </div>
         </CollapsibleContent>
       </Collapsible>
-    </Card>
+    </div>
   );
 }
