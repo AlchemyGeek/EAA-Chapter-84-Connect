@@ -98,15 +98,15 @@ export default function MemberVolunteering() {
     (contactMembers ?? []).map((m) => [m.key_id, `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim()])
   );
 
-  // Fetch my applications
-  const { data: myApplications } = useQuery({
-    queryKey: ["my-vol-applications", myMember?.key_id],
-    enabled: !!myMember?.key_id,
+  // Fetch applications for the displayed member (impersonated or self)
+  const { data: displayedApplications } = useQuery({
+    queryKey: ["display-vol-applications", displayMember?.key_id],
+    enabled: !!displayMember?.key_id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("volunteering_applications")
         .select("*")
-        .eq("key_id", myMember!.key_id);
+        .eq("key_id", displayMember!.key_id);
       if (error) throw error;
       return data;
     },
