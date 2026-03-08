@@ -120,7 +120,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
 
 
   return (
-    <Card>
+    <div className="border rounded-lg">
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger asChild>
           <button className="flex items-center justify-between w-full px-6 py-3 text-left">
@@ -135,7 +135,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <CardContent className="pt-0">
+          <div className="px-6 pb-4 pt-0">
             <div className="grid grid-cols-2 gap-3">
               {images.map((img) => (
                 <div key={img.id} className="relative group rounded-lg overflow-hidden border bg-muted aspect-square">
@@ -210,9 +210,9 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </CardContent>
+          </div>
         </CollapsibleContent>
       </Collapsible>
-    </Card>
+    </div>
   );
 }
