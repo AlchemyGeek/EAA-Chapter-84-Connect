@@ -305,7 +305,7 @@ export default function MemberProfile() {
         )}
 
         {/* No shared info fallback */}
-        {!contactVisible && !aviationVisible && images.length === 0 && volunteerBadges.length === 0 && (
+        {!contactVisible && !aviationVisible && images.length === 0 && (!volunteeringVisible || volunteerBadges.length === 0) && (
           <Card>
             <CardContent className="p-8 text-center">
               <p className="text-sm text-muted-foreground">
