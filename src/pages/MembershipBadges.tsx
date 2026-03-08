@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Search, Award, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Search, Award, AlertTriangle, CheckCircle2, XCircle, Users, BadgeCheck } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
@@ -17,6 +17,32 @@ export default function MembershipBadges() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [selectedKeyId, setSelectedKeyId] = useState<number | null>(null);
+
+  // Summary stats
+  const { data: badgeCount = 0 } = useQuery({
+    queryKey: ["badge-delivery-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("badge_deliveries")
+        .select("*", { count: "exact", head: true })
+        .eq("year", 2026);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const { data: currentMemberCount = 0 } = useQuery({
+    queryKey: ["current-member-count-2026"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("roster_members")
+        .select("*", { count: "exact", head: true })
+        .eq("current_standing", "Active")
+        .gte("expiration_date", "2026-03-01");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
 
   // Search members
   const { data: searchResults = [] } = useQuery({
@@ -133,6 +159,32 @@ export default function MembershipBadges() {
       <p className="text-sm text-muted-foreground">
         Search for a member to check their dues status and mark their badge as delivered.
       </p>
+
+      {/* Summary KPIs */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="rounded-full bg-primary/10 p-2">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{currentMemberCount}</p>
+              <p className="text-xs text-muted-foreground">Current Members</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="rounded-full bg-primary/10 p-2">
+              <BadgeCheck className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{badgeCount}</p>
+              <p className="text-xs text-muted-foreground">Badges Delivered</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Search */}
       <div className="relative">
