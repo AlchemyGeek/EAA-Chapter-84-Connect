@@ -51,7 +51,9 @@ export default function MemberVolunteering() {
   });
 
   // Determine which member to display data for
+  // Also check if we're *trying* to impersonate (viewAsKeyId present) even if data hasn't loaded
   const isImpersonating = !!viewAsKeyId && isAdmin && !!viewAsMember;
+  const isPendingImpersonation = !!viewAsKeyId && isAdmin && !viewAsMember;
   const displayMember = isImpersonating ? viewAsMember : myMember;
 
   // Fetch all opportunities
