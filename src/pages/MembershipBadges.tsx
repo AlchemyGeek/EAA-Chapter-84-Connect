@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Search, Award, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Search, Award, AlertTriangle, CheckCircle2, XCircle, Users, BadgeCheck } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
