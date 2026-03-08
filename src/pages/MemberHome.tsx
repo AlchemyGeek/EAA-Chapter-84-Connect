@@ -181,7 +181,6 @@ export default function MemberHome() {
   if (!user) return <Navigate to="/auth" replace />;
 
   const member = impersonateKeyId ? impersonatedMember : myMember;
-  const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
 
   // Determine if member is inactive/lapsed
   const isInactive = (() => {
