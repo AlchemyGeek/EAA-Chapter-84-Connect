@@ -222,6 +222,25 @@ export default function VolunteeringOpportunities() {
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
+  // Delete mutation
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("volunteering_opportunities")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["volunteering-opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteering-contacts"] });
+      setDeleteId(null);
+      toast({ title: "Opportunity deleted" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
   // Update opportunity mutation
   const updateMutation = useMutation({
     mutationFn: async () => {
