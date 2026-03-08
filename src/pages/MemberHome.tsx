@@ -215,16 +215,14 @@ export default function MemberHome() {
     { label: "Aircraft Built", key: "aircraft_built" },
   ];
 
-  const volunteerFields = member
-    ? [
-        { label: "Young Eagle Pilot", value: member.young_eagle_pilot },
-        { label: "Young Eagle Volunteer", value: member.young_eagle_volunteer },
-        { label: "Eagle Pilot", value: member.eagle_pilot },
-        { label: "Eagle Flight Volunteer", value: member.eagle_flight_volunteer },
-        { label: "IMC Club", value: member.imc },
-        { label: "VMC Club", value: member.vmc },
-      ]
-    : [];
+  const volunteerFieldDefs: EditableFieldDef[] = [
+    { label: "Young Eagle Pilot", key: "young_eagle_pilot", type: "boolean" },
+    { label: "Young Eagle Volunteer", key: "young_eagle_volunteer", type: "boolean" },
+    { label: "Eagle Pilot", key: "eagle_pilot", type: "boolean" },
+    { label: "Eagle Flight Volunteer", key: "eagle_flight_volunteer", type: "boolean" },
+    { label: "IMC Club", key: "imc", type: "boolean" },
+    { label: "VMC Club", key: "vmc", type: "boolean" },
+  ];
 
 
   const handleSave = async (updates: Record<string, any>) => {
@@ -381,7 +379,14 @@ export default function MemberHome() {
               }
               directoryToggleDisabled={toggleVisibility.isPending}
             />
-            <ReadOnlySection title="Volunteering" icon={Award} fields={volunteerFields} />
+            <EditableSection
+              title="EAA Volunteering"
+              icon={Award}
+              fields={volunteerFieldDefs}
+              data={member}
+              onSave={handleSave}
+              disabled={false}
+            />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating} />
           </div>
         )}
