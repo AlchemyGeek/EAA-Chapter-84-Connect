@@ -421,7 +421,11 @@ export default function MemberHome() {
             ) : (
               <>
                 <AdminLink to="/members" icon={Users} label="Member Directory" />
-                <AdminLink to="/member-volunteering" icon={HandHelping} label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} />
+                <AdminLink 
+                  to={impersonateKeyId ? `/member-volunteering?viewAs=${impersonateKeyId}` : "/member-volunteering"} 
+                  icon={HandHelping} 
+                  label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
+                />
               </>
             )}
           </CardContent>

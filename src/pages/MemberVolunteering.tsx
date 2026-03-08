@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate, Link } from "react-router-dom";
+import { Navigate, Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, HandHelping, Users, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, HandHelping, Users, CheckCircle2, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -15,12 +15,14 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function MemberVolunteering() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewAsKeyId = searchParams.get("viewAs");
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 
-  // Get my member record
+  // Get my member record (the logged-in user)
   const { data: myMember } = useQuery({
     queryKey: ["my-member-vol", user?.email],
     enabled: !!user?.email,
@@ -33,6 +35,24 @@ export default function MemberVolunteering() {
       return data;
     },
   });
+
+  // Get impersonated member record if viewing as another member (admin only)
+  const { data: viewAsMember } = useQuery({
+    queryKey: ["view-as-member-vol", viewAsKeyId],
+    enabled: !!viewAsKeyId && isAdmin,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, email, cell_phone, home_phone")
+        .eq("key_id", Number(viewAsKeyId))
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  // Determine which member to display data for
+  const isImpersonating = !!viewAsKeyId && isAdmin && !!viewAsMember;
+  const displayMember = isImpersonating ? viewAsMember : myMember;
 
   // Fetch all opportunities
   const { data: opportunities, isLoading } = useQuery({
@@ -78,21 +98,21 @@ export default function MemberVolunteering() {
     (contactMembers ?? []).map((m) => [m.key_id, `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim()])
   );
 
-  // Fetch my applications
-  const { data: myApplications } = useQuery({
-    queryKey: ["my-vol-applications", myMember?.key_id],
-    enabled: !!myMember?.key_id,
+  // Fetch applications for the displayed member (impersonated or self)
+  const { data: displayedApplications } = useQuery({
+    queryKey: ["display-vol-applications", displayMember?.key_id],
+    enabled: !!displayMember?.key_id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("volunteering_applications")
         .select("*")
-        .eq("key_id", myMember!.key_id);
+        .eq("key_id", displayMember!.key_id);
       if (error) throw error;
       return data;
     },
   });
 
-  const appliedIds = new Set((myApplications ?? []).map((a) => a.opportunity_id));
+  const appliedIds = new Set((displayedApplications ?? []).map((a) => a.opportunity_id));
 
   // Apply mutation
   const applyMutation = useMutation({
@@ -107,7 +127,7 @@ export default function MemberVolunteering() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-vol-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["display-vol-applications"] });
       toast({
         title: "Application submitted!",
         description: "The opportunity contacts have been notified of your interest.",
@@ -129,6 +149,21 @@ export default function MemberVolunteering() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* Impersonation indicator */}
+        {isImpersonating && viewAsMember && (
+          <div className="rounded-md bg-accent/10 border border-accent/30 px-3 py-2 text-xs text-accent font-medium flex items-center justify-between">
+            <span>Viewing as: {viewAsMember.first_name} {viewAsMember.last_name}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchParams({})}
+              className="h-6 px-2 text-xs text-accent hover:text-foreground"
+            >
+              <X className="h-3 w-3 mr-1" /> Reset
+            </Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link to="/home">
@@ -172,7 +207,7 @@ export default function MemberVolunteering() {
                     hasApplied={appliedIds.has(opp.id)}
                     onApply={() => applyMutation.mutate(opp.id)}
                     applying={applyMutation.isPending}
-                    canApply={!!myMember}
+                    canApply={!!myMember && !isImpersonating}
                   />
                 ))}
               </>
