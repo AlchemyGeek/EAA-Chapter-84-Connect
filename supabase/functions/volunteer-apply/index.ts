@@ -24,23 +24,23 @@ Deno.serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify user via getClaims
+    // Verify user via getUser
     const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await anonClient.auth.getUser();
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userEmail = claimsData.claims.email as string;
+    const callerUserId = userData.user.id;
+    const callerEmail = userData.user.email as string;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { opportunity_id } = await req.json();
+    const { opportunity_id, on_behalf_of_key_id } = await req.json();
     if (!opportunity_id) {
       return new Response(JSON.stringify({ error: "opportunity_id required" }), {
         status: 400,
@@ -48,18 +48,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get member record
-    const { data: member } = await supabase
-      .from("roster_members")
-      .select("key_id, first_name, last_name, email, cell_phone, home_phone")
-      .eq("email", userEmail)
-      .maybeSingle();
+    // Determine the target member
+    let member: any;
 
-    if (!member) {
-      return new Response(JSON.stringify({ error: "Member record not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (on_behalf_of_key_id) {
+      // Verify the caller is an admin
+      const { data: isAdmin } = await supabase.rpc("has_role", {
+        _user_id: callerUserId,
+        _role: "admin",
       });
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: "Only admins can apply on behalf of others" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Get the target member by key_id
+      const { data: targetMember } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, email, cell_phone, home_phone")
+        .eq("key_id", on_behalf_of_key_id)
+        .maybeSingle();
+
+      if (!targetMember) {
+        return new Response(JSON.stringify({ error: "Target member not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      member = targetMember;
+    } else {
+      // Get member record for the logged-in user
+      const { data: selfMember } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, email, cell_phone, home_phone")
+        .eq("email", callerEmail)
+        .maybeSingle();
+
+      if (!selfMember) {
+        return new Response(JSON.stringify({ error: "Member record not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      member = selfMember;
     }
 
     // Get opportunity
@@ -91,7 +124,9 @@ Deno.serve(async (req) => {
     if (insertError) {
       if (insertError.code === "23505") {
         return new Response(
-          JSON.stringify({ error: "You have already applied to this opportunity" }),
+          JSON.stringify({ error: on_behalf_of_key_id
+            ? "This member has already applied to this opportunity"
+            : "You have already applied to this opportunity" }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

@@ -120,8 +120,13 @@ export default function MemberVolunteering() {
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
       const session = (await supabase.auth.getSession()).data.session;
+      const body: Record<string, string | number> = { opportunity_id: opportunityId };
+      // If impersonating, pass the impersonated member's key_id so the edge function applies on their behalf
+      if (isImpersonating && displayMember) {
+        body.on_behalf_of_key_id = displayMember.key_id;
+      }
       const { data, error } = await supabase.functions.invoke("volunteer-apply", {
-        body: { opportunity_id: opportunityId },
+        body,
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (error) throw error;
@@ -132,7 +137,9 @@ export default function MemberVolunteering() {
       queryClient.invalidateQueries({ queryKey: ["display-vol-applications"] });
       toast({
         title: "Application submitted!",
-        description: "The opportunity contacts have been notified of your interest.",
+        description: isImpersonating
+          ? `Application submitted on behalf of ${displayMember?.first_name ?? "the member"}.`
+          : "The opportunity contacts have been notified of your interest.",
       });
     },
     onError: (e: any) => {
@@ -210,7 +217,7 @@ export default function MemberVolunteering() {
                     onApply={() => applyMutation.mutate(opp.id)}
                     applying={applyMutation.isPending}
                     canApply={!!displayMember && !isPendingImpersonation}
-                    isImpersonating={isImpersonating || isPendingImpersonation}
+                    isImpersonating={isImpersonating}
                   />
                 ))}
               </>
@@ -303,9 +310,9 @@ function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, a
                 {isImpersonating ? "This member has applied" : "You have applied for this opportunity"}
               </div>
             ) : canApply ? (
-              <Button size="sm" onClick={onApply} disabled={applying || isImpersonating}>
+              <Button size="sm" onClick={onApply} disabled={applying}>
                 <HandHelping className="h-4 w-4 mr-1.5" />
-                {isImpersonating ? "Apply to Volunteer (view only)" : applying ? "Applying..." : "Apply to Volunteer"}
+                {applying ? "Applying..." : isImpersonating ? "Apply on Behalf" : "Apply to Volunteer"}
               </Button>
             ) : null}
           </div>
