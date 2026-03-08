@@ -605,6 +605,44 @@ export type Database = {
         }
         Relationships: []
       }
+      volunteering_applications: {
+        Row: {
+          created_at: string
+          id: string
+          key_id: number
+          member_email: string | null
+          member_name: string
+          member_phone: string | null
+          opportunity_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_id: number
+          member_email?: string | null
+          member_name?: string
+          member_phone?: string | null
+          opportunity_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_id?: number
+          member_email?: string | null
+          member_name?: string
+          member_phone?: string | null
+          opportunity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "volunteering_applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "volunteering_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       volunteering_opportunities: {
         Row: {
           created_at: string
