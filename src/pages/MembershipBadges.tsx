@@ -263,10 +263,6 @@ export default function MembershipBadges() {
               <Alert className="border-amber-300 bg-amber-50">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
                 <AlertTitle className="text-amber-800">Badge Already Delivered</AlertTitle>
-                <AlertDescription className="text-amber-700 text-xs">
-                  Delivered on {new Date(badgeDelivery.delivered_at).toLocaleDateString()}
-                  {badgeDelivery.delivered_by_name && ` by ${badgeDelivery.delivered_by_name}`}
-                </AlertDescription>
               </Alert>
             )}
 
