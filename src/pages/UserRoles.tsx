@@ -163,14 +163,6 @@ export default function UserRoles() {
     return "Member";
   };
 
-  // Match role assignments to member names by finding the member whose auth user_id matches
-  // We can't easily reverse-lookup, so we'll show what we can
-  const getMemberForUserId = (userId: string) => {
-    // We don't have a direct mapping, but we can try to find from allMembers
-    // This won't work perfectly without another query, so we'll just show the user_id for now
-    return null;
-  };
-
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <div>
