@@ -127,7 +127,7 @@ export default function MemberVolunteering() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-vol-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["display-vol-applications"] });
       toast({
         title: "Application submitted!",
         description: "The opportunity contacts have been notified of your interest.",
