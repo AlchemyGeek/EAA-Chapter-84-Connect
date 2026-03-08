@@ -424,6 +424,7 @@ export default function MemberHome() {
               <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
               <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Due Payment" />
               <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
+              <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Manage Chapter Volunteering" />
             </CardContent>
           </Card>
         )}

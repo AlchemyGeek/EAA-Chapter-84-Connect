@@ -56,6 +56,7 @@ const App = () => (
           </Route>
           <Route path="/directory/:keyId" element={<MemberProfile />} />
           <Route path="/dues-payment" element={<DuesPayment />} />
+          <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
