@@ -120,7 +120,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
 
 
   return (
-    <Card>
+    <Card className="border rounded-lg">
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger asChild>
           <button className="flex items-center justify-between w-full px-6 py-3 text-left">
