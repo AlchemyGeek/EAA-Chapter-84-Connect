@@ -20,6 +20,7 @@ import DuesPayment from "./pages/DuesPayment";
 import MembershipBadges from "./pages/MembershipBadges";
 import UserRoles from "./pages/UserRoles";
 import VolunteeringOpportunities from "./pages/VolunteeringOpportunities";
+import MemberVolunteering from "./pages/MemberVolunteering";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -57,6 +58,7 @@ const App = () => (
           <Route path="/directory/:keyId" element={<MemberProfile />} />
           <Route path="/dues-payment" element={<DuesPayment />} />
           <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
+          <Route path="/member-volunteering" element={<MemberVolunteering />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

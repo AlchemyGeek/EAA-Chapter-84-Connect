@@ -1,0 +1,283 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate, Link } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, HandHelping, Users, CheckCircle2, Clock } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+
+const STATUS_COLORS: Record<string, string> = {
+  Active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  Closed: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  Completed: "bg-muted text-muted-foreground",
+};
+
+export default function MemberVolunteering() {
+  const { user, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+
+  if (!authLoading && !user) return <Navigate to="/auth" replace />;
+
+  // Get my member record
+  const { data: myMember } = useQuery({
+    queryKey: ["my-member-vol", user?.email],
+    enabled: !!user?.email,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, email, cell_phone, home_phone")
+        .eq("email", user!.email!)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  // Fetch all opportunities
+  const { data: opportunities, isLoading } = useQuery({
+    queryKey: ["member-vol-opportunities"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("volunteering_opportunities")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch contacts for all opportunities
+  const { data: allContacts } = useQuery({
+    queryKey: ["member-vol-contacts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("volunteering_opportunity_contacts")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch contact member names
+  const contactKeyIds = allContacts?.map((c) => c.key_id) ?? [];
+  const { data: contactMembers } = useQuery({
+    queryKey: ["member-vol-contact-names", contactKeyIds],
+    enabled: contactKeyIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name")
+        .in("key_id", contactKeyIds);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const contactNameMap = new Map(
+    (contactMembers ?? []).map((m) => [m.key_id, `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim()])
+  );
+
+  // Fetch my applications
+  const { data: myApplications } = useQuery({
+    queryKey: ["my-vol-applications", myMember?.key_id],
+    enabled: !!myMember?.key_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("volunteering_applications")
+        .select("*")
+        .eq("key_id", myMember!.key_id);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const appliedIds = new Set((myApplications ?? []).map((a) => a.opportunity_id));
+
+  // Apply mutation
+  const applyMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      const session = (await supabase.auth.getSession()).data.session;
+      const { data, error } = await supabase.functions.invoke("volunteer-apply", {
+        body: { opportunity_id: opportunityId },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-vol-applications"] });
+      toast({
+        title: "Application submitted!",
+        description: "The opportunity contacts have been notified of your interest.",
+      });
+    },
+    onError: (e: any) => {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    },
+  });
+
+  // Split opportunities: all active, then up to 3 closed/completed
+  const active = (opportunities ?? []).filter((o) => o.status === "Active");
+  const closedOrCompleted = (opportunities ?? [])
+    .filter((o) => o.status === "Closed" || o.status === "Completed")
+    .slice(0, 3);
+
+  const displayOpportunities = [...active, ...closedOrCompleted];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <Link to="/home">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <HandHelping className="h-5 w-5 text-accent" />
+              Chapter Volunteering Opportunities
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Browse and apply for chapter volunteering opportunities
+            </p>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <p className="text-muted-foreground text-sm">Loading...</p>
+        ) : displayOpportunities.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              No volunteering opportunities available at this time.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {/* Active section */}
+            {active.length > 0 && (
+              <>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Active Opportunities
+                </h2>
+                {active.map((opp) => (
+                  <OpportunityCard
+                    key={opp.id}
+                    opp={opp}
+                    contacts={allContacts ?? []}
+                    contactNameMap={contactNameMap}
+                    hasApplied={appliedIds.has(opp.id)}
+                    onApply={() => applyMutation.mutate(opp.id)}
+                    applying={applyMutation.isPending}
+                    canApply={!!myMember}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Closed/Completed section */}
+            {closedOrCompleted.length > 0 && (
+              <>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mt-6">
+                  Recently Closed / Completed
+                </h2>
+                {closedOrCompleted.map((opp) => (
+                  <OpportunityCard
+                    key={opp.id}
+                    opp={opp}
+                    contacts={allContacts ?? []}
+                    contactNameMap={contactNameMap}
+                    hasApplied={appliedIds.has(opp.id)}
+                    onApply={() => {}}
+                    applying={false}
+                    canApply={false}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type OpportunityCardProps = {
+  opp: any;
+  contacts: any[];
+  contactNameMap: Map<number, string>;
+  hasApplied: boolean;
+  onApply: () => void;
+  applying: boolean;
+  canApply: boolean;
+};
+
+function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, applying, canApply }: OpportunityCardProps) {
+  const oppContacts = contacts.filter((c) => c.opportunity_id === opp.id);
+  const isActive = opp.status === "Active";
+
+  return (
+    <Card className={!isActive ? "opacity-70" : ""}>
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base">{opp.title}</CardTitle>
+            <CardDescription className="text-xs mt-1">
+              Posted by {opp.created_by_name} · {new Date(opp.created_at).toLocaleDateString()}
+            </CardDescription>
+          </div>
+          <Badge className={STATUS_COLORS[opp.status] ?? ""}>{opp.status}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0">
+        {opp.description && (
+          <p className="text-sm text-muted-foreground">{opp.description}</p>
+        )}
+        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            {opp.num_volunteers} volunteer{opp.num_volunteers !== 1 ? "s" : ""} needed
+          </span>
+        </div>
+        {oppContacts.length > 0 && (
+          <div className="text-xs">
+            <span className="text-muted-foreground">Contact: </span>
+            {oppContacts.map((c, i) => (
+              <span key={c.id}>
+                {contactNameMap.get(c.key_id) ?? `Member #${c.key_id}`}
+                {i < oppContacts.length - 1 ? ", " : ""}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Apply button */}
+        {isActive && (
+          <div className="pt-1">
+            {hasApplied ? (
+              <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                <CheckCircle2 className="h-4 w-4" />
+                You have applied for this opportunity
+              </div>
+            ) : canApply ? (
+              <Button size="sm" onClick={onApply} disabled={applying}>
+                <HandHelping className="h-4 w-4 mr-1.5" />
+                {applying ? "Applying..." : "Apply to Volunteer"}
+              </Button>
+            ) : null}
+          </div>
+        )}
+
+        {!isActive && hasApplied && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            You applied for this opportunity
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

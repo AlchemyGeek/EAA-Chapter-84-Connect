@@ -406,7 +406,10 @@ export default function MemberHome() {
                 <span>Renew your membership to access chapter services and resources.</span>
               </div>
             ) : (
-              <AdminLink to="/members" icon={Users} label="Member Directory" />
+              <>
+                <AdminLink to="/members" icon={Users} label="Member Directory" />
+                <AdminLink to="/member-volunteering" icon={HandHelping} label="Chapter Volunteering Opportunities" />
+              </>
             )}
           </CardContent>
         </Card>
