@@ -14,11 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Shield, UserCog, Trash2, Search } from "lucide-react";
+import { Shield, UserCog, Trash2, Search, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Database } from "@/integrations/supabase/types";
-
-type AppRoleEnum = Database["public"]["Enums"]["app_role"];
 
 export default function UserRoles() {
   const { user, loading, isAdmin } = useAuth();
@@ -42,7 +39,7 @@ export default function UserRoles() {
     },
   });
 
-  // Fetch all role assignments
+  // Fetch active role assignments
   const { data: roleAssignments = [], isLoading: rolesLoading } = useQuery({
     queryKey: ["user-role-assignments"],
     enabled: isAdmin,
@@ -56,7 +53,21 @@ export default function UserRoles() {
     },
   });
 
-  // Resolve user_ids to emails so we can show member names
+  // Fetch pending role assignments
+  const { data: pendingRoles = [] } = useQuery({
+    queryKey: ["pending-role-assignments"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pending_user_roles")
+        .select("*")
+        .order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Resolve user_ids to emails for active assignments
   const userIds = useMemo(() => roleAssignments.map((r) => r.user_id), [roleAssignments]);
   const { data: userEmails = [] } = useQuery({
     queryKey: ["user-emails-for-roles", userIds],
@@ -76,17 +87,13 @@ export default function UserRoles() {
     return map;
   }, [userEmails]);
 
-  // Build a map of user_id -> member info for display
-  // We'll resolve this by matching emails from roleAssignments
-  // For existing assignments, we need to reverse-lookup. We'll store email in a separate query.
-
   const filteredMembers = useMemo(() => {
     if (!search.trim()) return [];
     const q = search.toLowerCase();
     return allMembers
       .filter(
         (m) =>
-          m.email &&
+          m.email && m.email.trim() &&
           (`${m.first_name} ${m.last_name}`.toLowerCase().includes(q) ||
             m.email.toLowerCase().includes(q))
       )
@@ -98,22 +105,32 @@ export default function UserRoles() {
     [selectedEmail, allMembers]
   );
 
+  // Assign role: try immediate assignment, fall back to pending
   const addRole = useMutation({
-    mutationFn: async ({ email, role }: { email: string; role: AppRoleEnum }) => {
-      // Look up the auth user_id by email using our security definer function
-      const { data: userId, error: lookupError } = await supabase.rpc("get_user_id_by_email", {
+    mutationFn: async ({ email, role }: { email: string; role: "admin" | "officer" }) => {
+      // First try to find the user_id
+      const { data: userId } = await supabase.rpc("get_user_id_by_email", {
         _email: email,
       });
-      if (lookupError) throw lookupError;
-      if (!userId) throw new Error("This member has not created an account yet. They need to sign in first.");
 
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role });
-      if (error) throw error;
+      if (userId) {
+        // User exists, assign directly
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role });
+        if (error) throw error;
+      } else {
+        // User hasn't signed in yet, create pending role
+        const { error } = await supabase
+          .from("pending_user_roles")
+          .insert({ email, role });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-role-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-role-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["user-emails-for-roles"] });
       setSelectedEmail(null);
       setSearch("");
       toast({ title: "Role assigned successfully" });
@@ -122,7 +139,7 @@ export default function UserRoles() {
       toast({
         title: "Error assigning role",
         description: err.message?.includes("duplicate")
-          ? "This user already has this role."
+          ? "This member already has this role."
           : err.message,
         variant: "destructive",
       });
@@ -131,15 +148,26 @@ export default function UserRoles() {
 
   const removeRole = useMutation({
     mutationFn: async (roleId: string) => {
-      const { error } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("id", roleId);
+      const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-role-assignments"] });
       toast({ title: "Role removed" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error removing role", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const removePendingRole = useMutation({
+    mutationFn: async (roleId: string) => {
+      const { error } = await supabase.from("pending_user_roles").delete().eq("id", roleId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-role-assignments"] });
+      toast({ title: "Pending role removed" });
     },
     onError: (err: any) => {
       toast({ title: "Error removing role", description: err.message, variant: "destructive" });
@@ -181,11 +209,11 @@ export default function UserRoles() {
             Assign Role
           </CardTitle>
           <CardDescription className="text-xs">
-            Search for a member by name, then select the role to assign.
+            Search for a member by name and assign a role. If they haven't signed in yet,
+            the role will be applied automatically when they do.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {/* Member search */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Member</label>
             {selectedMember ? (
@@ -230,12 +258,8 @@ export default function UserRoles() {
                           setSearch("");
                         }}
                       >
-                        <span>
-                          {m.last_name}, {m.first_name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          EAA #{m.eaa_number}
-                        </span>
+                        <span>{m.last_name}, {m.first_name}</span>
+                        <span className="text-xs text-muted-foreground">EAA #{m.eaa_number}</span>
                       </button>
                     ))}
                   </div>
@@ -249,7 +273,6 @@ export default function UserRoles() {
             )}
           </div>
 
-          {/* Role selector */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Role</label>
             <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as "admin" | "officer")}>
@@ -277,19 +300,19 @@ export default function UserRoles() {
         </CardContent>
       </Card>
 
-      {/* Current assignments */}
+      {/* Current active assignments */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Shield className="h-4 w-4" />
-            Current Role Assignments
+            Active Role Assignments
           </CardTitle>
         </CardHeader>
         <CardContent>
           {rolesLoading ? (
             <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
           ) : roleAssignments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No role assignments yet.</p>
+            <p className="text-sm text-muted-foreground">No active role assignments.</p>
           ) : (
             <div className="space-y-2">
               {roleAssignments.map((ra) => {
@@ -333,6 +356,61 @@ export default function UserRoles() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pending assignments */}
+      {pendingRoles.length > 0 && (
+        <Card className="border-dashed">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              Pending Assignments
+            </CardTitle>
+            <CardDescription className="text-xs">
+              These roles will be applied automatically when the member signs in.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {pendingRoles.map((pr) => {
+                const member = allMembers.find(
+                  (m) => m.email?.toLowerCase() === pr.email.toLowerCase()
+                );
+                return (
+                  <div
+                    key={pr.id}
+                    className="flex items-center justify-between rounded-md border border-dashed px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Badge variant={roleBadgeVariant(pr.role)}>
+                        {roleLabel(pr.role)}
+                      </Badge>
+                      <span className="text-sm truncate">
+                        {member
+                          ? `${member.last_name}, ${member.first_name}`
+                          : pr.email}
+                      </span>
+                      {member && (
+                        <span className="text-xs text-muted-foreground">
+                          EAA #{member.eaa_number}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
+                      onClick={() => removePendingRole.mutate(pr.id)}
+                      disabled={removePendingRole.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
