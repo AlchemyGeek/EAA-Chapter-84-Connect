@@ -120,7 +120,11 @@ export default function MembershipBadges() {
     },
   });
 
-  const hasPaid = !!duesPayment;
+  // Member is considered paid if there's a dues_payments record OR their expiration_date covers 2026
+  const paidViaDuesTable = !!duesPayment;
+  const paidViaExpiration = !!selectedMember?.expiration_date &&
+    new Date(selectedMember.expiration_date) >= new Date("2026-03-01");
+  const hasPaid = paidViaDuesTable || paidViaExpiration;
   const alreadyDelivered = !!badgeDelivery;
 
   return (
@@ -187,7 +191,10 @@ export default function MembershipBadges() {
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <span className="text-green-700 font-medium">
-                  2026 dues paid — ${duesPayment.amount} on {new Date(duesPayment.payment_date).toLocaleDateString()}
+                  {paidViaDuesTable
+                    ? `2026 dues paid — $${duesPayment!.amount} on ${new Date(duesPayment!.payment_date).toLocaleDateString()}`
+                    : `2026 dues confirmed — membership active through ${new Date(selectedMember!.expiration_date!).toLocaleDateString()}`
+                  }
                 </span>
               </div>
             ) : (
