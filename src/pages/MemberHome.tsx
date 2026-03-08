@@ -94,6 +94,19 @@ export default function MemberHome() {
     },
   });
 
+  // Fetch active volunteering opportunities count
+  const { data: activeVolCount = 0 } = useQuery({
+    queryKey: ["active-vol-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("volunteering_opportunities")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "Active");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   // Fetch member chapter data (for directory visibility)
   const activeKeyId = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
   const { data: chapterData } = useQuery({
