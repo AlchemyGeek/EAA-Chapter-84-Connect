@@ -230,6 +230,7 @@ export default function MemberVolunteering() {
                     onApply={() => {}}
                     applying={false}
                     canApply={false}
+                    isImpersonating={isImpersonating}
                   />
                 ))}
               </>
