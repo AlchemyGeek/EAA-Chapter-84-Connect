@@ -140,19 +140,38 @@ export function EditableSection({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                 {fields.map((f) => (
                   <div key={f.key}>
-                    <Label htmlFor={`edit-${f.key}`} className="text-xs text-muted-foreground">
-                      {f.label}
-                    </Label>
-                    <Input
-                      id={`edit-${f.key}`}
-                      type={f.type === "date" ? "date" : "text"}
-                      value={draft[f.key] ?? ""}
-                      onChange={(e) =>
-                        setDraft((prev) => ({ ...prev, [f.key]: e.target.value }))
-                      }
-                      className="mt-1"
-                      disabled={saving}
-                    />
+                    {f.type === "boolean" ? (
+                      <label
+                        htmlFor={`edit-${f.key}`}
+                        className="flex items-center gap-2 min-h-[44px] cursor-pointer select-none text-sm"
+                      >
+                        <Checkbox
+                          id={`edit-${f.key}`}
+                          checked={!!draft[f.key]}
+                          onCheckedChange={(checked) =>
+                            setDraft((prev) => ({ ...prev, [f.key]: !!checked }))
+                          }
+                          disabled={saving}
+                        />
+                        {f.label}
+                      </label>
+                    ) : (
+                      <>
+                        <Label htmlFor={`edit-${f.key}`} className="text-xs text-muted-foreground">
+                          {f.label}
+                        </Label>
+                        <Input
+                          id={`edit-${f.key}`}
+                          type={f.type === "date" ? "date" : "text"}
+                          value={draft[f.key] ?? ""}
+                          onChange={(e) =>
+                            setDraft((prev) => ({ ...prev, [f.key]: e.target.value }))
+                          }
+                          className="mt-1"
+                          disabled={saving}
+                        />
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
