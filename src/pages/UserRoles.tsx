@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Shield, UserCog, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Shield, UserCog, Trash2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -23,8 +24,23 @@ export default function UserRoles() {
   const { user, loading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [selectedUserId, setSelectedUserId] = useState("");
+  const [search, setSearch] = useState("");
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<"admin" | "officer">("officer");
+
+  // Fetch all members
+  const { data: allMembers = [] } = useQuery({
+    queryKey: ["all-members-for-roles"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, email, eaa_number")
+        .order("last_name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Fetch all role assignments
   const { data: roleAssignments = [], isLoading: rolesLoading } = useQuery({
@@ -40,26 +56,57 @@ export default function UserRoles() {
     },
   });
 
-  // Fetch all members to map user emails
-  const { data: allMembers = [] } = useQuery({
-    queryKey: ["all-members-for-roles"],
-    enabled: isAdmin,
+  // Resolve user_ids to emails so we can show member names
+  const userIds = useMemo(() => roleAssignments.map((r) => r.user_id), [roleAssignments]);
+  const { data: userEmails = [] } = useQuery({
+    queryKey: ["user-emails-for-roles", userIds],
+    enabled: isAdmin && userIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_members")
-        .select("key_id, first_name, last_name, email, eaa_number")
-        .order("last_name");
+      const { data, error } = await supabase.rpc("get_user_emails_by_ids", {
+        _user_ids: userIds,
+      });
       if (error) throw error;
-      return data;
+      return data as { user_id: string; email: string }[];
     },
   });
 
-  // We need to get auth users - we'll use a lookup approach via the role assignments
-  // For assigning, we need to know the user_id. We'll let the admin type/paste the user ID
-  // or we can match by email from roster_members who have logged in.
+  const userEmailMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const ue of userEmails) map[ue.user_id] = ue.email;
+    return map;
+  }, [userEmails]);
+
+  // Build a map of user_id -> member info for display
+  // We'll resolve this by matching emails from roleAssignments
+  // For existing assignments, we need to reverse-lookup. We'll store email in a separate query.
+
+  const filteredMembers = useMemo(() => {
+    if (!search.trim()) return [];
+    const q = search.toLowerCase();
+    return allMembers
+      .filter(
+        (m) =>
+          m.email &&
+          (`${m.first_name} ${m.last_name}`.toLowerCase().includes(q) ||
+            m.email.toLowerCase().includes(q))
+      )
+      .slice(0, 10);
+  }, [search, allMembers]);
+
+  const selectedMember = useMemo(
+    () => allMembers.find((m) => m.email === selectedEmail),
+    [selectedEmail, allMembers]
+  );
 
   const addRole = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRoleEnum }) => {
+    mutationFn: async ({ email, role }: { email: string; role: AppRoleEnum }) => {
+      // Look up the auth user_id by email using our security definer function
+      const { data: userId, error: lookupError } = await supabase.rpc("get_user_id_by_email", {
+        _email: email,
+      });
+      if (lookupError) throw lookupError;
+      if (!userId) throw new Error("This member has not created an account yet. They need to sign in first.");
+
       const { error } = await supabase
         .from("user_roles")
         .insert({ user_id: userId, role });
@@ -67,14 +114,15 @@ export default function UserRoles() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-role-assignments"] });
-      setSelectedUserId("");
+      setSelectedEmail(null);
+      setSearch("");
       toast({ title: "Role assigned successfully" });
     },
     onError: (err: any) => {
       toast({
         title: "Error assigning role",
-        description: err.message?.includes("duplicate") 
-          ? "This user already has this role." 
+        description: err.message?.includes("duplicate")
+          ? "This user already has this role."
           : err.message,
         variant: "destructive",
       });
@@ -104,9 +152,9 @@ export default function UserRoles() {
   if (!user || !isAdmin) return <Navigate to="/home" replace />;
 
   const roleBadgeVariant = (role: string) => {
-    if (role === "admin") return "default";
-    if (role === "officer") return "secondary";
-    return "outline";
+    if (role === "admin") return "default" as const;
+    if (role === "officer") return "secondary" as const;
+    return "outline" as const;
   };
 
   const roleLabel = (role: string) => {
@@ -115,15 +163,12 @@ export default function UserRoles() {
     return "Member";
   };
 
-  // Find member info by matching user_id won't work directly, but we can show user_id
-  // and cross-reference if they have a roster record linked by email
-
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">User Roles</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Assign Officer and Membership Coordinator roles to users.
+          Assign Officer and Membership Coordinator roles to members.
           All authenticated users are Members by default.
         </p>
       </div>
@@ -136,21 +181,75 @@ export default function UserRoles() {
             Assign Role
           </CardTitle>
           <CardDescription className="text-xs">
-            Enter the user ID (UUID) of the authenticated user you want to assign a role to.
-            You can find user IDs in the backend authentication settings.
+            Search for a member by name, then select the role to assign.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Member search */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">User ID</label>
-            <input
-              type="text"
-              placeholder="e.g. a1b2c3d4-e5f6-..."
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value.trim())}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
+            <label className="text-sm font-medium">Member</label>
+            {selectedMember ? (
+              <div className="flex items-center justify-between rounded-md border bg-muted/50 px-3 py-2.5">
+                <div>
+                  <span className="text-sm font-medium">
+                    {selectedMember.last_name}, {selectedMember.first_name}
+                  </span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    EAA #{selectedMember.eaa_number}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => {
+                    setSelectedEmail(null);
+                    setSearch("");
+                  }}
+                >
+                  Change
+                </Button>
+              </div>
+            ) : (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+                {filteredMembers.length > 0 && (
+                  <div className="absolute z-10 top-full mt-1 w-full rounded-md border bg-popover shadow-md max-h-48 overflow-auto">
+                    {filteredMembers.map((m) => (
+                      <button
+                        key={m.key_id}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent/10 transition-colors flex justify-between items-center"
+                        onClick={() => {
+                          setSelectedEmail(m.email!);
+                          setSearch("");
+                        }}
+                      >
+                        <span>
+                          {m.last_name}, {m.first_name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          EAA #{m.eaa_number}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {search.trim().length > 0 && filteredMembers.length === 0 && (
+                  <div className="absolute z-10 top-full mt-1 w-full rounded-md border bg-popover shadow-md px-3 py-2 text-sm text-muted-foreground">
+                    No members found
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Role selector */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Role</label>
             <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as "admin" | "officer")}>
@@ -163,12 +262,17 @@ export default function UserRoles() {
               </SelectContent>
             </Select>
           </div>
+
           <Button
-            onClick={() => addRole.mutate({ userId: selectedUserId, role: selectedRole })}
-            disabled={!selectedUserId || addRole.isPending}
+            onClick={() => {
+              if (selectedEmail) {
+                addRole.mutate({ email: selectedEmail, role: selectedRole });
+              }
+            }}
+            disabled={!selectedEmail || addRole.isPending}
             className="w-full"
           >
-            Assign Role
+            {addRole.isPending ? "Assigning..." : "Assign Role"}
           </Button>
         </CardContent>
       </Card>
@@ -188,30 +292,43 @@ export default function UserRoles() {
             <p className="text-sm text-muted-foreground">No role assignments yet.</p>
           ) : (
             <div className="space-y-2">
-              {roleAssignments.map((ra) => (
-                <div
-                  key={ra.id}
-                  className="flex items-center justify-between rounded-md border px-3 py-2.5"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Badge variant={roleBadgeVariant(ra.role)}>
-                      {roleLabel(ra.role)}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground font-mono truncate">
-                      {ra.user_id}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
-                    onClick={() => removeRole.mutate(ra.id)}
-                    disabled={removeRole.isPending}
+              {roleAssignments.map((ra) => {
+                const email = userEmailMap[ra.user_id];
+                const member = email
+                  ? allMembers.find((m) => m.email?.toLowerCase() === email.toLowerCase())
+                  : null;
+                return (
+                  <div
+                    key={ra.id}
+                    className="flex items-center justify-between rounded-md border px-3 py-2.5"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Badge variant={roleBadgeVariant(ra.role)}>
+                        {roleLabel(ra.role)}
+                      </Badge>
+                      <span className="text-sm truncate">
+                        {member
+                          ? `${member.last_name}, ${member.first_name}`
+                          : email ?? ra.user_id.slice(0, 8) + "…"}
+                      </span>
+                      {member && (
+                        <span className="text-xs text-muted-foreground">
+                          EAA #{member.eaa_number}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
+                      onClick={() => removeRole.mutate(ra.id)}
+                      disabled={removeRole.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
