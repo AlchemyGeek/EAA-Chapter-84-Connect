@@ -112,7 +112,7 @@ export default function MemberVolunteering() {
     },
   });
 
-  const appliedIds = new Set((myApplications ?? []).map((a) => a.opportunity_id));
+  const appliedIds = new Set((displayedApplications ?? []).map((a) => a.opportunity_id));
 
   // Apply mutation
   const applyMutation = useMutation({
