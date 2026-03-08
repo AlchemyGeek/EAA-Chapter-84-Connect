@@ -209,8 +209,8 @@ export default function MemberVolunteering() {
                     hasApplied={appliedIds.has(opp.id)}
                     onApply={() => applyMutation.mutate(opp.id)}
                     applying={applyMutation.isPending}
-                    canApply={!!displayMember}
-                    isImpersonating={isImpersonating}
+                    canApply={!!displayMember && !isPendingImpersonation}
+                    isImpersonating={isImpersonating || isPendingImpersonation}
                   />
                 ))}
               </>
