@@ -18,6 +18,32 @@ export default function MembershipBadges() {
   const [search, setSearch] = useState("");
   const [selectedKeyId, setSelectedKeyId] = useState<number | null>(null);
 
+  // Summary stats
+  const { data: badgeCount = 0 } = useQuery({
+    queryKey: ["badge-delivery-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("badge_deliveries")
+        .select("*", { count: "exact", head: true })
+        .eq("year", 2026);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const { data: currentMemberCount = 0 } = useQuery({
+    queryKey: ["current-member-count-2026"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("roster_members")
+        .select("*", { count: "exact", head: true })
+        .eq("current_standing", "Active")
+        .gte("expiration_date", "2026-03-01");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   // Search members
   const { data: searchResults = [] } = useQuery({
     queryKey: ["badge-member-search", search],
