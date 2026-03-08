@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
+export type AppRole = "admin" | "officer" | "member";
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
+  const [role, setRole] = useState<AppRole>("member");
+  const [roleLoading, setRoleLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -15,8 +17,6 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setUser(session?.user ?? null);
-
-      // Avoid redirect flicker: only resolve loading after initial getSession() finishes
       if (initialized) {
         setLoading(false);
       }
@@ -46,11 +46,11 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
-    const checkAdmin = async () => {
+    const checkRole = async () => {
       if (!user) {
         if (mounted) {
-          setIsAdmin(false);
-          setAdminLoading(false);
+          setRole("member");
+          setRoleLoading(false);
         }
         return;
       }
@@ -59,24 +59,30 @@ export function useAuth() {
         const { data } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .maybeSingle();
+          .eq("user_id", user.id);
 
         if (mounted) {
-          setIsAdmin(!!data);
-          setAdminLoading(false);
+          // Determine highest role: admin > officer > member
+          const roles = (data ?? []).map((r) => r.role);
+          if (roles.includes("admin")) {
+            setRole("admin");
+          } else if (roles.includes("officer")) {
+            setRole("officer");
+          } else {
+            setRole("member");
+          }
+          setRoleLoading(false);
         }
       } catch {
         if (mounted) {
-          setIsAdmin(false);
-          setAdminLoading(false);
+          setRole("member");
+          setRoleLoading(false);
         }
       }
     };
 
-    setAdminLoading(true);
-    checkAdmin();
+    setRoleLoading(true);
+    checkRole();
 
     return () => {
       mounted = false;
@@ -87,5 +93,8 @@ export function useAuth() {
     await supabase.auth.signOut();
   };
 
-  return { user, loading: loading || adminLoading, isAdmin, signOut };
+  const isAdmin = role === "admin";
+  const isOfficerOrAbove = role === "admin" || role === "officer";
+
+  return { user, loading: loading || roleLoading, isAdmin, isOfficerOrAbove, role, signOut };
 }
