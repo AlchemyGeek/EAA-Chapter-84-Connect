@@ -224,7 +224,6 @@ export default function VolunteeringOpportunities() {
   });
 
   // Delete mutation
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
