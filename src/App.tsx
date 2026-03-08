@@ -19,6 +19,7 @@ import MembershipStatistics from "./pages/MembershipStatistics";
 import DuesPayment from "./pages/DuesPayment";
 import MembershipBadges from "./pages/MembershipBadges";
 import UserRoles from "./pages/UserRoles";
+import VolunteeringOpportunities from "./pages/VolunteeringOpportunities";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
