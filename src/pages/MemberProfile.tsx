@@ -102,7 +102,7 @@ export default function MemberProfile() {
     );
   }
 
-  const fullName = `${member.first_name || ""}${member.nickname ? ` "${member.nickname}"` : ""} ${member.last_name || ""}`.trim();
+  const fullName = `${member.first_name || ""}${member.nickname?.trim() ? ` "${member.nickname}"` : ""} ${member.last_name || ""}`.trim();
 
   const address = [
     member.street_address_1,
