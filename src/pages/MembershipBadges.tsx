@@ -120,7 +120,11 @@ export default function MembershipBadges() {
     },
   });
 
-  const hasPaid = !!duesPayment;
+  // Member is considered paid if there's a dues_payments record OR their expiration_date covers 2026
+  const paidViaDuesTable = !!duesPayment;
+  const paidViaExpiration = !!selectedMember?.expiration_date &&
+    new Date(selectedMember.expiration_date) >= new Date("2026-03-01");
+  const hasPaid = paidViaDuesTable || paidViaExpiration;
   const alreadyDelivered = !!badgeDelivery;
 
   return (
