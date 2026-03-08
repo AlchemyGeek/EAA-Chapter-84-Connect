@@ -111,7 +111,7 @@ export default function MemberHome() {
   });
 
   const toggleVisibility = useMutation({
-    mutationFn: async ({ field, visible }: { field: "contact_visible_in_directory" | "aviation_visible_in_directory"; visible: boolean }) => {
+    mutationFn: async ({ field, visible }: { field: "contact_visible_in_directory" | "aviation_visible_in_directory" | "volunteering_visible_in_directory"; visible: boolean }) => {
       if (chapterData) {
         const { error } = await supabase
           .from("member_chapter_data")
