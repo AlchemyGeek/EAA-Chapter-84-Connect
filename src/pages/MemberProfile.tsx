@@ -280,7 +280,7 @@ export default function MemberProfile() {
         )}
 
         {/* Volunteering badges */}
-        {volunteerBadges.length > 0 && (
+        {volunteeringVisible && volunteerBadges.length > 0 && (
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-3">
