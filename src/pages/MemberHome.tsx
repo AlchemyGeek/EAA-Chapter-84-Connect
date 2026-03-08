@@ -220,8 +220,6 @@ export default function MemberHome() {
     { label: "Young Eagle Volunteer", key: "young_eagle_volunteer", type: "boolean" },
     { label: "Eagle Pilot", key: "eagle_pilot", type: "boolean" },
     { label: "Eagle Flight Volunteer", key: "eagle_flight_volunteer", type: "boolean" },
-    { label: "IMC Club", key: "imc", type: "boolean" },
-    { label: "VMC Club", key: "vmc", type: "boolean" },
   ];
 
 
