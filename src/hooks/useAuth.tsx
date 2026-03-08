@@ -56,13 +56,20 @@ export function useAuth() {
       }
 
       try {
+        // Auto-promote any pending roles for this user's email
+        if (user.email) {
+          await supabase.rpc("promote_pending_roles", {
+            _user_id: user.id,
+            _email: user.email,
+          });
+        }
+
         const { data } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id);
 
         if (mounted) {
-          // Determine highest role: admin > officer > member
           const roles = (data ?? []).map((r) => r.role);
           if (roles.includes("admin")) {
             setRole("admin");
