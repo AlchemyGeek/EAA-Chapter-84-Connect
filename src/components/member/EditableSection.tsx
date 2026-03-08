@@ -18,7 +18,8 @@ export interface EditableFieldDef {
   type?: "text" | "date" | "boolean";
 }
 
-function formatValue(value: any): string {
+function formatValue(value: any, type?: string): string {
+  if (type === "boolean") return value ? "Yes" : "No";
   if (value == null || value === "") return "—";
   return String(value);
 }
