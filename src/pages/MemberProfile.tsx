@@ -118,8 +118,6 @@ export default function MemberProfile() {
     member.young_eagle_volunteer && "Young Eagle Volunteer",
     member.eagle_pilot && "Eagle Pilot",
     member.eagle_flight_volunteer && "Eagle Flight Volunteer",
-    member.imc && "IMC Club",
-    member.vmc && "VMC Club",
   ].filter(Boolean) as string[];
 
   const hasContactInfo = member.email || member.cell_phone || member.home_phone || address;
