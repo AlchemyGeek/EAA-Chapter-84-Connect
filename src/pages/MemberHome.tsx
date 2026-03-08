@@ -396,6 +396,7 @@ export default function MemberHome() {
               <AdminLink to="/imports" icon={FileText} label="Import History" />
               <AdminLink to="/export" icon={Download} label="Export Data" />
               <AdminLink to="/site-config" icon={Settings} label="Website Configuration" />
+              <AdminLink to="/user-roles" icon={UserCog} label="User Roles" />
             </CardContent>
           </Card>
         )}

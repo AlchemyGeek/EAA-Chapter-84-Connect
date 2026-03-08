@@ -49,6 +49,7 @@ const App = () => (
             <Route path="/export" element={<Export />} />
             <Route path="/site-config" element={<SiteConfig />} />
             <Route path="/membership-stats" element={<MembershipStatistics />} />
+            <Route path="/user-roles" element={<UserRoles />} />
           </Route>
           <Route path="/directory/:keyId" element={<MemberProfile />} />
           <Route path="/dues-payment" element={<DuesPayment />} />
