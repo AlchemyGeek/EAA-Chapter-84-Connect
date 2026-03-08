@@ -384,6 +384,11 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={false}
+              directoryVisible={chapterData?.volunteering_visible_in_directory ?? true}
+              onDirectoryVisibleChange={(checked) =>
+                toggleVisibility.mutate({ field: "volunteering_visible_in_directory", visible: checked })
+              }
+              directoryToggleDisabled={toggleVisibility.isPending}
             />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating} />
           </div>
