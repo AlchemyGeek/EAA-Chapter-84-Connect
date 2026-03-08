@@ -160,6 +160,32 @@ export default function MembershipBadges() {
         Search for a member to check their dues status and mark their badge as delivered.
       </p>
 
+      {/* Summary KPIs */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="rounded-full bg-primary/10 p-2">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{currentMemberCount}</p>
+              <p className="text-xs text-muted-foreground">Current Members</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="rounded-full bg-primary/10 p-2">
+              <BadgeCheck className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{badgeCount}</p>
+              <p className="text-xs text-muted-foreground">Badges Delivered</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
