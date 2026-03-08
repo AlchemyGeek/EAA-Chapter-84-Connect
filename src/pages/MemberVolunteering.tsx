@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate, Link } from "react-router-dom";
+import { Navigate, Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, HandHelping, Users, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, HandHelping, Users, CheckCircle2, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -15,12 +15,14 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function MemberVolunteering() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewAsKeyId = searchParams.get("viewAs");
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 
-  // Get my member record
+  // Get my member record (the logged-in user)
   const { data: myMember } = useQuery({
     queryKey: ["my-member-vol", user?.email],
     enabled: !!user?.email,
@@ -33,6 +35,24 @@ export default function MemberVolunteering() {
       return data;
     },
   });
+
+  // Get impersonated member record if viewing as another member (admin only)
+  const { data: viewAsMember } = useQuery({
+    queryKey: ["view-as-member-vol", viewAsKeyId],
+    enabled: !!viewAsKeyId && isAdmin,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, email, cell_phone, home_phone")
+        .eq("key_id", Number(viewAsKeyId))
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  // Determine which member to display data for
+  const isImpersonating = !!viewAsKeyId && isAdmin && !!viewAsMember;
+  const displayMember = isImpersonating ? viewAsMember : myMember;
 
   // Fetch all opportunities
   const { data: opportunities, isLoading } = useQuery({
