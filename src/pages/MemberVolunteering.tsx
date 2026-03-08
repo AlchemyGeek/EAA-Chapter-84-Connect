@@ -149,6 +149,21 @@ export default function MemberVolunteering() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* Impersonation indicator */}
+        {isImpersonating && viewAsMember && (
+          <div className="rounded-md bg-accent/10 border border-accent/30 px-3 py-2 text-xs text-accent font-medium flex items-center justify-between">
+            <span>Viewing as: {viewAsMember.first_name} {viewAsMember.last_name}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchParams({})}
+              className="h-6 px-2 text-xs text-accent hover:text-foreground"
+            >
+              <X className="h-3 w-3 mr-1" /> Reset
+            </Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link to="/home">
