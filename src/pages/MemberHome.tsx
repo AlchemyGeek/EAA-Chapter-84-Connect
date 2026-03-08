@@ -274,7 +274,7 @@ export default function MemberHome() {
           {member ? (
             <div>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Welcome, {member.first_name}{member.nickname ? ` (${member.nickname})` : ""}
+                Welcome, {member.first_name}{member.nickname?.trim() ? ` (${member.nickname.trim()})` : ""}
               </h1>
               <p className="text-primary-foreground/70 text-sm mt-1">
                 EAA #{member.eaa_number} · {member.chapter_name}
