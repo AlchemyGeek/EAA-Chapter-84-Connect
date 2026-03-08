@@ -31,8 +31,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Plus, Search, HandHelping, Users, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Search, HandHelping, Users, Pencil, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type Opportunity = {
