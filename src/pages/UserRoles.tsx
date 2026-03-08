@@ -42,7 +42,7 @@ export default function UserRoles() {
     },
   });
 
-  // Fetch all role assignments with member info
+  // Fetch all role assignments
   const { data: roleAssignments = [], isLoading: rolesLoading } = useQuery({
     queryKey: ["user-role-assignments"],
     enabled: isAdmin,
@@ -55,6 +55,26 @@ export default function UserRoles() {
       return data;
     },
   });
+
+  // Resolve user_ids to emails so we can show member names
+  const userIds = useMemo(() => roleAssignments.map((r) => r.user_id), [roleAssignments]);
+  const { data: userEmails = [] } = useQuery({
+    queryKey: ["user-emails-for-roles", userIds],
+    enabled: isAdmin && userIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_user_emails_by_ids", {
+        _user_ids: userIds,
+      });
+      if (error) throw error;
+      return data as { user_id: string; email: string }[];
+    },
+  });
+
+  const userEmailMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const ue of userEmails) map[ue.user_id] = ue.email;
+    return map;
+  }, [userEmails]);
 
   // Build a map of user_id -> member info for display
   // We'll resolve this by matching emails from roleAssignments
