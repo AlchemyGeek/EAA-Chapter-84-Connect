@@ -136,7 +136,7 @@ export default function MemberHome() {
   const impersonatedEmail = impersonatedMember?.email;
   const { data: impersonatedUserId } = useQuery({
     queryKey: ["impersonate-user-id", impersonatedEmail],
-    enabled: !!impersonatedEmail && isImpersonating,
+    enabled: !!impersonatedEmail && !!impersonateKeyId,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_user_id_by_email", {
         _email: impersonatedEmail!,
