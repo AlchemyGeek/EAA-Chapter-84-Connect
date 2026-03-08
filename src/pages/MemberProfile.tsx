@@ -286,7 +286,7 @@ export default function MemberProfile() {
               <div className="flex items-center gap-2 mb-3">
                 <Globe className="h-4 w-4 text-secondary" />
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Volunteering
+                  EAA Volunteering
                 </h2>
               </div>
               <div className="flex flex-wrap gap-2">
