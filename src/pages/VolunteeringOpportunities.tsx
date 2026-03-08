@@ -31,8 +31,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Plus, Search, HandHelping, Users, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Search, HandHelping, Users, Pencil, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type Opportunity = {
@@ -72,6 +82,7 @@ export default function VolunteeringOpportunities() {
   const [numVolunteers, setNumVolunteers] = useState("1");
   const [contactSearch, setContactSearch] = useState("");
   const [selectedContacts, setSelectedContacts] = useState<{ key_id: number; name: string }[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Auth guard
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
@@ -212,6 +223,24 @@ export default function VolunteeringOpportunities() {
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("volunteering_opportunities")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["volunteering-opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ["volunteering-contacts"] });
+      setDeleteId(null);
+      toast({ title: "Opportunity deleted" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
   // Update opportunity mutation
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -344,6 +373,9 @@ export default function VolunteeringOpportunities() {
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(opp)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(opp.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
@@ -464,6 +496,27 @@ export default function VolunteeringOpportunities() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Opportunity</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this volunteering opportunity. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
