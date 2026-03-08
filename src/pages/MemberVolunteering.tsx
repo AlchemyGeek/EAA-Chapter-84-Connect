@@ -207,7 +207,8 @@ export default function MemberVolunteering() {
                     hasApplied={appliedIds.has(opp.id)}
                     onApply={() => applyMutation.mutate(opp.id)}
                     applying={applyMutation.isPending}
-                    canApply={!!myMember && !isImpersonating}
+                    canApply={!!displayMember}
+                    isImpersonating={isImpersonating}
                   />
                 ))}
               </>
@@ -229,6 +230,7 @@ export default function MemberVolunteering() {
                     onApply={() => {}}
                     applying={false}
                     canApply={false}
+                    isImpersonating={isImpersonating}
                   />
                 ))}
               </>
@@ -248,9 +250,10 @@ type OpportunityCardProps = {
   onApply: () => void;
   applying: boolean;
   canApply: boolean;
+  isImpersonating: boolean;
 };
 
-function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, applying, canApply }: OpportunityCardProps) {
+function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, applying, canApply, isImpersonating }: OpportunityCardProps) {
   const oppContacts = contacts.filter((c) => c.opportunity_id === opp.id);
   const isActive = opp.status === "Active";
 
@@ -295,12 +298,12 @@ function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, a
             {hasApplied ? (
               <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
                 <CheckCircle2 className="h-4 w-4" />
-                You have applied for this opportunity
+                {isImpersonating ? "This member has applied" : "You have applied for this opportunity"}
               </div>
             ) : canApply ? (
-              <Button size="sm" onClick={onApply} disabled={applying}>
+              <Button size="sm" onClick={onApply} disabled={applying || isImpersonating}>
                 <HandHelping className="h-4 w-4 mr-1.5" />
-                {applying ? "Applying..." : "Apply to Volunteer"}
+                {isImpersonating ? "Apply to Volunteer (view only)" : applying ? "Applying..." : "Apply to Volunteer"}
               </Button>
             ) : null}
           </div>
@@ -309,7 +312,7 @@ function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, a
         {!isActive && hasApplied && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            You applied for this opportunity
+            {isImpersonating ? "This member applied" : "You applied for this opportunity"}
           </div>
         )}
       </CardContent>
