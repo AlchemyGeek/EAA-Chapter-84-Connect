@@ -120,8 +120,13 @@ export default function MemberVolunteering() {
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
       const session = (await supabase.auth.getSession()).data.session;
+      const body: Record<string, string | number> = { opportunity_id: opportunityId };
+      // If impersonating, pass the impersonated member's key_id so the edge function applies on their behalf
+      if (isImpersonating && displayMember) {
+        body.on_behalf_of_key_id = displayMember.key_id;
+      }
       const { data, error } = await supabase.functions.invoke("volunteer-apply", {
-        body: { opportunity_id: opportunityId },
+        body,
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (error) throw error;
@@ -132,7 +137,9 @@ export default function MemberVolunteering() {
       queryClient.invalidateQueries({ queryKey: ["display-vol-applications"] });
       toast({
         title: "Application submitted!",
-        description: "The opportunity contacts have been notified of your interest.",
+        description: isImpersonating
+          ? `Application submitted on behalf of ${displayMember?.first_name ?? "the member"}.`
+          : "The opportunity contacts have been notified of your interest.",
       });
     },
     onError: (e: any) => {
