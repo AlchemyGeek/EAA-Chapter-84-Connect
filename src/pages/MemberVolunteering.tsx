@@ -217,7 +217,7 @@ export default function MemberVolunteering() {
                     onApply={() => applyMutation.mutate(opp.id)}
                     applying={applyMutation.isPending}
                     canApply={!!displayMember && !isPendingImpersonation}
-                    isImpersonating={isImpersonating || isPendingImpersonation}
+                    isImpersonating={isImpersonating}
                   />
                 ))}
               </>
