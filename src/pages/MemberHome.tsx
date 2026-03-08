@@ -420,7 +420,7 @@ export default function MemberHome() {
         )}
 
         {/* Admin tools */}
-        {isAdmin && !isInactive && (
+        {viewIsAdmin && !isInactive && (
           <Card className="border-secondary/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
