@@ -131,6 +131,43 @@ export default function MemberHome() {
   });
 
   const { isOfficer, role: officerRole } = useIsOfficer(activeKeyId);
+
+  // Look up the impersonated member's app role (from user_roles via their email)
+  const impersonatedEmail = impersonatedMember?.email;
+  const { data: impersonatedUserId } = useQuery({
+    queryKey: ["impersonate-user-id", impersonatedEmail],
+    enabled: !!impersonatedEmail && isImpersonating,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_user_id_by_email", {
+        _email: impersonatedEmail!,
+      });
+      if (error) throw error;
+      return data as string | null;
+    },
+  });
+  const { data: impersonatedRoles = [] } = useQuery({
+    queryKey: ["impersonate-roles", impersonatedUserId],
+    enabled: !!impersonatedUserId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", impersonatedUserId!);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Compute effective view permissions (real admin's role when not impersonating, impersonated member's role when impersonating)
+  const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
+  const viewRoles = isImpersonating
+    ? (impersonatedRoles ?? []).map((r) => r.role)
+    : null;
+  const viewIsAdmin = isImpersonating ? (viewRoles?.includes("admin") ?? false) : isAdmin;
+  const viewIsOfficerOrAbove = isImpersonating
+    ? (viewRoles?.includes("admin") || viewRoles?.includes("officer") || isOfficer)
+    : isOfficerOrAbove;
+
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
