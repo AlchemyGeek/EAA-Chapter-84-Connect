@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 export interface EditableFieldDef {
   label: string;
   key: string;
-  type?: "text" | "date";
+  type?: "text" | "date" | "boolean";
 }
 
 function formatValue(value: any): string {
