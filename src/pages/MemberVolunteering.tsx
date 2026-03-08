@@ -51,7 +51,9 @@ export default function MemberVolunteering() {
   });
 
   // Determine which member to display data for
+  // Also check if we're *trying* to impersonate (viewAsKeyId present) even if data hasn't loaded
   const isImpersonating = !!viewAsKeyId && isAdmin && !!viewAsMember;
+  const isPendingImpersonation = !!viewAsKeyId && isAdmin && !viewAsMember;
   const displayMember = isImpersonating ? viewAsMember : myMember;
 
   // Fetch all opportunities
@@ -207,8 +209,8 @@ export default function MemberVolunteering() {
                     hasApplied={appliedIds.has(opp.id)}
                     onApply={() => applyMutation.mutate(opp.id)}
                     applying={applyMutation.isPending}
-                    canApply={!!displayMember}
-                    isImpersonating={isImpersonating}
+                    canApply={!!displayMember && !isPendingImpersonation}
+                    isImpersonating={isImpersonating || isPendingImpersonation}
                   />
                 ))}
               </>
