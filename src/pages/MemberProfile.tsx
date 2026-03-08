@@ -53,7 +53,7 @@ export default function MemberProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("member_chapter_data")
-        .select("contact_visible_in_directory, aviation_visible_in_directory")
+        .select("contact_visible_in_directory, aviation_visible_in_directory, volunteering_visible_in_directory")
         .eq("key_id", Number(keyId))
         .maybeSingle();
       if (error) throw error;
