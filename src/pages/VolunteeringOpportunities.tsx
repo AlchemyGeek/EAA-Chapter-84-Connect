@@ -82,6 +82,7 @@ export default function VolunteeringOpportunities() {
   const [numVolunteers, setNumVolunteers] = useState("1");
   const [contactSearch, setContactSearch] = useState("");
   const [selectedContacts, setSelectedContacts] = useState<{ key_id: number; name: string }[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Auth guard
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
