@@ -415,6 +415,7 @@ export default function MemberHome() {
             <CardContent className="space-y-1">
               <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
               <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Due Payment" />
+              <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
             </CardContent>
           </Card>
         )}
