@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      badge_deliveries: {
+        Row: {
+          created_at: string
+          delivered_at: string
+          delivered_by: string | null
+          delivered_by_name: string | null
+          id: string
+          key_id: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string
+          delivered_by?: string | null
+          delivered_by_name?: string | null
+          id?: string
+          key_id: number
+          year?: number
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string
+          delivered_by?: string | null
+          delivered_by_name?: string | null
+          id?: string
+          key_id?: number
+          year?: number
+        }
+        Relationships: []
+      }
       chapter_fees: {
         Row: {
           amount: number
