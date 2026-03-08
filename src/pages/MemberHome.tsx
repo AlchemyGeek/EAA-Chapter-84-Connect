@@ -18,6 +18,7 @@ import {
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
+  UserCog,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import {
@@ -31,7 +32,7 @@ import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
 
 export default function MemberHome() {
-  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const { user, loading: authLoading, isAdmin, isOfficerOrAbove, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [impersonateKeyId, setImpersonateKeyId] = useState<string | null>(null);
   const [debugOpen, setDebugOpen] = useState(false);
@@ -367,7 +368,7 @@ export default function MemberHome() {
         </Card>
 
         {/* Officer Services */}
-        {isOfficer && !isInactive && (
+        {(isOfficer || isOfficerOrAbove) && !isInactive && (
           <Card className="border-accent/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -396,6 +397,7 @@ export default function MemberHome() {
               <AdminLink to="/imports" icon={FileText} label="Import History" />
               <AdminLink to="/export" icon={Download} label="Export Data" />
               <AdminLink to="/site-config" icon={Settings} label="Website Configuration" />
+              <AdminLink to="/user-roles" icon={UserCog} label="User Roles" />
             </CardContent>
           </Card>
         )}
