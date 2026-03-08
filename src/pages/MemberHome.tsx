@@ -131,6 +131,43 @@ export default function MemberHome() {
   });
 
   const { isOfficer, role: officerRole } = useIsOfficer(activeKeyId);
+
+  // Look up the impersonated member's app role (from user_roles via their email)
+  const impersonatedEmail = impersonatedMember?.email;
+  const { data: impersonatedUserId } = useQuery({
+    queryKey: ["impersonate-user-id", impersonatedEmail],
+    enabled: !!impersonatedEmail && !!impersonateKeyId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_user_id_by_email", {
+        _email: impersonatedEmail!,
+      });
+      if (error) throw error;
+      return data as string | null;
+    },
+  });
+  const { data: impersonatedRoles = [] } = useQuery({
+    queryKey: ["impersonate-roles", impersonatedUserId],
+    enabled: !!impersonatedUserId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", impersonatedUserId!);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Compute effective view permissions (real admin's role when not impersonating, impersonated member's role when impersonating)
+  const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
+  const viewRoles = isImpersonating
+    ? (impersonatedRoles ?? []).map((r) => r.role)
+    : null;
+  const viewIsAdmin = isImpersonating ? (viewRoles?.includes("admin") ?? false) : isAdmin;
+  const viewIsOfficerOrAbove = isImpersonating
+    ? (viewRoles?.includes("admin") || viewRoles?.includes("officer") || isOfficer)
+    : isOfficerOrAbove;
+
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
@@ -144,7 +181,6 @@ export default function MemberHome() {
   if (!user) return <Navigate to="/auth" replace />;
 
   const member = impersonateKeyId ? impersonatedMember : myMember;
-  const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
 
   // Determine if member is inactive/lapsed
   const isInactive = (() => {
@@ -368,7 +404,7 @@ export default function MemberHome() {
         </Card>
 
         {/* Officer Services */}
-        {(isOfficer || isOfficerOrAbove) && !isInactive && (
+        {viewIsOfficerOrAbove && !isInactive && (
           <Card className="border-accent/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -384,7 +420,7 @@ export default function MemberHome() {
         )}
 
         {/* Admin tools */}
-        {isAdmin && !isInactive && (
+        {viewIsAdmin && !isInactive && (
           <Card className="border-secondary/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
