@@ -326,6 +326,12 @@ export default function SiteConfig() {
                     <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{fee.name}</p>
+                      {fee.payment_url && (
+                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                          <a href={fee.payment_url} target="_blank" rel="noopener noreferrer" className="hover:underline">{fee.payment_url}</a>
+                        </p>
+                      )}
                     </div>
                     <span className="text-sm font-semibold tabular-nums">
                       ${Number(fee.amount).toFixed(2)}
