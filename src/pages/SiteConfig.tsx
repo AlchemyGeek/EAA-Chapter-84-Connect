@@ -132,17 +132,19 @@ export default function SiteConfig() {
       if (!trimmedName) throw new Error("Name is required");
       if (isNaN(amt) || amt < 0) throw new Error("Valid amount is required");
 
+      const trimmedUrl = feePaymentUrl.trim() || null;
+
       if (editingFee) {
         const { error } = await supabase
           .from("chapter_fees" as any)
-          .update({ name: trimmedName, amount: amt } as any)
+          .update({ name: trimmedName, amount: amt, payment_url: trimmedUrl } as any)
           .eq("id", editingFee.id);
         if (error) throw error;
       } else {
         const maxOrder = fees.length > 0 ? Math.max(...fees.map((f) => f.sort_order)) : -1;
         const { error } = await supabase
           .from("chapter_fees" as any)
-          .insert({ name: trimmedName, amount: amt, sort_order: maxOrder + 1 } as any);
+          .insert({ name: trimmedName, amount: amt, payment_url: trimmedUrl, sort_order: maxOrder + 1 } as any);
         if (error) throw error;
       }
     },
