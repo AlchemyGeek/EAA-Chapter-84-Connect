@@ -139,18 +139,18 @@ export default function Import() {
     <div className="p-6 max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Import Roster</h1>
 
-      {hasUnexportedChanges && (
+      {hasUnsyncedChanges && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Unexported Local Changes Detected</AlertTitle>
+          <AlertTitle>Unsynced Local Changes Detected</AlertTitle>
           <AlertDescription className="space-y-3">
             <p>
-              There are <strong>{localChanges.length}</strong> unexported local change(s) 
+              There are <strong>{localChanges.length}</strong> local change(s) 
               ({modifiedMembers.size} modified, {localChanges.filter(c => c.change_type === "added").length} added, {localChanges.filter(c => c.change_type === "removed").length} removed) 
-              since the last import. Importing a new roster will overwrite this data and these changes will be lost.
+              that have not been synced with the EAA Roster Tool. Importing a new roster will overwrite this data and these changes will be lost.
             </p>
             <p className="text-sm">
-              Consider exporting your changes first from the <strong>Export</strong> page. 
+              Consider syncing your changes first from the <strong>Export</strong> page using "Mark Data Synced". 
               To proceed anyway, type <strong>"{CONFIRM_PHRASE}"</strong> below.
             </p>
             <Input
