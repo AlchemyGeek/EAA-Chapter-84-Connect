@@ -37,6 +37,7 @@ interface ChapterFee {
   id: string;
   name: string;
   amount: number;
+  payment_url: string | null;
   sort_order: number;
 }
 
