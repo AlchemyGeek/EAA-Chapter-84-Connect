@@ -37,6 +37,7 @@ interface ChapterFee {
   id: string;
   name: string;
   amount: number;
+  payment_url: string | null;
   sort_order: number;
 }
 
@@ -55,6 +56,7 @@ export default function SiteConfig() {
   const [editingFee, setEditingFee] = useState<ChapterFee | null>(null);
   const [feeName, setFeeName] = useState("");
   const [feeAmount, setFeeAmount] = useState("");
+  const [feePaymentUrl, setFeePaymentUrl] = useState("");
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ["site-links"],
@@ -130,17 +132,19 @@ export default function SiteConfig() {
       if (!trimmedName) throw new Error("Name is required");
       if (isNaN(amt) || amt < 0) throw new Error("Valid amount is required");
 
+      const trimmedUrl = feePaymentUrl.trim() || null;
+
       if (editingFee) {
         const { error } = await supabase
           .from("chapter_fees" as any)
-          .update({ name: trimmedName, amount: amt } as any)
+          .update({ name: trimmedName, amount: amt, payment_url: trimmedUrl } as any)
           .eq("id", editingFee.id);
         if (error) throw error;
       } else {
         const maxOrder = fees.length > 0 ? Math.max(...fees.map((f) => f.sort_order)) : -1;
         const { error } = await supabase
           .from("chapter_fees" as any)
-          .insert({ name: trimmedName, amount: amt, sort_order: maxOrder + 1 } as any);
+          .insert({ name: trimmedName, amount: amt, payment_url: trimmedUrl, sort_order: maxOrder + 1 } as any);
         if (error) throw error;
       }
     },
@@ -192,6 +196,7 @@ export default function SiteConfig() {
     setEditingFee(null);
     setFeeName("");
     setFeeAmount("");
+    setFeePaymentUrl("");
     setFeeDialogOpen(true);
   };
 
@@ -199,6 +204,7 @@ export default function SiteConfig() {
     setEditingFee(fee);
     setFeeName(fee.name);
     setFeeAmount(String(fee.amount));
+    setFeePaymentUrl(fee.payment_url || "");
     setFeeDialogOpen(true);
   };
 
@@ -207,6 +213,7 @@ export default function SiteConfig() {
     setEditingFee(null);
     setFeeName("");
     setFeeAmount("");
+    setFeePaymentUrl("");
   };
 
   if (authLoading) {
@@ -319,6 +326,12 @@ export default function SiteConfig() {
                     <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{fee.name}</p>
+                      {fee.payment_url && (
+                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                          <a href={fee.payment_url} target="_blank" rel="noopener noreferrer" className="hover:underline">{fee.payment_url}</a>
+                        </p>
+                      )}
                     </div>
                     <span className="text-sm font-semibold tabular-nums">
                       ${Number(fee.amount).toFixed(2)}
@@ -430,6 +443,17 @@ export default function SiteConfig() {
                 value={feeAmount}
                 onChange={(e) => setFeeAmount(e.target.value)}
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fee-payment-url">Payment URL (optional)</Label>
+              <Input
+                id="fee-payment-url"
+                type="url"
+                placeholder="https://..."
+                value={feePaymentUrl}
+                onChange={(e) => setFeePaymentUrl(e.target.value)}
+                maxLength={500}
               />
             </div>
             <div className="flex justify-end gap-2">

@@ -1,0 +1,1 @@
+ALTER TABLE public.chapter_fees ADD COLUMN payment_url text;
