@@ -77,18 +77,20 @@ export default function Import() {
     return diffCurrentVsSnapshots(members, snapshots);
   }, [members, snapshots]);
 
-  // Check if data has been synced since the last import
+  // Check if any local data was modified after the last sync
   const lastSyncedAt = localStorage.getItem("lastExportSyncAt");
   const hasUnsyncedChanges = useMemo(() => {
     if (localChanges.length === 0) return false;
     // If never synced, there are unsynced changes
     if (!lastSyncedAt) return true;
-    // If synced after the last import, consider changes as synced
-    if (lastImport?.imported_at) {
-      return new Date(lastSyncedAt) < new Date(lastImport.imported_at);
-    }
-    return true;
-  }, [localChanges, lastSyncedAt, lastImport]);
+    const syncDate = new Date(lastSyncedAt);
+    // Check if any member involved in local changes was updated after the last sync
+    const changedKeyIds = new Set(localChanges.map(c => c.key_id));
+    const hasNewerData = members
+      .filter(m => changedKeyIds.has(m.key_id))
+      .some(m => new Date(m.updated_at) > syncDate);
+    return hasNewerData;
+  }, [localChanges, lastSyncedAt, members]);
   const confirmMatches = confirmText.trim().toLowerCase() === CONFIRM_PHRASE;
   const canImport = file && !importing && (!hasUnsyncedChanges || confirmMatches);
 
