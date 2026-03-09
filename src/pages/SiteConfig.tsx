@@ -56,6 +56,7 @@ export default function SiteConfig() {
   const [editingFee, setEditingFee] = useState<ChapterFee | null>(null);
   const [feeName, setFeeName] = useState("");
   const [feeAmount, setFeeAmount] = useState("");
+  const [feePaymentUrl, setFeePaymentUrl] = useState("");
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ["site-links"],
