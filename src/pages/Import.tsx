@@ -90,7 +90,7 @@ export default function Import() {
     return true;
   }, [localChanges, lastSyncedAt, lastImport]);
   const confirmMatches = confirmText.trim().toLowerCase() === CONFIRM_PHRASE;
-  const canImport = file && !importing && (!hasUnexportedChanges || confirmMatches);
+  const canImport = file && !importing && (!hasUnsyncedChanges || confirmMatches);
 
   const handleImport = async () => {
     if (!file) return;
