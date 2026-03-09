@@ -60,6 +60,7 @@ const App = () => (
           <Route path="/dues-payment" element={<DuesPayment />} />
           <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
           <Route path="/member-volunteering" element={<MemberVolunteering />} />
+          <Route path="/join" element={<NewMemberApplication />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
