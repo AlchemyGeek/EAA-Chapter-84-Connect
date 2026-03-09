@@ -229,6 +229,51 @@ export type Database = {
         }
         Relationships: []
       }
+      new_member_applications: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          eaa_number: string
+          email: string
+          fee_amount: number
+          first_name: string
+          id: string
+          last_name: string
+          quarter_applied: string
+          state: string
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          eaa_number: string
+          email: string
+          fee_amount?: number
+          first_name: string
+          id?: string
+          last_name: string
+          quarter_applied: string
+          state: string
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          eaa_number?: string
+          email?: string
+          fee_amount?: number
+          first_name?: string
+          id?: string
+          last_name?: string
+          quarter_applied?: string
+          state?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
       pending_user_roles: {
         Row: {
           created_at: string
