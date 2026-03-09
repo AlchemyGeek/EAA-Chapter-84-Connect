@@ -445,6 +445,17 @@ export default function SiteConfig() {
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="fee-payment-url">Payment URL (optional)</Label>
+              <Input
+                id="fee-payment-url"
+                type="url"
+                placeholder="https://..."
+                value={feePaymentUrl}
+                onChange={(e) => setFeePaymentUrl(e.target.value)}
+                maxLength={500}
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={closeFeeDialog}>
                 Cancel
