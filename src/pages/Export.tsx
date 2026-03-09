@@ -130,7 +130,7 @@ export default function Export() {
           </div>
           <CardDescription>
             After entering exported changes into the EAA Roster Tool, mark the data as synced.
-            This also marks all recent dues payments as exported.
+            This records that member data, dues payments, and other changes have been uploaded.
           </CardDescription>
         </CardHeader>
         <CardContent>
