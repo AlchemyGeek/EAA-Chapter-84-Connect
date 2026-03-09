@@ -196,6 +196,7 @@ export default function SiteConfig() {
     setEditingFee(null);
     setFeeName("");
     setFeeAmount("");
+    setFeePaymentUrl("");
     setFeeDialogOpen(true);
   };
 
@@ -203,6 +204,7 @@ export default function SiteConfig() {
     setEditingFee(fee);
     setFeeName(fee.name);
     setFeeAmount(String(fee.amount));
+    setFeePaymentUrl(fee.payment_url || "");
     setFeeDialogOpen(true);
   };
 
@@ -211,6 +213,7 @@ export default function SiteConfig() {
     setEditingFee(null);
     setFeeName("");
     setFeeAmount("");
+    setFeePaymentUrl("");
   };
 
   if (authLoading) {
