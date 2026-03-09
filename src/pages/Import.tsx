@@ -77,7 +77,18 @@ export default function Import() {
     return diffCurrentVsSnapshots(members, snapshots);
   }, [members, snapshots]);
 
-  const hasUnexportedChanges = localChanges.length > 0;
+  // Check if data has been synced since the last import
+  const lastSyncedAt = localStorage.getItem("lastExportSyncAt");
+  const hasUnsyncedChanges = useMemo(() => {
+    if (localChanges.length === 0) return false;
+    // If never synced, there are unsynced changes
+    if (!lastSyncedAt) return true;
+    // If synced after the last import, consider changes as synced
+    if (lastImport?.imported_at) {
+      return new Date(lastSyncedAt) < new Date(lastImport.imported_at);
+    }
+    return true;
+  }, [localChanges, lastSyncedAt, lastImport]);
   const confirmMatches = confirmText.trim().toLowerCase() === CONFIRM_PHRASE;
   const canImport = file && !importing && (!hasUnexportedChanges || confirmMatches);
 
