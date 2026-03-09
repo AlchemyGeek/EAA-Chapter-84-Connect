@@ -152,7 +152,7 @@ export default function Export() {
                 setLastSyncedAt(now);
                 toast({
                   title: "Data marked as synced",
-                  description: "All pending dues payments have been marked as exported.",
+                  description: "Member data and dues payments have been marked as synced with EAA Roster Tool.",
                 });
               } catch (err: any) {
                 toast({ title: "Error", description: err.message, variant: "destructive" });
