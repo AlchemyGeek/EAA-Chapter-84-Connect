@@ -117,19 +117,21 @@ export default function Export() {
       {/* Mark Synced Section */}
       <Card className="border-accent/30">
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-accent" />
-            Sync Status
-          </CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-accent" />
+              Sync Status
+            </CardTitle>
+            {lastSyncedAt && (
+              <Badge variant="outline" className="text-xs font-normal">
+                Last synced: {format(new Date(lastSyncedAt), "MMM d, yyyy h:mm a")}
+              </Badge>
+            )}
+          </div>
           <CardDescription>
             After entering exported changes into the EAA Roster Tool, mark the data as synced.
             This also marks all recent dues payments as exported.
           </CardDescription>
-          {lastSyncedAt && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Last synced: {format(new Date(lastSyncedAt), "MMM d, yyyy h:mm a")}
-            </p>
-          )}
         </CardHeader>
         <CardContent>
           <Button
