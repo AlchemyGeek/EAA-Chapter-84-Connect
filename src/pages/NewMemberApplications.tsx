@@ -214,40 +214,48 @@ export default function NewMemberApplications() {
         </p>
       )}
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 text-center text-muted-foreground">Loading...</div>
-          ) : applications.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground">
-              No {filter !== "all" ? filter : ""} applications found.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>EAA #</TableHead>
-                  <TableHead>Applied</TableHead>
-                  <TableHead className="text-center">EAA National</TableHead>
-                  <TableHead className="text-center">Fees</TableHead>
-                  <TableHead>Sync</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {applications.map((app) => (
-                  <TableRow
-                    key={app.id}
-                    className={`cursor-pointer ${app.processed ? "opacity-60" : ""}`}
-                    onClick={() => setDetailApp(app)}
-                  >
-                    <TableCell className="font-medium">
+      {isLoading ? (
+        <div className="p-6 text-center text-muted-foreground">Loading...</div>
+      ) : applications.length === 0 ? (
+        <div className="p-6 text-center text-muted-foreground">
+          No {filter !== "all" ? filter : ""} applications found.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {applications.map((app) => (
+            <Card
+              key={app.id}
+              className={`cursor-pointer transition-colors hover:bg-muted/50 ${app.processed ? "opacity-60" : ""}`}
+              onClick={() => setDetailApp(app)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">
                       {app.last_name}, {app.first_name}
-                    </TableCell>
-                    <TableCell>{app.eaa_number}</TableCell>
-                    <TableCell>{format(new Date(app.created_at), "MM/dd/yyyy")}</TableCell>
-                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      {isSynced(app.created_at) ? (
+                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                          Synced
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                          Not Synced
+                        </Badge>
+                      )}
+                      {app.processed ? (
+                        <Badge className="text-xs bg-primary/10 text-primary border-0">Completed</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">Pending</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <label className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
                       <Checkbox
                         checked={app.eaa_verified}
                         disabled={app.processed || updateVerification.isPending}
@@ -255,8 +263,9 @@ export default function NewMemberApplications() {
                           handleCheckboxChange(app, "eaa_verified", !!checked)
                         }
                       />
-                    </TableCell>
-                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      <span className="text-[10px] text-muted-foreground leading-none">EAA</span>
+                    </label>
+                    <label className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
                       <Checkbox
                         checked={app.fees_verified}
                         disabled={app.processed || updateVerification.isPending}
@@ -264,32 +273,15 @@ export default function NewMemberApplications() {
                           handleCheckboxChange(app, "fees_verified", !!checked)
                         }
                       />
-                    </TableCell>
-                    <TableCell>
-                      {isSynced(app.created_at) ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          Synced
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                          Not Synced
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {app.processed ? (
-                        <Badge className="bg-primary/10 text-primary border-0">Completed</Badge>
-                      ) : (
-                        <Badge variant="secondary">Pending</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                      <span className="text-[10px] text-muted-foreground leading-none">Fees</span>
+                    </label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Detail Dialog */}
       <Dialog open={!!detailApp} onOpenChange={() => setDetailApp(null)}>
