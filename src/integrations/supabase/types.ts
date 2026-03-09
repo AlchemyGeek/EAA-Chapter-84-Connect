@@ -235,12 +235,17 @@ export type Database = {
           city: string
           created_at: string
           eaa_number: string
+          eaa_verified: boolean
           email: string
           fee_amount: number
+          fees_verified: boolean
           first_name: string
           id: string
           last_name: string
+          processed: boolean
+          processed_at: string | null
           quarter_applied: string
+          roster_key_id: number | null
           state: string
           zip_code: string
         }
@@ -249,12 +254,17 @@ export type Database = {
           city: string
           created_at?: string
           eaa_number: string
+          eaa_verified?: boolean
           email: string
           fee_amount?: number
+          fees_verified?: boolean
           first_name: string
           id?: string
           last_name: string
+          processed?: boolean
+          processed_at?: string | null
           quarter_applied: string
+          roster_key_id?: number | null
           state: string
           zip_code: string
         }
@@ -263,12 +273,17 @@ export type Database = {
           city?: string
           created_at?: string
           eaa_number?: string
+          eaa_verified?: boolean
           email?: string
           fee_amount?: number
+          fees_verified?: boolean
           first_name?: string
           id?: string
           last_name?: string
+          processed?: boolean
+          processed_at?: string | null
           quarter_applied?: string
+          roster_key_id?: number | null
           state?: string
           zip_code?: string
         }

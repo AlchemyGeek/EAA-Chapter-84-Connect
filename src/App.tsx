@@ -22,6 +22,7 @@ import UserRoles from "./pages/UserRoles";
 import VolunteeringOpportunities from "./pages/VolunteeringOpportunities";
 import MemberVolunteering from "./pages/MemberVolunteering";
 import NewMemberApplication from "./pages/NewMemberApplication";
+import NewMemberApplications from "./pages/NewMemberApplications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/membership-stats" element={<MembershipStatistics />} />
               <Route path="/membership-badges" element={<MembershipBadges />} />
               <Route path="/user-roles" element={<UserRoles />} />
+              <Route path="/new-member-applications" element={<NewMemberApplications />} />
           </Route>
           <Route path="/directory/:keyId" element={<MemberProfile />} />
           <Route path="/dues-payment" element={<DuesPayment />} />
