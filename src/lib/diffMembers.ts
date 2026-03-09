@@ -28,16 +28,36 @@ export function diffCurrentVsSnapshots(
     const snap = snapshotMap.get(member.key_id);
     if (!snap) {
       // Member exists now but wasn't in last import snapshot — added locally
-      changes.push({
-        key_id: member.key_id,
-        first_name: member.first_name || "",
-        last_name: member.last_name || "",
-        eaa_number: member.eaa_number || "",
-        change_type: "added",
-        field_name: null,
-        old_value: null,
-        new_value: null,
-      });
+      // Emit one row per non-empty field so the export includes all details
+      let hasFields = false;
+      for (const key of Object.keys(member)) {
+        if (SKIP_DIFF.has(key)) continue;
+        const val = member[key];
+        if (val == null || String(val) === "") continue;
+        hasFields = true;
+        changes.push({
+          key_id: member.key_id,
+          first_name: member.first_name || "",
+          last_name: member.last_name || "",
+          eaa_number: member.eaa_number || "",
+          change_type: "added",
+          field_name: key,
+          old_value: null,
+          new_value: String(val),
+        });
+      }
+      if (!hasFields) {
+        changes.push({
+          key_id: member.key_id,
+          first_name: member.first_name || "",
+          last_name: member.last_name || "",
+          eaa_number: member.eaa_number || "",
+          change_type: "added",
+          field_name: null,
+          old_value: null,
+          new_value: null,
+        });
+      }
       continue;
     }
 
