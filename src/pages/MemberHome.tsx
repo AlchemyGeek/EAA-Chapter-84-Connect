@@ -265,7 +265,7 @@ export default function MemberHome() {
                 href="mailto:membership@eaa84.org"
                 className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 inline-flex items-center rounded-md px-3 text-sm font-medium h-9 min-h-[44px]"
               >
-                <Phone className="h-4 w-4 mr-1.5" />
+                <Mail className="h-4 w-4 mr-1.5" />
                 Contact Us
               </a>
               <Button
