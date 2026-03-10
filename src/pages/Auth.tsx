@@ -46,6 +46,15 @@ const Auth = () => {
           </div>
           <CardTitle className="text-2xl">Chapter 84 Connect</CardTitle>
           <CardDescription>{isSignUp ? "Create an account" : "Sign in to continue"}</CardDescription>
+          {isSignUp && (
+            <p className="text-sm text-muted-foreground mt-3 text-left leading-relaxed">
+              Chapter 84 Connect is the services portal for EAA Chapter 84 members. To sign up, use the email address you have registered with the chapter. If you don't remember which email you used, or if you did not provide one, please contact{" "}
+              <a href="mailto:membership@eaa84.org" className="text-primary underline hover:text-primary/80">membership@eaa84.org</a>{" "}
+              for assistance. If you are not yet a chapter member, please use the{" "}
+              <a href="/join" className="text-primary underline hover:text-primary/80">New Member Application</a>{" "}
+              to join.
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
