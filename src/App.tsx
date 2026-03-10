@@ -44,6 +44,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/home" element={<MemberHome />} />
           {/* Admin routes still use the sidebar layout */}
           <Route element={<AppLayout />}>
