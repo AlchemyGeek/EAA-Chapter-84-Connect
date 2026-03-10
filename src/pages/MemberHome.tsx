@@ -477,22 +477,6 @@ export default function MemberHome() {
             </CardContent>
           </Card>
         )}
-
-        {/* Contact Us */}
-        <Card>
-          <CardContent className="p-4">
-            <a
-              href="mailto:membership@eaa84.org"
-              className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted min-h-[44px]"
-            >
-              <span className="flex items-center gap-2.5">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                Contact Us — membership@eaa84.org
-              </span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </a>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Floating debug button */}
