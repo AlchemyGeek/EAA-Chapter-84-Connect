@@ -12,6 +12,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [rosterError, setRosterError] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -22,6 +23,23 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        // Check email against roster first
+        const { data: emailExists, error: rpcError } = await supabase.rpc("check_email_in_roster", { _email: email });
+        if (rpcError) throw rpcError;
+
+        if (!emailExists) {
+          toast({
+            title: "Email not found",
+            description: "We could not find your email in our member roster. If you believe this is an error, please contact membership@eaa84.org and we will be happy to help.",
+            variant: "destructive",
+            duration: 10000,
+          });
+          setLoading(false);
+          setRosterError(true);
+          return;
+        }
+
+        setRosterError(false);
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         toast({ title: "Check your email", description: "We sent you a confirmation link." });
@@ -70,6 +88,19 @@ const Auth = () => {
               {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
             </Button>
           </form>
+          {rosterError && isSignUp && (
+            <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+              <p>
+                We could not find your email in our member roster. If you believe this is an error, please contact{" "}
+                <a href="mailto:membership@eaa84.org" className="underline font-medium hover:text-destructive/80">membership@eaa84.org</a>{" "}
+                and we will be happy to help.
+              </p>
+              <p className="mt-2">
+                If you are not yet a member and would like to join the chapter, please complete the{" "}
+                <a href="/join" className="underline font-medium hover:text-destructive/80">New Member Application</a>.
+              </p>
+            </div>
+          )}
           <div className="mt-4 text-center text-sm text-muted-foreground">
             <button type="button" className="underline hover:text-foreground min-h-0 min-w-0" onClick={() => setIsSignUp(!isSignUp)}>
               {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}

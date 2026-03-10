@@ -776,6 +776,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_email_in_roster: { Args: { _email: string }; Returns: boolean }
       get_user_emails_by_ids: {
         Args: { _user_ids: string[] }
         Returns: {
