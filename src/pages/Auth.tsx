@@ -22,6 +22,23 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        // Check email against roster first
+        const { data: emailExists, error: rpcError } = await supabase.rpc("check_email_in_roster", { _email: email });
+        if (rpcError) throw rpcError;
+
+        if (!emailExists) {
+          toast({
+            title: "Email not found",
+            description: "We could not find your email in our member roster. If you believe this is an error, please contact membership@eaa84.org and we will be happy to help.",
+            variant: "destructive",
+            duration: 10000,
+          });
+          setLoading(false);
+          setRosterError(true);
+          return;
+        }
+
+        setRosterError(false);
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         toast({ title: "Check your email", description: "We sent you a confirmation link." });
