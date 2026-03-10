@@ -88,6 +88,19 @@ const Auth = () => {
               {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
             </Button>
           </form>
+          {rosterError && isSignUp && (
+            <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+              <p>
+                We could not find your email in our member roster. If you believe this is an error, please contact{" "}
+                <a href="mailto:membership@eaa84.org" className="underline font-medium hover:text-destructive/80">membership@eaa84.org</a>{" "}
+                and we will be happy to help.
+              </p>
+              <p className="mt-2">
+                If you are not yet a member and would like to join the chapter, please complete the{" "}
+                <a href="/join" className="underline font-medium hover:text-destructive/80">New Member Application</a>.
+              </p>
+            </div>
+          )}
           <div className="mt-4 text-center text-sm text-muted-foreground">
             <button type="button" className="underline hover:text-foreground min-h-0 min-w-0" onClick={() => setIsSignUp(!isSignUp)}>
               {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
