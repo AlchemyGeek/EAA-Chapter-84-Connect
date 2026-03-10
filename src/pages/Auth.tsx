@@ -28,12 +28,6 @@ const Auth = () => {
         if (rpcError) throw rpcError;
 
         if (!emailExists) {
-          toast({
-            title: "Email not found",
-            description: "We could not find your email in our member roster. If you believe this is an error, please contact membership@eaa84.org and we will be happy to help.",
-            variant: "destructive",
-            duration: 10000,
-          });
           setLoading(false);
           setRosterError(true);
           return;
