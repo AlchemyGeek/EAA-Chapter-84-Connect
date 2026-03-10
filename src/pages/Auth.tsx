@@ -8,10 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { useToast } from "@/hooks/use-toast";
 
+type AuthMode = "signin" | "signup" | "forgot";
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<AuthMode>("signin");
   const [rosterError, setRosterError] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -22,8 +24,13 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        // Check email against roster first
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast({ title: "Check your email", description: "We sent you a password reset link." });
+      } else if (mode === "signup") {
         const { data: emailExists, error: rpcError } = await supabase.rpc("check_email_in_roster", { _email: email });
         if (rpcError) throw rpcError;
 
@@ -49,6 +56,9 @@ const Auth = () => {
     }
   };
 
+  const title = mode === "forgot" ? "Reset password" : mode === "signup" ? "Create an account" : "Sign in to continue";
+  const buttonLabel = mode === "forgot" ? "Send Reset Link" : mode === "signup" ? "Sign Up" : "Sign In";
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -57,14 +67,19 @@ const Auth = () => {
             <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-16 w-16 rounded-full" />
           </div>
           <CardTitle className="text-2xl">Chapter 84 Connect</CardTitle>
-          <CardDescription>{isSignUp ? "Create an account" : "Sign in to continue"}</CardDescription>
-          {isSignUp && (
+          <CardDescription>{title}</CardDescription>
+          {mode === "signup" && (
             <p className="text-sm text-muted-foreground mt-3 text-left leading-relaxed">
               Chapter 84 Connect is the services portal for our chapter. To sign up, use the email address you have registered with the chapter. If you don't remember which email you used, or if you did not provide one, please contact{" "}
               <a href="mailto:membership@eaa84.org" className="text-primary underline hover:text-primary/80">membership@eaa84.org</a>{" "}
               for assistance. If you are not yet a chapter member, please use the{" "}
               <a href="/join" className="text-primary underline hover:text-primary/80">New Member Application</a>{" "}
               to join.
+            </p>
+          )}
+          {mode === "forgot" && (
+            <p className="text-sm text-muted-foreground mt-3 text-left leading-relaxed">
+              Enter your email address and we'll send you a link to reset your password.
             </p>
           )}
         </CardHeader>
@@ -74,15 +89,17 @@ const Auth = () => {
               <Label htmlFor="email">Email address</Label>
               <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-            </div>
+            {mode !== "forgot" && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+              {loading ? "Loading..." : buttonLabel}
             </Button>
           </form>
-          {rosterError && isSignUp && (
+          {rosterError && mode === "signup" && (
             <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               <p>
                 We could not find your email in our member roster. If you believe this is an error, please contact{" "}
@@ -95,10 +112,27 @@ const Auth = () => {
               </p>
             </div>
           )}
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            <button type="button" className="underline hover:text-foreground min-h-0 min-w-0" onClick={() => setIsSignUp(!isSignUp)}>
-              {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
-            </button>
+          <div className="mt-4 text-center text-sm text-muted-foreground space-y-1">
+            {mode === "signin" && (
+              <>
+                <button type="button" className="block w-full underline hover:text-foreground min-h-0 min-w-0" onClick={() => setMode("forgot")}>
+                  Forgot your password?
+                </button>
+                <button type="button" className="block w-full underline hover:text-foreground min-h-0 min-w-0" onClick={() => setMode("signup")}>
+                  Need an account? Sign up
+                </button>
+              </>
+            )}
+            {mode === "signup" && (
+              <button type="button" className="underline hover:text-foreground min-h-0 min-w-0" onClick={() => setMode("signin")}>
+                Already have an account? Sign in
+              </button>
+            )}
+            {mode === "forgot" && (
+              <button type="button" className="underline hover:text-foreground min-h-0 min-w-0" onClick={() => setMode("signin")}>
+                Back to sign in
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>
