@@ -301,6 +301,68 @@ export default function DuesPayment() {
       queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
     },
   });
+
+  // Edit/Delete state
+  const [editingPayment, setEditingPayment] = useState<DuesPayment | null>(null);
+  const [editDate, setEditDate] = useState<Date>(new Date());
+  const [editAmount, setEditAmount] = useState("");
+  const [editMethod, setEditMethod] = useState("");
+  const [deletingPayment, setDeletingPayment] = useState<DuesPayment | null>(null);
+
+  const openEditDialog = (p: DuesPayment) => {
+    setEditingPayment(p);
+    setEditDate(new Date(p.payment_date));
+    setEditAmount(String(p.amount));
+    setEditMethod(p.method);
+  };
+
+  const updatePayment = useMutation({
+    mutationFn: async () => {
+      if (!editingPayment) throw new Error("No payment selected");
+      const methodObj = PAYMENT_METHODS.find((m) => m.label === editMethod);
+      if (!methodObj) throw new Error("Invalid method");
+      const amountNum = parseFloat(editAmount);
+      if (isNaN(amountNum) || amountNum <= 0) throw new Error("Invalid amount");
+
+      const { error } = await supabase
+        .from("dues_payments" as any)
+        .update({
+          payment_date: format(editDate, "yyyy-MM-dd"),
+          amount: amountNum,
+          method: editMethod,
+          method_code: methodObj.code,
+        } as any)
+        .eq("id", editingPayment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Payment updated" });
+      setEditingPayment(null);
+      queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deletePayment = useMutation({
+    mutationFn: async () => {
+      if (!deletingPayment) throw new Error("No payment selected");
+      const { error } = await supabase
+        .from("dues_payments" as any)
+        .delete()
+        .eq("id", deletingPayment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Payment deleted" });
+      setDeletingPayment(null);
+      queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
   // Find current user's member name for recording
   const currentUserMember = useMemo(() => {
     if (!user?.email) return null;
