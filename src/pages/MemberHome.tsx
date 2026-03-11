@@ -377,6 +377,37 @@ export default function MemberHome() {
           </Card>
         )}
 
+        {/* Dues reminder for active members with expired/expiring dues */}
+        {member && !isInactive && needsDuesReminder && (
+          <Card className="border-2 border-amber-300/60 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/40 shadow-md">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-amber-100 dark:bg-amber-900/30 p-2 shrink-0">
+                  <CircleDollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground leading-relaxed">
+                    {duesExpired
+                      ? "Your chapter dues have expired. Please renew to keep enjoying all chapter programs and events!"
+                      : "Your chapter dues are expiring soon. Renew now to stay current!"}
+                  </p>
+                  {renewalLink ? (
+                    <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
+                      <Button className="mt-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+                        Renew Membership
+                      </Button>
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Please contact your chapter coordinator for renewal information.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Editable & read-only sections */}
         {member && (
           <div className="space-y-2">
