@@ -185,10 +185,17 @@ export default function DuesPayment() {
     return map;
   }, [allMembers]);
 
-  const isInactive = selectedMember
-    ? selectedMember.current_standing !== "Active" ||
-      (selectedMember.expiration_date && new Date(selectedMember.expiration_date) < new Date())
+  const isStandingInactive = selectedMember
+    ? selectedMember.current_standing !== "Active"
     : false;
+
+  const isOverdue = selectedMember
+    ? selectedMember.current_standing === "Active" &&
+      !!selectedMember.expiration_date &&
+      new Date(selectedMember.expiration_date) < new Date()
+    : false;
+
+  const isInactive = isStandingInactive || isOverdue;
 
   const newExpiration = selectedMember
     ? computeNewExpiration(selectedMember.expiration_date)
@@ -356,8 +363,9 @@ export default function DuesPayment() {
                       {selectedMember.first_name} {selectedMember.last_name}
                     </h3>
                     <div className="flex gap-1.5">
-                      <Badge variant={isInactive ? "destructive" : "secondary"}>
-                        {isInactive ? "Inactive" : "Active"}
+                      <Badge variant={isStandingInactive ? "destructive" : isOverdue ? "secondary" : "secondary"}
+                        className={isOverdue ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : ""}>
+                        {isStandingInactive ? "Inactive" : isOverdue ? "Active — Overdue" : "Active"}
                       </Badge>
                       {selectedMember.member_type && (
                         <Badge variant="outline" className="text-xs">{selectedMember.member_type}</Badge>
