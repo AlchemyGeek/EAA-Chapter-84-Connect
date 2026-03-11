@@ -517,7 +517,7 @@ export default function MemberHome() {
         )}
 
         {/* Admin tools */}
-        {viewIsAdmin && !isInactive && (
+        {viewIsAdmin && !isRestricted && (
           <Card className="border-secondary/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
