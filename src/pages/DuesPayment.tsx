@@ -664,12 +664,12 @@ export default function DuesPayment() {
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[25%]">Member</TableHead>
-                      <TableHead className="w-[16%]">Date</TableHead>
-                      <TableHead className="w-[12%]">Amount</TableHead>
-                      <TableHead className="w-[14%]">Method</TableHead>
-                      <TableHead className="w-[23%]">Received By</TableHead>
-                      <TableHead className="w-[10%]">Actions</TableHead>
+                      <TableHead className="w-[24%]">Member</TableHead>
+                      <TableHead className="w-[15%]">Date</TableHead>
+                      <TableHead className="w-[11%]">Amount</TableHead>
+                      <TableHead className="w-[12%]">Method</TableHead>
+                      <TableHead className="w-[22%]">Received By</TableHead>
+                      <TableHead className="w-[16%]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
