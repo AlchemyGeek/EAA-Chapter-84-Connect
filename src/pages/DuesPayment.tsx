@@ -661,7 +661,7 @@ export default function DuesPayment() {
                 })}
               </div>
             ) : (
-              <div className="rounded-md border max-h-[400px] overflow-y-auto">
+              <div className="rounded-md border max-h-[400px] overflow-y-auto overflow-x-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
