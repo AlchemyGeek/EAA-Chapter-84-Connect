@@ -31,7 +31,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; path: string } | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const { data: images = [], isLoading } = useQuery({
     queryKey: ["member-images", keyId],
