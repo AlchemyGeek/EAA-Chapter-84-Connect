@@ -474,12 +474,12 @@ export default function MemberHome() {
         )}
 
         {/* Member Services */}
-        <Card className={isInactive ? "opacity-60 relative" : ""}>
+        <Card className={isRestricted ? "opacity-60 relative" : ""}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Member Services</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
-            {isInactive ? (
+            {isRestricted ? (
               <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-3 text-sm text-muted-foreground">
                 <Shield className="h-4 w-4 shrink-0" />
                 <span>Renew your membership to access chapter services and resources.</span>
