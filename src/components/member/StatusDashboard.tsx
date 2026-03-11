@@ -119,7 +119,7 @@ export function StatusDashboard({
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${config.badgeClass}`}>
-                {config.label}
+                {displayLabel}
               </span>
               {memberType && (
                 <Badge variant="secondary" className="text-xs">
