@@ -43,7 +43,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck, ArrowLeft, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { CalendarIcon, Search, CheckCircle, CircleDollarSign, ArrowLeft, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
