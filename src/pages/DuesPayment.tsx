@@ -686,7 +686,7 @@ export default function DuesPayment() {
                           <TableCell className="whitespace-nowrap">{format(new Date(p.payment_date), "MMM d, yyyy")}</TableCell>
                           <TableCell className="whitespace-nowrap">${Number(p.amount).toFixed(2)}</TableCell>
                           <TableCell>{p.method}</TableCell>
-                          <TableCell className="whitespace-nowrap">{format(new Date(p.new_expiration_date), "MMM d, yyyy")}</TableCell>
+                          
                           <TableCell className="text-muted-foreground">
                             <span className="block truncate">{(p as any).recorded_by_name || "—"}</span>
                           </TableCell>
