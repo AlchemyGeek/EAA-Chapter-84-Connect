@@ -222,6 +222,9 @@ export default function MemberHome() {
     return daysUntil <= 60;
   })();
   const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
+  // Active but overdue = active standing with expired dues
+  const isOverdue = !!member && !isInactive && duesExpired;
+  const isRestricted = isInactive || isOverdue;
 
   // Find renewal link from chapter fees (look for "annual" or "renewal" in the fee name)
   const renewalFee = chapterFees.find(
