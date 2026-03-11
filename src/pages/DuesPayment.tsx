@@ -661,8 +661,8 @@ export default function DuesPayment() {
                 })}
               </div>
             ) : (
-              <div className="rounded-md border max-h-[400px] overflow-y-auto overflow-x-hidden">
-                <Table className="table-fixed">
+              <div className="rounded-md border max-h-[400px] overflow-y-auto overflow-x-hidden [&>div]:overflow-visible">
+                <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[22%]">Member</TableHead>
