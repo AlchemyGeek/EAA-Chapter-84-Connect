@@ -223,10 +223,13 @@ export default function MemberHome() {
   })();
   const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
 
-  // Find renewal link from site_links
-  const renewalLink = siteLinks.find(
-    (l) => l.name.toLowerCase().includes("renewal") || l.name.toLowerCase().includes("renew")
+  // Find renewal link from chapter fees (look for "annual" or "renewal" in the fee name)
+  const renewalFee = chapterFees.find(
+    (f) => f.name.toLowerCase().includes("annual") || f.name.toLowerCase().includes("renewal") || f.name.toLowerCase().includes("renew")
   );
+  const renewalUrl = renewalFee?.payment_url || siteLinks.find(
+    (l) => l.name.toLowerCase().includes("renewal") || l.name.toLowerCase().includes("renew")
+  )?.url;
 
   const contactFieldDefs: EditableFieldDef[] = [
     { label: "Nickname", key: "nickname" },
