@@ -363,8 +363,9 @@ export default function DuesPayment() {
                       {selectedMember.first_name} {selectedMember.last_name}
                     </h3>
                     <div className="flex gap-1.5">
-                      <Badge variant={isInactive ? "destructive" : "secondary"}>
-                        {isInactive ? "Inactive" : "Active"}
+                      <Badge variant={isStandingInactive ? "destructive" : isOverdue ? "secondary" : "secondary"}
+                        className={isOverdue ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" : ""}>
+                        {isStandingInactive ? "Inactive" : isOverdue ? "Active — Overdue" : "Active"}
                       </Badge>
                       {selectedMember.member_type && (
                         <Badge variant="outline" className="text-xs">{selectedMember.member_type}</Badge>
