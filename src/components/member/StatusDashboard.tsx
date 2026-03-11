@@ -7,11 +7,10 @@ type MembershipStatus = "good" | "expiring" | "lapsed";
 function computeStatus(
   currentStanding: string | null,
   expirationDate: string | null
-): { status: MembershipStatus; message: string; coverageYear: number | null } {
+): { status: MembershipStatus; message: string; coverageYear: number | null; overdue: boolean } {
   const now = new Date();
   const expDate = expirationDate ? new Date(expirationDate) : null;
 
-  // Inactive is determined solely by the standing field
   if (currentStanding !== "Active") {
     return {
       status: "lapsed",
@@ -19,57 +18,41 @@ function computeStatus(
         ? `Your membership is inactive. Last expiration: ${expDate.toLocaleDateString()}.`
         : "Your membership is inactive.",
       coverageYear: null,
+      overdue: false,
     };
   }
 
-  // Active member — use expiration date for renewal reminders
   if (!expDate) {
-    return {
-      status: "good",
-      message: "You're in good standing.",
-      coverageYear: null,
-    };
+    return { status: "good", message: "You're in good standing.", coverageYear: null, overdue: false };
   }
 
-  // Coverage year = expiration year - 1
   const coverageYear = expDate.getFullYear() - 1;
 
-  // Already past expiration — prompt renewal
   if (expDate < now) {
     return {
       status: "expiring",
       message: `Your dues expired on ${expDate.toLocaleDateString()}. Please renew to stay current.`,
       coverageYear,
+      overdue: true,
     };
   }
 
-  // Expiring within 60 days
-  const daysUntil = Math.ceil(
-    (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const daysUntil = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   if (daysUntil <= 60) {
     return {
       status: "expiring",
       message: `Your dues expire in ${daysUntil} days. Please renew to stay current.`,
       coverageYear,
+      overdue: false,
     };
   }
 
-  return {
-    status: "good",
-    message: `You're in good standing through ${coverageYear}.`,
-    coverageYear,
-  };
+  return { status: "good", message: `You're in good standing through ${coverageYear}.`, coverageYear, overdue: false };
 }
 
 const statusConfig: Record<
   MembershipStatus,
-  {
-    icon: typeof CheckCircle2;
-    label: string;
-    badgeClass: string;
-    cardClass: string;
-  }
+  { icon: typeof CheckCircle2; label: string; badgeClass: string; cardClass: string }
 > = {
   good: {
     icon: CheckCircle2,
@@ -134,9 +117,7 @@ export function StatusDashboard({
             </div>
             <p className="text-sm text-muted-foreground">{message}</p>
             {eaaNumber && (
-              <p className="text-xs text-muted-foreground">
-                EAA #{eaaNumber}
-              </p>
+              <p className="text-xs text-muted-foreground">EAA #{eaaNumber}</p>
             )}
             {expirationDate && (
               <p className="text-xs text-muted-foreground">
