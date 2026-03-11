@@ -473,7 +473,7 @@ export default function MemberHome() {
               }
               directoryToggleDisabled={toggleVisibility.isPending}
             />
-            <MemberImageGallery keyId={member.key_id} editable={!isImpersonating} />
+            <MemberImageGallery keyId={member.key_id} editable={!isImpersonating || isAdmin} />
           </div>
         )}
 
