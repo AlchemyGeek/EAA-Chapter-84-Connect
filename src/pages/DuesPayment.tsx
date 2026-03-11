@@ -285,22 +285,7 @@ export default function DuesPayment() {
     },
   });
 
-  // Mark all as exported
-  const markExported = useMutation({
-    mutationFn: async () => {
-      const unexported = payments.filter((p) => !p.exported).map((p) => p.id);
-      if (unexported.length === 0) return;
-      const { error } = await supabase
-        .from("dues_payments" as any)
-        .update({ exported: true } as any)
-        .in("id", unexported);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Marked as exported" });
-      queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
-    },
-  });
+
 
   // Edit/Delete state
   const [editingPayment, setEditingPayment] = useState<DuesPayment | null>(null);
