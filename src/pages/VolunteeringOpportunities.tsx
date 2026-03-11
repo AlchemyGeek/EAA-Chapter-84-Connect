@@ -411,7 +411,6 @@ export default function VolunteeringOpportunities() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Closed">Closed</SelectItem>
                           <SelectItem value="Completed">Completed</SelectItem>
                         </SelectContent>
                       </Select>
