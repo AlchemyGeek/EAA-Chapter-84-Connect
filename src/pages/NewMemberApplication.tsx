@@ -133,11 +133,19 @@ export default function NewMemberApplication() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
-        {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Join as a New Member
-          </h1>
+        {/* Branding Header */}
+        <div className="flex items-center gap-4">
+          <img
+            src={chapterLogo}
+            alt="EAA Chapter 84"
+            className="h-14 w-14 rounded-full ring-2 ring-border"
+          />
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              EAA Chapter 84
+            </h1>
+            <p className="text-sm text-muted-foreground">Join as a New Member</p>
+          </div>
         </div>
 
         {/* Intro text */}
