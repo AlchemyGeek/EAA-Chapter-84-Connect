@@ -222,6 +222,9 @@ export default function MemberHome() {
     return daysUntil <= 60;
   })();
   const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
+  // Active but overdue = active standing with expired dues
+  const isOverdue = !!member && !isInactive && duesExpired;
+  const isRestricted = isInactive || isOverdue;
 
   // Find renewal link from chapter fees (look for "annual" or "renewal" in the fee name)
   const renewalFee = chapterFees.find(
@@ -471,12 +474,12 @@ export default function MemberHome() {
         )}
 
         {/* Member Services */}
-        <Card className={isInactive ? "opacity-60 relative" : ""}>
+        <Card className={isRestricted ? "opacity-60 relative" : ""}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Member Services</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
-            {isInactive ? (
+            {isRestricted ? (
               <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-3 text-sm text-muted-foreground">
                 <Shield className="h-4 w-4 shrink-0" />
                 <span>Renew your membership to access chapter services and resources.</span>
@@ -495,7 +498,7 @@ export default function MemberHome() {
         </Card>
 
         {/* Officer Services */}
-        {viewIsOfficerOrAbove && !isInactive && (
+        {viewIsOfficerOrAbove && !isRestricted && (
           <Card className="border-accent/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -514,7 +517,7 @@ export default function MemberHome() {
         )}
 
         {/* Admin tools */}
-        {viewIsAdmin && !isInactive && (
+        {viewIsAdmin && !isRestricted && (
           <Card className="border-secondary/30">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
