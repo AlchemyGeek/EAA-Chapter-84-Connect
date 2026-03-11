@@ -11,28 +11,37 @@ function computeStatus(
   const now = new Date();
   const expDate = expirationDate ? new Date(expirationDate) : null;
 
-  // If not active or no expiration → lapsed
-  if (currentStanding !== "Active" || !expDate) {
+  // Inactive is determined solely by the standing field
+  if (currentStanding !== "Active") {
     return {
       status: "lapsed",
       message: expDate
-        ? `Your membership expired on ${expDate.toLocaleDateString()}.`
-        : "No expiration date on file.",
+        ? `Your membership is inactive. Last expiration: ${expDate.toLocaleDateString()}.`
+        : "Your membership is inactive.",
       coverageYear: null,
     };
   }
 
-  // Expiration date is in the past
+  // Active member — use expiration date for renewal reminders
+  if (!expDate) {
+    return {
+      status: "good",
+      message: "You're in good standing.",
+      coverageYear: null,
+    };
+  }
+
+  // Coverage year = expiration year - 1
+  const coverageYear = expDate.getFullYear() - 1;
+
+  // Already past expiration — prompt renewal
   if (expDate < now) {
     return {
-      status: "lapsed",
-      message: `Your membership expired on ${expDate.toLocaleDateString()}.`,
-      coverageYear: null,
+      status: "expiring",
+      message: `Your dues expired on ${expDate.toLocaleDateString()}. Please renew to stay current.`,
+      coverageYear,
     };
   }
-
-  // Coverage year = expiration year - 1 (e.g. expires 03/10/2027 → covered through 2026)
-  const coverageYear = expDate.getFullYear() - 1;
 
   // Expiring within 60 days
   const daysUntil = Math.ceil(
@@ -41,7 +50,7 @@ function computeStatus(
   if (daysUntil <= 60) {
     return {
       status: "expiring",
-      message: `Your membership expires in ${daysUntil} days. Please renew to stay current.`,
+      message: `Your dues expire in ${daysUntil} days. Please renew to stay current.`,
       coverageYear,
     };
   }
