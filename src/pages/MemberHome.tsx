@@ -56,10 +56,14 @@ export default function MemberHome() {
     queryKey: ["my-member", user?.email],
     enabled: !!user?.email,
     queryFn: async () => {
+      const authEmail = user?.email?.trim();
+      if (!authEmail) return null;
+
       const { data, error } = await supabase
         .from("roster_members")
         .select("*")
-        .eq("email", user!.email!)
+        .ilike("email", authEmail)
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;
