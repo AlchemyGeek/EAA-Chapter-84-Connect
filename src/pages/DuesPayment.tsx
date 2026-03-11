@@ -185,10 +185,17 @@ export default function DuesPayment() {
     return map;
   }, [allMembers]);
 
-  const isInactive = selectedMember
-    ? selectedMember.current_standing !== "Active" ||
-      (selectedMember.expiration_date && new Date(selectedMember.expiration_date) < new Date())
+  const isStandingInactive = selectedMember
+    ? selectedMember.current_standing !== "Active"
     : false;
+
+  const isOverdue = selectedMember
+    ? selectedMember.current_standing === "Active" &&
+      !!selectedMember.expiration_date &&
+      new Date(selectedMember.expiration_date) < new Date()
+    : false;
+
+  const isInactive = isStandingInactive || isOverdue;
 
   const newExpiration = selectedMember
     ? computeNewExpiration(selectedMember.expiration_date)
