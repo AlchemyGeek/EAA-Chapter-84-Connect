@@ -10,7 +10,6 @@ import { toast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
   Active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  Closed: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
   Completed: "bg-muted text-muted-foreground",
 };
 
