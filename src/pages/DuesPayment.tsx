@@ -586,18 +586,6 @@ export default function DuesPayment() {
                     <SelectItem value="all">All Payments</SelectItem>
                   </SelectContent>
                 </Select>
-                {recentCount > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs gap-1"
-                    onClick={() => markExported.mutate()}
-                    disabled={markExported.isPending}
-                  >
-                    <PackageCheck className="h-3 w-3" />
-                    Mark Exported
-                  </Button>
-                )}
               </div>
             </div>
           </CardHeader>
