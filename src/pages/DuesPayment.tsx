@@ -680,13 +680,17 @@ export default function DuesPayment() {
                       return (
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">
-                            {m ? `${m.last_name}, ${m.first_name}` : `Key ${p.key_id}`}
+                            <span className="block truncate">
+                              {m ? `${m.last_name}, ${m.first_name}` : `Key ${p.key_id}`}
+                            </span>
                           </TableCell>
-                          <TableCell>{format(new Date(p.payment_date), "MMM d, yyyy")}</TableCell>
-                          <TableCell>${Number(p.amount).toFixed(2)}</TableCell>
+                          <TableCell className="whitespace-nowrap">{format(new Date(p.payment_date), "MMM d, yyyy")}</TableCell>
+                          <TableCell className="whitespace-nowrap">${Number(p.amount).toFixed(2)}</TableCell>
                           <TableCell>{p.method}</TableCell>
-                          <TableCell>{format(new Date(p.new_expiration_date), "MMM d, yyyy")}</TableCell>
-                          <TableCell className="text-muted-foreground">{(p as any).recorded_by_name || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{format(new Date(p.new_expiration_date), "MMM d, yyyy")}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            <span className="block truncate">{(p as any).recorded_by_name || "—"}</span>
+                          </TableCell>
                           <TableCell>
                             {!p.exported && (
                               <div className="flex gap-1">
