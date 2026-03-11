@@ -376,8 +376,8 @@ export default function MemberHome() {
                     — please renew your subscription using the link below to continue participating
                     in chapter programs and events.
                   </p>
-                  {renewalLink ? (
-                    <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
+                  {renewalUrl ? (
+                    <a href={renewalUrl} target="_blank" rel="noopener noreferrer">
                       <Button className="mt-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold">
                         Renew Membership
                       </Button>
