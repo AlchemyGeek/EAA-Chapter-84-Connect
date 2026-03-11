@@ -407,8 +407,8 @@ export default function MemberHome() {
                       ? "Your chapter dues have expired. Please renew to keep enjoying all chapter programs and events!"
                       : "Your chapter dues are expiring soon. Renew now to stay current!"}
                   </p>
-                  {renewalLink ? (
-                    <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
+                  {renewalUrl ? (
+                    <a href={renewalUrl} target="_blank" rel="noopener noreferrer">
                       <Button className="mt-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
                         Renew Membership
                       </Button>
