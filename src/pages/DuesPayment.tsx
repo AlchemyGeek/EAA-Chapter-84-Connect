@@ -634,7 +634,15 @@ export default function DuesPayment() {
                           <span className="font-medium text-sm">
                             {m ? `${m.last_name}, ${m.first_name}` : `Key ${p.key_id}`}
                           </span>
-                          <span className="font-semibold text-sm">${Number(p.amount).toFixed(2)}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-sm mr-1">${Number(p.amount).toFixed(2)}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(p)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingPayment(p)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>{p.method} · {format(new Date(p.payment_date), "MMM d, yyyy")}</span>
