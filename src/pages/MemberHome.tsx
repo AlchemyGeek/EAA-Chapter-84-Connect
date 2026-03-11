@@ -94,6 +94,19 @@ export default function MemberHome() {
     },
   });
 
+  // Fetch chapter fees for renewal payment URL
+  const { data: chapterFees = [] } = useQuery({
+    queryKey: ["chapter-fees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chapter_fees")
+        .select("*")
+        .order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch active volunteering opportunities count
   const { data: activeVolCount = 0 } = useQuery({
     queryKey: ["active-vol-count"],
