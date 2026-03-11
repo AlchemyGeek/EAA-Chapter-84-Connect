@@ -43,7 +43,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck, ArrowLeft, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { CalendarIcon, Search, CheckCircle, CircleDollarSign, ArrowLeft, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -285,22 +285,7 @@ export default function DuesPayment() {
     },
   });
 
-  // Mark all as exported
-  const markExported = useMutation({
-    mutationFn: async () => {
-      const unexported = payments.filter((p) => !p.exported).map((p) => p.id);
-      if (unexported.length === 0) return;
-      const { error } = await supabase
-        .from("dues_payments" as any)
-        .update({ exported: true } as any)
-        .in("id", unexported);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Marked as exported" });
-      queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
-    },
-  });
+
 
   // Edit/Delete state
   const [editingPayment, setEditingPayment] = useState<DuesPayment | null>(null);
@@ -601,18 +586,6 @@ export default function DuesPayment() {
                     <SelectItem value="all">All Payments</SelectItem>
                   </SelectContent>
                 </Select>
-                {recentCount > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs gap-1"
-                    onClick={() => markExported.mutate()}
-                    disabled={markExported.isPending}
-                  >
-                    <PackageCheck className="h-3 w-3" />
-                    Mark Exported
-                  </Button>
-                )}
               </div>
             </div>
           </CardHeader>
