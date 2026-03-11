@@ -195,13 +195,20 @@ export default function MemberHome() {
 
   const member = impersonateKeyId ? impersonatedMember : myMember;
 
-  // Determine if member is inactive/lapsed
-  const isInactive = (() => {
-    if (!member) return false;
-    if (member.current_standing !== "Active") return true;
-    if (member.expiration_date && new Date(member.expiration_date) < new Date()) return true;
-    return false;
+  // Inactive = standing is not Active (expiration date no longer factors in)
+  const isInactive = !!member && member.current_standing !== "Active";
+
+  // Dues reminder for active members whose expiration has passed or is within 60 days
+  const needsDuesReminder = (() => {
+    if (!member || isInactive) return false;
+    if (!member.expiration_date) return false;
+    const exp = new Date(member.expiration_date);
+    const now = new Date();
+    if (exp < now) return true;
+    const daysUntil = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return daysUntil <= 60;
   })();
+  const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
 
   // Find renewal link from site_links
   const renewalLink = siteLinks.find(
@@ -356,6 +363,37 @@ export default function MemberHome() {
                   {renewalLink ? (
                     <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
                       <Button className="mt-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold">
+                        Renew Membership
+                      </Button>
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Please contact your chapter coordinator for renewal information.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Dues reminder for active members with expired/expiring dues */}
+        {member && !isInactive && needsDuesReminder && (
+          <Card className="border-2 border-amber-300/60 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/40 shadow-md">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-amber-100 dark:bg-amber-900/30 p-2 shrink-0">
+                  <CircleDollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground leading-relaxed">
+                    {duesExpired
+                      ? "Your chapter dues have expired. Please renew to keep enjoying all chapter programs and events!"
+                      : "Your chapter dues are expiring soon. Renew now to stay current!"}
+                  </p>
+                  {renewalLink ? (
+                    <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
+                      <Button className="mt-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
                         Renew Membership
                       </Button>
                     </a>
