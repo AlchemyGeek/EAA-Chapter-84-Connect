@@ -648,9 +648,8 @@ export default function DuesPayment() {
                             )}
                           </div>
                         </div>
-                        <div className="flex justify-between text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground">
                           <span>{p.method} · {format(new Date(p.payment_date), "MMM d, yyyy")}</span>
-                          <span>→ {format(new Date(p.new_expiration_date), "MMM d, yyyy")}</span>
                         </div>
                         {(p as any).recorded_by_name && (
                           <p className="text-xs text-muted-foreground">Received by: {(p as any).recorded_by_name}</p>
@@ -665,13 +664,12 @@ export default function DuesPayment() {
                 <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[22%]">Member</TableHead>
-                      <TableHead className="w-[14%]">Date</TableHead>
-                      <TableHead className="w-[10%]">Amount</TableHead>
-                      <TableHead className="w-[12%]">Method</TableHead>
-                      <TableHead className="w-[14%]">New Expiration</TableHead>
-                      <TableHead className="w-[20%]">Received By</TableHead>
-                      <TableHead className="w-[8%]">Actions</TableHead>
+                      <TableHead className="w-[25%]">Member</TableHead>
+                      <TableHead className="w-[16%]">Date</TableHead>
+                      <TableHead className="w-[12%]">Amount</TableHead>
+                      <TableHead className="w-[14%]">Method</TableHead>
+                      <TableHead className="w-[23%]">Received By</TableHead>
+                      <TableHead className="w-[10%]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -687,7 +685,7 @@ export default function DuesPayment() {
                           <TableCell className="whitespace-nowrap">{format(new Date(p.payment_date), "MMM d, yyyy")}</TableCell>
                           <TableCell className="whitespace-nowrap">${Number(p.amount).toFixed(2)}</TableCell>
                           <TableCell>{p.method}</TableCell>
-                          <TableCell className="whitespace-nowrap">{format(new Date(p.new_expiration_date), "MMM d, yyyy")}</TableCell>
+                          
                           <TableCell className="text-muted-foreground">
                             <span className="block truncate">{(p as any).recorded_by_name || "—"}</span>
                           </TableCell>
