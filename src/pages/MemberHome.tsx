@@ -195,13 +195,20 @@ export default function MemberHome() {
 
   const member = impersonateKeyId ? impersonatedMember : myMember;
 
-  // Determine if member is inactive/lapsed
-  const isInactive = (() => {
-    if (!member) return false;
-    if (member.current_standing !== "Active") return true;
-    if (member.expiration_date && new Date(member.expiration_date) < new Date()) return true;
-    return false;
+  // Inactive = standing is not Active (expiration date no longer factors in)
+  const isInactive = !!member && member.current_standing !== "Active";
+
+  // Dues reminder for active members whose expiration has passed or is within 60 days
+  const needsDuesReminder = (() => {
+    if (!member || isInactive) return false;
+    if (!member.expiration_date) return false;
+    const exp = new Date(member.expiration_date);
+    const now = new Date();
+    if (exp < now) return true;
+    const daysUntil = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return daysUntil <= 60;
   })();
+  const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
 
   // Find renewal link from site_links
   const renewalLink = siteLinks.find(
