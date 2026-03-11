@@ -23,10 +23,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck, ArrowLeft, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Search, CheckCircle, CircleDollarSign, PackageCheck, ArrowLeft, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -282,6 +299,68 @@ export default function DuesPayment() {
     onSuccess: () => {
       toast({ title: "Marked as exported" });
       queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
+    },
+  });
+
+  // Edit/Delete state
+  const [editingPayment, setEditingPayment] = useState<DuesPayment | null>(null);
+  const [editDate, setEditDate] = useState<Date>(new Date());
+  const [editAmount, setEditAmount] = useState("");
+  const [editMethod, setEditMethod] = useState("");
+  const [deletingPayment, setDeletingPayment] = useState<DuesPayment | null>(null);
+
+  const openEditDialog = (p: DuesPayment) => {
+    setEditingPayment(p);
+    setEditDate(new Date(p.payment_date));
+    setEditAmount(String(p.amount));
+    setEditMethod(p.method);
+  };
+
+  const updatePayment = useMutation({
+    mutationFn: async () => {
+      if (!editingPayment) throw new Error("No payment selected");
+      const methodObj = PAYMENT_METHODS.find((m) => m.label === editMethod);
+      if (!methodObj) throw new Error("Invalid method");
+      const amountNum = parseFloat(editAmount);
+      if (isNaN(amountNum) || amountNum <= 0) throw new Error("Invalid amount");
+
+      const { error } = await supabase
+        .from("dues_payments" as any)
+        .update({
+          payment_date: format(editDate, "yyyy-MM-dd"),
+          amount: amountNum,
+          method: editMethod,
+          method_code: methodObj.code,
+        } as any)
+        .eq("id", editingPayment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Payment updated" });
+      setEditingPayment(null);
+      queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deletePayment = useMutation({
+    mutationFn: async () => {
+      if (!deletingPayment) throw new Error("No payment selected");
+      const { error } = await supabase
+        .from("dues_payments" as any)
+        .delete()
+        .eq("id", deletingPayment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Payment deleted" });
+      setDeletingPayment(null);
+      queryClient.invalidateQueries({ queryKey: ["dues-payments"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
   // Find current user's member name for recording
@@ -555,7 +634,15 @@ export default function DuesPayment() {
                           <span className="font-medium text-sm">
                             {m ? `${m.last_name}, ${m.first_name}` : `Key ${p.key_id}`}
                           </span>
-                          <span className="font-semibold text-sm">${Number(p.amount).toFixed(2)}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-sm mr-1">${Number(p.amount).toFixed(2)}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(p)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingPayment(p)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>{p.method} · {format(new Date(p.payment_date), "MMM d, yyyy")}</span>
@@ -580,6 +667,7 @@ export default function DuesPayment() {
                       <TableHead>Method</TableHead>
                       <TableHead>New Expiration</TableHead>
                       <TableHead>Received By</TableHead>
+                      <TableHead className="w-[80px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -595,6 +683,16 @@ export default function DuesPayment() {
                           <TableCell>{p.method}</TableCell>
                           <TableCell>{format(new Date(p.new_expiration_date), "MMM d, yyyy")}</TableCell>
                           <TableCell className="text-muted-foreground">{(p as any).recorded_by_name || "—"}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(p)}>
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingPayment(p)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -604,6 +702,77 @@ export default function DuesPayment() {
             )}
           </CardContent>
         </Card>
+
+        {/* Edit Payment Dialog */}
+        <Dialog open={!!editingPayment} onOpenChange={(open) => !open && setEditingPayment(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Payment</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Payment Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(editDate, "MMM d, yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={editDate} onSelect={(d) => d && setEditDate(d)} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>Amount ($)</Label>
+                <Input type="number" step="0.01" min="0" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Method</Label>
+                <Select value={editMethod} onValueChange={setEditMethod}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m.code} value={m.label}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingPayment(null)}>Cancel</Button>
+              <Button onClick={() => updatePayment.mutate()} disabled={updatePayment.isPending}>
+                {updatePayment.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation */}
+        <AlertDialog open={!!deletingPayment} onOpenChange={(open) => !open && setDeletingPayment(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this payment record? This action cannot be undone.
+                {deletingPayment && (() => {
+                  const m = memberMap.get(deletingPayment.key_id);
+                  return m ? ` (${m.first_name} ${m.last_name} — $${Number(deletingPayment.amount).toFixed(2)})` : "";
+                })()}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deletePayment.mutate()}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deletePayment.isPending ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
