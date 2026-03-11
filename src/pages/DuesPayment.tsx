@@ -662,16 +662,16 @@ export default function DuesPayment() {
               </div>
             ) : (
               <div className="rounded-md border max-h-[400px] overflow-y-auto overflow-x-hidden">
-                <Table>
+                <Table className="table-fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Member</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>New Expiration</TableHead>
-                      <TableHead>Received By</TableHead>
-                      <TableHead className="w-[80px]">Actions</TableHead>
+                      <TableHead className="w-[22%]">Member</TableHead>
+                      <TableHead className="w-[14%]">Date</TableHead>
+                      <TableHead className="w-[10%]">Amount</TableHead>
+                      <TableHead className="w-[12%]">Method</TableHead>
+                      <TableHead className="w-[14%]">New Expiration</TableHead>
+                      <TableHead className="w-[20%]">Received By</TableHead>
+                      <TableHead className="w-[8%]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
