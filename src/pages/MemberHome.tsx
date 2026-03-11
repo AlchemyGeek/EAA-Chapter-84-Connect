@@ -94,6 +94,19 @@ export default function MemberHome() {
     },
   });
 
+  // Fetch chapter fees for renewal payment URL
+  const { data: chapterFees = [] } = useQuery({
+    queryKey: ["chapter-fees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chapter_fees")
+        .select("*")
+        .order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch active volunteering opportunities count
   const { data: activeVolCount = 0 } = useQuery({
     queryKey: ["active-vol-count"],
@@ -210,10 +223,13 @@ export default function MemberHome() {
   })();
   const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
 
-  // Find renewal link from site_links
-  const renewalLink = siteLinks.find(
-    (l) => l.name.toLowerCase().includes("renewal") || l.name.toLowerCase().includes("renew")
+  // Find renewal link from chapter fees (look for "annual" or "renewal" in the fee name)
+  const renewalFee = chapterFees.find(
+    (f) => f.name.toLowerCase().includes("annual") || f.name.toLowerCase().includes("renewal") || f.name.toLowerCase().includes("renew")
   );
+  const renewalUrl = renewalFee?.payment_url || siteLinks.find(
+    (l) => l.name.toLowerCase().includes("renewal") || l.name.toLowerCase().includes("renew")
+  )?.url;
 
   const contactFieldDefs: EditableFieldDef[] = [
     { label: "Nickname", key: "nickname" },
@@ -360,8 +376,8 @@ export default function MemberHome() {
                     — please renew your subscription using the link below to continue participating
                     in chapter programs and events.
                   </p>
-                  {renewalLink ? (
-                    <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
+                  {renewalUrl ? (
+                    <a href={renewalUrl} target="_blank" rel="noopener noreferrer">
                       <Button className="mt-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold">
                         Renew Membership
                       </Button>
@@ -391,8 +407,8 @@ export default function MemberHome() {
                       ? "Your chapter dues have expired. Please renew to keep enjoying all chapter programs and events!"
                       : "Your chapter dues are expiring soon. Renew now to stay current!"}
                   </p>
-                  {renewalLink ? (
-                    <a href={renewalLink.url} target="_blank" rel="noopener noreferrer">
+                  {renewalUrl ? (
+                    <a href={renewalUrl} target="_blank" rel="noopener noreferrer">
                       <Button className="mt-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
                         Renew Membership
                       </Button>
