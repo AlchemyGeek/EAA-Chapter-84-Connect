@@ -226,7 +226,7 @@ export default function MemberVolunteering() {
             {closedOrCompleted.length > 0 && (
               <>
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mt-6">
-                  Recently Closed / Completed
+                  RECENTLY COMPLETED
                 </h2>
                 {closedOrCompleted.map((opp) => (
                   <OpportunityCard
