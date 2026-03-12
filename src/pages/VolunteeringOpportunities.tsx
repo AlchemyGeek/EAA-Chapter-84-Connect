@@ -220,6 +220,7 @@ export default function VolunteeringOpportunities() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["volunteering-opportunities"] });
       queryClient.invalidateQueries({ queryKey: ["active-vol-count"] });
+      queryClient.invalidateQueries({ queryKey: ["member-vol-opportunities"] });
       toast({ title: "Status updated" });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
