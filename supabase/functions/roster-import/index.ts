@@ -320,10 +320,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Detect removed members
+    // Detect and delete removed members
+    const removedKeyIds: number[] = [];
     for (const [keyId, existing] of existingMap) {
       if (!incomingKeyIds.has(keyId)) {
         removedCount++;
+        removedKeyIds.push(keyId);
         changeRecords.push({
           import_id: importId,
           key_id: keyId,
@@ -335,6 +337,18 @@ Deno.serve(async (req) => {
           last_name: existing.last_name,
           eaa_number: existing.eaa_number,
         });
+      }
+    }
+
+    // Delete removed members from roster_members
+    if (removedKeyIds.length > 0) {
+      const delBatchSize = 100;
+      for (let i = 0; i < removedKeyIds.length; i += delBatchSize) {
+        const batch = removedKeyIds.slice(i, i + delBatchSize);
+        await adminClient
+          .from("roster_members")
+          .delete()
+          .in("key_id", batch);
       }
     }
 
