@@ -283,6 +283,7 @@ export default function VolunteeringOpportunities() {
       queryClient.invalidateQueries({ queryKey: ["volunteering-contacts"] });
       queryClient.invalidateQueries({ queryKey: ["contact-member-names"] });
       queryClient.invalidateQueries({ queryKey: ["active-vol-count"] });
+      queryClient.invalidateQueries({ queryKey: ["member-vol-opportunities"] });
       resetForm();
       setEditOpportunity(null);
       toast({ title: "Opportunity updated" });
