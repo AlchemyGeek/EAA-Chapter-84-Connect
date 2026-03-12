@@ -236,6 +236,7 @@ export default function VolunteeringOpportunities() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["volunteering-opportunities"] });
       queryClient.invalidateQueries({ queryKey: ["volunteering-contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["active-vol-count"] });
       setDeleteId(null);
       toast({ title: "Opportunity deleted" });
     },
