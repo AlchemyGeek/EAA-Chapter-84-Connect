@@ -124,6 +124,20 @@ export default function MemberHome() {
     },
   });
 
+  // Fetch pending new member applications count
+  const { data: pendingAppCount = 0 } = useQuery({
+    queryKey: ["pending-app-count"],
+    enabled: isOfficerOrAbove || isAdmin,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("new_member_applications")
+        .select("*", { count: "exact", head: true })
+        .eq("processed", false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   // Fetch member chapter data (for directory visibility)
   const activeKeyId = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
   const { data: chapterData } = useQuery({
@@ -515,7 +529,7 @@ export default function MemberHome() {
               <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Due Payment" />
               <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
               <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Manage Chapter Volunteering" />
-              <AdminLink to="/new-member-applications" icon={UserPlus} label="New Member Applications" />
+              <AdminLink to="/new-member-applications" icon={UserPlus} label={`New Member Applications${pendingAppCount > 0 ? ` (${pendingAppCount})` : ""}`} />
             </CardContent>
           </Card>
         )}
