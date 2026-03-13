@@ -32,10 +32,13 @@ const Auth = () => {
         if (error) throw error;
         toast({ title: "Check your email", description: "We sent you a password reset link." });
       } else if (mode === "signup") {
-        const { data: emailExists, error: rpcError } = await supabase.rpc("check_email_in_roster", { _email: email });
+        const { data: matchFound, error: rpcError } = await supabase.rpc("check_email_and_eaa_in_roster", {
+          _email: email,
+          _eaa_number: eaaNumber,
+        });
         if (rpcError) throw rpcError;
 
-        if (!emailExists) {
+        if (!matchFound) {
           setLoading(false);
           setRosterError(true);
           return;
@@ -44,7 +47,8 @@ const Auth = () => {
         setRosterError(false);
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        toast({ title: "Check your email", description: "We sent you a confirmation link." });
+        toast({ title: "Account created!", description: "You can now sign in with your credentials." });
+        setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
