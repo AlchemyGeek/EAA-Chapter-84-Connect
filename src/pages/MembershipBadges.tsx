@@ -157,7 +157,7 @@ export default function MembershipBadges() {
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
       <h1 className="text-xl font-bold">2026 Membership Badges</h1>
       <p className="text-sm text-muted-foreground">
-        Search for a member to check their dues status and mark their badge as delivered.
+        Track the delivery of Young Eagle pilot badges to members who have paid their 2026 membership fees. Search for a member to check their dues status and mark their badge as delivered.
       </p>
 
       {/* Summary KPIs */}
