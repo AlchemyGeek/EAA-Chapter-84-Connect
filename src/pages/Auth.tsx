@@ -13,6 +13,7 @@ type AuthMode = "signin" | "signup" | "forgot";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [eaaNumber, setEaaNumber] = useState("");
   const [mode, setMode] = useState<AuthMode>("signin");
   const [rosterError, setRosterError] = useState(false);
   const [loading, setLoading] = useState(false);
