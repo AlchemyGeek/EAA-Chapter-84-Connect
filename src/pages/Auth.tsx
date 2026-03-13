@@ -75,7 +75,7 @@ const Auth = () => {
           <CardDescription>{title}</CardDescription>
           {mode === "signup" && (
             <p className="text-sm text-muted-foreground mt-3 text-left leading-relaxed">
-              Chapter 84 Connect is the services portal for our chapter. To sign up, use the email address you have registered with the chapter. If you don't remember which email you used, or if you did not provide one, please contact{" "}
+              Chapter 84 Connect is the services portal for our chapter. To sign up, use the email address you have registered with the chapter and your EAA Membership number. If you don't remember which email you used, or if you did not provide one, please contact{" "}
               <a href="mailto:membership@eaa84.org" className="text-primary underline hover:text-primary/80">membership@eaa84.org</a>{" "}
               for assistance. If you are not yet a chapter member, please use the{" "}
               <a href="/join" className="text-primary underline hover:text-primary/80">New Member Application</a>{" "}
@@ -94,16 +94,16 @@ const Auth = () => {
               <Label htmlFor="email">Email address</Label>
               <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            {mode !== "forgot" && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-              </div>
-            )}
             {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="eaa-number">EAA Membership Number</Label>
                 <Input id="eaa-number" type="text" placeholder="123456" value={eaaNumber} onChange={(e) => setEaaNumber(e.target.value)} required />
+              </div>
+            )}
+            {mode !== "forgot" && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
               </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
