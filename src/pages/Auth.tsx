@@ -113,9 +113,9 @@ const Auth = () => {
           {rosterError && mode === "signup" && (
             <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               <p>
-                We could not find your email in our member roster. If you believe this is an error, please contact{" "}
+                The email and EAA membership number you entered do not match our records. Please verify your information and try again. If you believe this is an error, please contact{" "}
                 <a href="mailto:membership@eaa84.org" className="underline font-medium hover:text-destructive/80">membership@eaa84.org</a>{" "}
-                and we will be happy to help.
+                for assistance.
               </p>
               <p className="mt-2">
                 If you are not yet a member and would like to join the chapter, please complete the{" "}
