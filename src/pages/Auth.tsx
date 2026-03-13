@@ -94,16 +94,16 @@ const Auth = () => {
               <Label htmlFor="email">Email address</Label>
               <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            {mode !== "forgot" && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-              </div>
-            )}
             {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="eaa-number">EAA Membership Number</Label>
                 <Input id="eaa-number" type="text" placeholder="123456" value={eaaNumber} onChange={(e) => setEaaNumber(e.target.value)} required />
+              </div>
+            )}
+            {mode !== "forgot" && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
               </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
