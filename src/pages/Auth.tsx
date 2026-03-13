@@ -13,6 +13,7 @@ type AuthMode = "signin" | "signup" | "forgot";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [eaaNumber, setEaaNumber] = useState("");
   const [mode, setMode] = useState<AuthMode>("signin");
   const [rosterError, setRosterError] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,10 +32,13 @@ const Auth = () => {
         if (error) throw error;
         toast({ title: "Check your email", description: "We sent you a password reset link." });
       } else if (mode === "signup") {
-        const { data: emailExists, error: rpcError } = await supabase.rpc("check_email_in_roster", { _email: email });
+        const { data: matchFound, error: rpcError } = await supabase.rpc("check_email_and_eaa_in_roster", {
+          _email: email,
+          _eaa_number: eaaNumber,
+        });
         if (rpcError) throw rpcError;
 
-        if (!emailExists) {
+        if (!matchFound) {
           setLoading(false);
           setRosterError(true);
           return;
@@ -43,7 +47,8 @@ const Auth = () => {
         setRosterError(false);
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        toast({ title: "Check your email", description: "We sent you a confirmation link." });
+        toast({ title: "Account created!", description: "You can now sign in with your credentials." });
+        setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -95,6 +100,12 @@ const Auth = () => {
                 <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
               </div>
             )}
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <Label htmlFor="eaa-number">EAA Membership Number</Label>
+                <Input id="eaa-number" type="text" placeholder="123456" value={eaaNumber} onChange={(e) => setEaaNumber(e.target.value)} required />
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Loading..." : buttonLabel}
             </Button>
@@ -102,9 +113,9 @@ const Auth = () => {
           {rosterError && mode === "signup" && (
             <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               <p>
-                We could not find your email in our member roster. If you believe this is an error, please contact{" "}
+                The email and EAA membership number you entered do not match our records. Please verify your information and try again. If you believe this is an error, please contact{" "}
                 <a href="mailto:membership@eaa84.org" className="underline font-medium hover:text-destructive/80">membership@eaa84.org</a>{" "}
-                and we will be happy to help.
+                for assistance.
               </p>
               <p className="mt-2">
                 If you are not yet a member and would like to join the chapter, please complete the{" "}
