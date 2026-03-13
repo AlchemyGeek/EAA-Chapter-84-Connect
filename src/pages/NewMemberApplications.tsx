@@ -190,12 +190,13 @@ export default function NewMemberApplications() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
+      <h1 className="text-xl font-bold">New Member Applications</h1>
+      <p className="text-sm text-muted-foreground">
+        Track new member applications, validate their EAA national membership, and confirm that membership fees have been paid. Once both checks are complete, the member can be promoted from a Prospect to a Regular Member.
+      </p>
+
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <UserPlus className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">New Member Applications</h1>
-        </div>
         <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
           <SelectTrigger className="w-40">
             <SelectValue />
