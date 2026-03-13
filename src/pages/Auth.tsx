@@ -75,7 +75,7 @@ const Auth = () => {
           <CardDescription>{title}</CardDescription>
           {mode === "signup" && (
             <p className="text-sm text-muted-foreground mt-3 text-left leading-relaxed">
-              Chapter 84 Connect is the services portal for our chapter. To sign up, use the email address you have registered with the chapter. If you don't remember which email you used, or if you did not provide one, please contact{" "}
+              Chapter 84 Connect is the services portal for our chapter. To sign up, use the email address you have registered with the chapter and your EAA Membership number. If you don't remember which email you used, or if you did not provide one, please contact{" "}
               <a href="mailto:membership@eaa84.org" className="text-primary underline hover:text-primary/80">membership@eaa84.org</a>{" "}
               for assistance. If you are not yet a chapter member, please use the{" "}
               <a href="/join" className="text-primary underline hover:text-primary/80">New Member Application</a>{" "}
