@@ -23,9 +23,14 @@ export default function Landing() {
           </p>
         </div>
 
-        <Button asChild size="lg" className="w-full min-h-[44px] text-base">
-          <Link to="/auth">Sign In</Link>
-        </Button>
+        <div className="space-y-3">
+          <Button asChild size="lg" className="w-full min-h-[44px] text-base">
+            <Link to="/auth">Sign In</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="w-full min-h-[44px] text-base">
+            <Link to="/join">New Member Application</Link>
+          </Button>
+        </div>
       </div>
     </div>);
 
