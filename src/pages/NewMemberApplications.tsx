@@ -96,6 +96,7 @@ export default function NewMemberApplications() {
       if (error) throw error;
       return data;
     },
+    staleTime: 0,
   });
 
   const updateVerification = useMutation({
