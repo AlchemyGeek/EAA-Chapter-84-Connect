@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./hooks/useAuth";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -41,32 +42,34 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/home" element={<MemberHome />} />
-          {/* Admin routes still use the sidebar layout */}
-          <Route element={<AppLayout />}>
-            <Route path="/members" element={<Members />} />
-            <Route path="/members/:keyId" element={<MemberDetail />} />
-            <Route path="/import" element={<Import />} />
-            <Route path="/imports" element={<ImportHistory />} />
-            <Route path="/imports/:importId" element={<ImportReport />} />
-            <Route path="/export" element={<Export />} />
-            <Route path="/site-config" element={<SiteConfig />} />
-              <Route path="/membership-stats" element={<MembershipStatistics />} />
-              <Route path="/membership-badges" element={<MembershipBadges />} />
-              <Route path="/user-roles" element={<UserRoles />} />
-              <Route path="/new-member-applications" element={<NewMemberApplications />} />
-          </Route>
-          <Route path="/directory/:keyId" element={<MemberProfile />} />
-          <Route path="/dues-payment" element={<DuesPayment />} />
-          <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
-          <Route path="/member-volunteering" element={<MemberVolunteering />} />
-          <Route path="/join" element={<NewMemberApplication />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/home" element={<MemberHome />} />
+            {/* Admin routes still use the sidebar layout */}
+            <Route element={<AppLayout />}>
+              <Route path="/members" element={<Members />} />
+              <Route path="/members/:keyId" element={<MemberDetail />} />
+              <Route path="/import" element={<Import />} />
+              <Route path="/imports" element={<ImportHistory />} />
+              <Route path="/imports/:importId" element={<ImportReport />} />
+              <Route path="/export" element={<Export />} />
+              <Route path="/site-config" element={<SiteConfig />} />
+                <Route path="/membership-stats" element={<MembershipStatistics />} />
+                <Route path="/membership-badges" element={<MembershipBadges />} />
+                <Route path="/user-roles" element={<UserRoles />} />
+                <Route path="/new-member-applications" element={<NewMemberApplications />} />
+            </Route>
+            <Route path="/directory/:keyId" element={<MemberProfile />} />
+            <Route path="/dues-payment" element={<DuesPayment />} />
+            <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
+            <Route path="/member-volunteering" element={<MemberVolunteering />} />
+            <Route path="/join" element={<NewMemberApplication />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
