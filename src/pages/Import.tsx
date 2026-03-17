@@ -23,7 +23,7 @@ export default function Import() {
   const { toast } = useToast();
 
   // Fetch current members
-  const { data: members = [] } = useQuery({
+  const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: ["members-full"],
     queryFn: async () => {
       const { data, error } = await supabase.from("roster_members").select("*").order("last_name");
@@ -49,7 +49,7 @@ export default function Import() {
   });
 
   // Fetch snapshots
-  const { data: snapshots = [] } = useQuery({
+  const { data: snapshots = [], isLoading: snapshotsLoading } = useQuery({
     queryKey: ["last-import-snapshots", lastImport?.id],
     queryFn: async () => {
       let all: any[] = [];
@@ -71,6 +71,8 @@ export default function Import() {
     },
     enabled: !!lastImport?.id,
   });
+
+  const dataReady = !membersLoading && !snapshotsLoading;
 
   const localChanges = useMemo(() => {
     if (snapshots.length === 0 || members.length === 0) return [];
@@ -141,7 +143,7 @@ export default function Import() {
     <div className="p-6 max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Import Roster</h1>
 
-      {hasUnsyncedChanges && (
+      {dataReady && hasUnsyncedChanges && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Unsynced Local Changes Detected</AlertTitle>
