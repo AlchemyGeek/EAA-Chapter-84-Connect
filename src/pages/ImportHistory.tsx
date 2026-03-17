@@ -79,9 +79,9 @@ export default function ImportHistory() {
             <TableBody>
               {imports.map((imp) => (
                 <TableRow key={imp.id}>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <Link to={`/imports/${imp.id}`} className="text-secondary hover:underline min-h-0 min-w-0">
-                      {format(new Date(imp.imported_at), "MMM d, yyyy h:mm a")}
+                      {format(new Date(imp.imported_at), "MM/dd/yy h:mm a")}
                     </Link>
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate">{imp.file_name || "—"}</TableCell>
