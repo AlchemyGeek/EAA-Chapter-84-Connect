@@ -2,15 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Download, Plus, RefreshCw, Minus, CheckCircle2 } from "lucide-react";
 import { exportMembersToExcel, exportMembersToCsv, exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
 import { diffCurrentVsSnapshots } from "@/lib/diffMembers";
 import { format } from "date-fns";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import GroupedDiffView from "@/components/diff/GroupedDiffView";
 
 function ChangeTypeBadge({ type }: { type: string }) {
   const config: Record<string, { variant: "secondary" | "destructive"; icon: typeof Plus; label: string }> = {
