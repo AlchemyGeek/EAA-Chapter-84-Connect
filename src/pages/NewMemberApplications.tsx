@@ -323,7 +323,23 @@ export default function NewMemberApplications() {
             </DialogDescription>
           </DialogHeader>
           {detailApp && (
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="space-y-3">
+              {existingEaaSet.has(detailApp.eaa_number?.trim()) && (
+                <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium">Possible duplicate</p>
+                    <p className="text-xs">
+                      EAA #{detailApp.eaa_number} already belongs to an existing member in the roster
+                      ({existingMembers.find((m) => m.eaa_number?.trim() === detailApp.eaa_number?.trim())?.first_name}{" "}
+                      {existingMembers.find((m) => m.eaa_number?.trim() === detailApp.eaa_number?.trim())?.last_name} –{" "}
+                      {existingMembers.find((m) => m.eaa_number?.trim() === detailApp.eaa_number?.trim())?.member_type},{" "}
+                      {existingMembers.find((m) => m.eaa_number?.trim() === detailApp.eaa_number?.trim())?.current_standing}).
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-muted-foreground">First Name</span>
                 <p className="font-medium">{detailApp.first_name}</p>
