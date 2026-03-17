@@ -2,32 +2,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Download, Plus, RefreshCw, Minus, CheckCircle2 } from "lucide-react";
 import { exportMembersToExcel, exportMembersToCsv, exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
 import { diffCurrentVsSnapshots } from "@/lib/diffMembers";
 import { format } from "date-fns";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import GroupedDiffView from "@/components/diff/GroupedDiffView";
 
-function ChangeTypeBadge({ type }: { type: string }) {
-  const config: Record<string, { variant: "secondary" | "destructive"; icon: typeof Plus; label: string }> = {
-    added: { variant: "secondary", icon: Plus, label: "Added" },
-    modified: { variant: "secondary", icon: RefreshCw, label: "Modified" },
-    removed: { variant: "destructive", icon: Minus, label: "Removed" },
-  };
-  const { variant, icon: Icon, label } = config[type] || { variant: "secondary" as const, icon: RefreshCw, label: type };
-  return (
-    <Badge variant={variant} className="gap-1 text-xs">
-      <Icon className="h-3 w-3" />{label}
-    </Badge>
-  );
-}
 
 export default function Export() {
-  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
@@ -218,54 +203,8 @@ export default function Export() {
                   ? "No snapshots found. Run a new import to enable local change tracking."
                   : "No local changes since last import."}
               </p>
-            ) : isMobile ? (
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {localChanges.map((c, i) => (
-                  <Card key={`${c.key_id}-${c.field_name}-${i}`}>
-                    <CardContent className="p-3 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm">{c.last_name}, {c.first_name}</p>
-                        <ChangeTypeBadge type={c.change_type} />
-                      </div>
-                      <p className="text-xs text-muted-foreground">EAA #{c.eaa_number}</p>
-                      {c.field_name && (
-                        <div className="text-xs">
-                          <span className="text-muted-foreground">{c.field_name}: </span>
-                          {c.old_value && <span className="line-through text-muted-foreground mr-2">{c.old_value}</span>}
-                          {c.new_value && <span className="font-medium">{c.new_value}</span>}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
             ) : (
-              <div className="rounded-md border max-h-[400px] overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Member</TableHead>
-                      <TableHead>EAA #</TableHead>
-                      <TableHead>Field</TableHead>
-                      <TableHead>Old Value</TableHead>
-                      <TableHead>New Value</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {localChanges.map((c, i) => (
-                      <TableRow key={`${c.key_id}-${c.field_name}-${i}`}>
-                        <TableCell><ChangeTypeBadge type={c.change_type} /></TableCell>
-                        <TableCell className="font-medium">{c.last_name}, {c.first_name}</TableCell>
-                        <TableCell>{c.eaa_number}</TableCell>
-                        <TableCell>{c.field_name || "—"}</TableCell>
-                        <TableCell className="max-w-[150px] truncate text-muted-foreground">{c.old_value || "—"}</TableCell>
-                        <TableCell className="max-w-[150px] truncate">{c.new_value || "—"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <GroupedDiffView changes={exportableChanges} />
             )}
           </CardContent>
         )}
