@@ -9,7 +9,6 @@ import GroupedDiffView from "@/components/diff/GroupedDiffView";
 
 export default function ImportReport() {
   const { importId } = useParams();
-  const isMobile = useIsMobile();
 
   const { data: importRecord } = useQuery({
     queryKey: ["import", importId],
