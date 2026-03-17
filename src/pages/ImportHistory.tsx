@@ -33,7 +33,7 @@ export default function ImportHistory() {
   });
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
+    <div className="p-4 md:p-6 max-w-2xl lg:max-w-4xl mx-auto space-y-4">
       <h1 className="text-xl md:text-2xl font-bold">Import History</h1>
       {isLoading ? (
         <p className="text-muted-foreground">Loading...</p>
