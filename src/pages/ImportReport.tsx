@@ -66,62 +66,8 @@ export default function ImportReport() {
 
       {isLoading ? (
         <p className="text-muted-foreground">Loading changes...</p>
-      ) : isMobile ? (
-        <div className="space-y-3">
-          {changes.map((c) => (
-            <Card key={c.id}>
-              <CardContent className="p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium text-sm">{c.last_name}, {c.first_name}</p>
-                  <ChangeTypeBadge type={c.change_type} />
-                </div>
-                <p className="text-sm text-muted-foreground">EAA #{c.eaa_number}</p>
-                {c.field_name && (
-                  <div className="text-sm">
-                    <span className="text-muted-foreground">{c.field_name}: </span>
-                    {c.old_value && <span className="line-through text-muted-foreground mr-2">{c.old_value}</span>}
-                    {c.new_value && <span className="font-medium">{c.new_value}</span>}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-          {changes.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">No changes recorded for this import.</p>
-          )}
-        </div>
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Type</TableHead>
-                <TableHead>Member</TableHead>
-                <TableHead>EAA #</TableHead>
-                <TableHead>Field</TableHead>
-                <TableHead>Old Value</TableHead>
-                <TableHead>New Value</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {changes.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell><ChangeTypeBadge type={c.change_type} /></TableCell>
-                  <TableCell className="font-medium">{c.last_name}, {c.first_name}</TableCell>
-                  <TableCell>{c.eaa_number}</TableCell>
-                  <TableCell>{c.field_name || "—"}</TableCell>
-                  <TableCell className="max-w-[150px] truncate text-muted-foreground">{c.old_value || "—"}</TableCell>
-                  <TableCell className="max-w-[150px] truncate">{c.new_value || "—"}</TableCell>
-                </TableRow>
-              ))}
-              {changes.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No changes recorded for this import.</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <GroupedDiffView changes={changes} />
       )}
     </div>
   );
