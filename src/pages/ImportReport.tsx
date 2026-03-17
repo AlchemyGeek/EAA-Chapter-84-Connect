@@ -1,28 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, RefreshCw, Minus } from "lucide-react";
 import { format } from "date-fns";
 import { exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-function ChangeTypeBadge({ type }: { type: string }) {
-  const config: Record<string, { variant: "secondary" | "destructive"; icon: typeof Plus; label: string }> = {
-    added: { variant: "secondary", icon: Plus, label: "Added" },
-    modified: { variant: "secondary", icon: RefreshCw, label: "Modified" },
-    removed: { variant: "destructive", icon: Minus, label: "Removed" },
-  };
-  const { variant, icon: Icon, label } = config[type] || { variant: "secondary" as const, icon: RefreshCw, label: type };
-  return (
-    <Badge variant={variant} className="gap-1 text-xs">
-      <Icon className="h-3 w-3" />{label}
-    </Badge>
-  );
-}
+import GroupedDiffView from "@/components/diff/GroupedDiffView";
 
 export default function ImportReport() {
   const { importId } = useParams();
