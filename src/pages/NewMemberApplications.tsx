@@ -99,6 +99,28 @@ export default function NewMemberApplications() {
     staleTime: 0,
   });
 
+  // Check which applicants' EAA numbers already exist in the roster as non-Prospect members
+  const eaaNumbers = applications
+    .filter((a) => a.eaa_number && a.eaa_number.trim())
+    .map((a) => a.eaa_number.trim());
+
+  const { data: existingMembers = [] } = useQuery({
+    queryKey: ["existing-eaa-check", eaaNumbers],
+    queryFn: async () => {
+      if (eaaNumbers.length === 0) return [];
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("eaa_number, first_name, last_name, member_type, current_standing")
+        .in("eaa_number", eaaNumbers)
+        .neq("member_type", "Prospect");
+      if (error) throw error;
+      return data;
+    },
+    enabled: eaaNumbers.length > 0,
+  });
+
+  const existingEaaSet = new Set(existingMembers.map((m) => m.eaa_number?.trim()));
+
   const updateVerification = useMutation({
     mutationFn: async ({
       id,
