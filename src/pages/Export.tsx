@@ -75,10 +75,9 @@ export default function Export() {
     return diffCurrentVsSnapshots(members, snapshots);
   }, [members, snapshots]);
 
-  const addedCount = localChanges.filter(c => c.change_type === "added").length;
-  const modifiedMembers = new Set(localChanges.filter(c => c.change_type === "modified").map(c => c.key_id));
-  const modifiedCount = modifiedMembers.size;
-  const removedCount = localChanges.filter(c => c.change_type === "removed").length;
+  const addedCount = new Set(localChanges.filter(c => c.change_type === "added").map(c => c.key_id)).size;
+  const modifiedCount = new Set(localChanges.filter(c => c.change_type === "modified").map(c => c.key_id)).size;
+  const removedCount = new Set(localChanges.filter(c => c.change_type === "removed").map(c => c.key_id)).size;
 
   const changesLoading = membersLoading || snapshotsLoading;
 
