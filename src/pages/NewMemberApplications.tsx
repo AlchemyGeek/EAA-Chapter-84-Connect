@@ -262,6 +262,12 @@ export default function NewMemberApplications() {
                       EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
+                      {existingEaaSet.has(app.eaa_number?.trim()) && (
+                        <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Existing Member
+                        </Badge>
+                      )}
                       {isSynced(app.created_at) ? (
                         <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                           Synced
