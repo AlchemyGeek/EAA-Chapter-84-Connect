@@ -378,6 +378,7 @@ export default function NewMemberApplications() {
                   </p>
                 </div>
               )}
+              </div>
             </div>
           )}
         </DialogContent>
