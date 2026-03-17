@@ -49,7 +49,7 @@ export default function Import() {
   });
 
   // Fetch snapshots
-  const { data: snapshots = [] } = useQuery({
+  const { data: snapshots = [], isLoading: snapshotsLoading } = useQuery({
     queryKey: ["last-import-snapshots", lastImport?.id],
     queryFn: async () => {
       let all: any[] = [];
@@ -71,6 +71,8 @@ export default function Import() {
     },
     enabled: !!lastImport?.id,
   });
+
+  const dataReady = !membersLoading && !snapshotsLoading;
 
   const localChanges = useMemo(() => {
     if (snapshots.length === 0 || members.length === 0) return [];
