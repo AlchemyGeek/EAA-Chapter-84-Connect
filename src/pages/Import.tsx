@@ -143,7 +143,7 @@ export default function Import() {
     <div className="p-6 max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Import Roster</h1>
 
-      {hasUnsyncedChanges && (
+      {dataReady && hasUnsyncedChanges && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Unsynced Local Changes Detected</AlertTitle>
