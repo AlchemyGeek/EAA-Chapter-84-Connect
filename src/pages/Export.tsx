@@ -11,19 +11,6 @@ import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import GroupedDiffView from "@/components/diff/GroupedDiffView";
 
-function ChangeTypeBadge({ type }: { type: string }) {
-  const config: Record<string, { variant: "secondary" | "destructive"; icon: typeof Plus; label: string }> = {
-    added: { variant: "secondary", icon: Plus, label: "Added" },
-    modified: { variant: "secondary", icon: RefreshCw, label: "Modified" },
-    removed: { variant: "destructive", icon: Minus, label: "Removed" },
-  };
-  const { variant, icon: Icon, label } = config[type] || { variant: "secondary" as const, icon: RefreshCw, label: type };
-  return (
-    <Badge variant={variant} className="gap-1 text-xs">
-      <Icon className="h-3 w-3" />{label}
-    </Badge>
-  );
-}
 
 export default function Export() {
   const isMobile = useIsMobile();
