@@ -13,7 +13,7 @@ import GroupedDiffView from "@/components/diff/GroupedDiffView";
 
 
 export default function Export() {
-  const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
