@@ -204,54 +204,8 @@ export default function Export() {
                   ? "No snapshots found. Run a new import to enable local change tracking."
                   : "No local changes since last import."}
               </p>
-            ) : isMobile ? (
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {localChanges.map((c, i) => (
-                  <Card key={`${c.key_id}-${c.field_name}-${i}`}>
-                    <CardContent className="p-3 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm">{c.last_name}, {c.first_name}</p>
-                        <ChangeTypeBadge type={c.change_type} />
-                      </div>
-                      <p className="text-xs text-muted-foreground">EAA #{c.eaa_number}</p>
-                      {c.field_name && (
-                        <div className="text-xs">
-                          <span className="text-muted-foreground">{c.field_name}: </span>
-                          {c.old_value && <span className="line-through text-muted-foreground mr-2">{c.old_value}</span>}
-                          {c.new_value && <span className="font-medium">{c.new_value}</span>}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
             ) : (
-              <div className="rounded-md border max-h-[400px] overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Member</TableHead>
-                      <TableHead>EAA #</TableHead>
-                      <TableHead>Field</TableHead>
-                      <TableHead>Old Value</TableHead>
-                      <TableHead>New Value</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {localChanges.map((c, i) => (
-                      <TableRow key={`${c.key_id}-${c.field_name}-${i}`}>
-                        <TableCell><ChangeTypeBadge type={c.change_type} /></TableCell>
-                        <TableCell className="font-medium">{c.last_name}, {c.first_name}</TableCell>
-                        <TableCell>{c.eaa_number}</TableCell>
-                        <TableCell>{c.field_name || "—"}</TableCell>
-                        <TableCell className="max-w-[150px] truncate text-muted-foreground">{c.old_value || "—"}</TableCell>
-                        <TableCell className="max-w-[150px] truncate">{c.new_value || "—"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <GroupedDiffView changes={exportableChanges} />
             )}
           </CardContent>
         )}
