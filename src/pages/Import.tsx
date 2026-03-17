@@ -23,7 +23,7 @@ export default function Import() {
   const { toast } = useToast();
 
   // Fetch current members
-  const { data: members = [] } = useQuery({
+  const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: ["members-full"],
     queryFn: async () => {
       const { data, error } = await supabase.from("roster_members").select("*").order("last_name");
