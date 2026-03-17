@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus } from "lucide-react";
+import { UserPlus, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -98,6 +98,28 @@ export default function NewMemberApplications() {
     },
     staleTime: 0,
   });
+
+  // Check which applicants' EAA numbers already exist in the roster as non-Prospect members
+  const eaaNumbers = applications
+    .filter((a) => a.eaa_number && a.eaa_number.trim())
+    .map((a) => a.eaa_number.trim());
+
+  const { data: existingMembers = [] } = useQuery({
+    queryKey: ["existing-eaa-check", eaaNumbers],
+    queryFn: async () => {
+      if (eaaNumbers.length === 0) return [];
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("eaa_number, first_name, last_name, member_type, current_standing")
+        .in("eaa_number", eaaNumbers)
+        .neq("member_type", "Prospect");
+      if (error) throw error;
+      return data;
+    },
+    enabled: eaaNumbers.length > 0,
+  });
+
+  const existingEaaSet = new Set(existingMembers.map((m) => m.eaa_number?.trim()));
 
   const updateVerification = useMutation({
     mutationFn: async ({
@@ -240,6 +262,12 @@ export default function NewMemberApplications() {
                       EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
+                      {existingEaaSet.has(app.eaa_number?.trim()) && (
+                        <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Existing Member
+                        </Badge>
+                      )}
                       {isSynced(app.created_at) ? (
                         <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                           Synced
@@ -295,7 +323,23 @@ export default function NewMemberApplications() {
             </DialogDescription>
           </DialogHeader>
           {detailApp && (
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="space-y-3">
+              {existingEaaSet.has(detailApp.eaa_number?.trim()) && (
+                <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium">Possible duplicate</p>
+                    <p className="text-xs">
+                      EAA #{detailApp.eaa_number} already belongs to an existing member in the roster
+                      ({existingMembers.find((m) => m.eaa_number?.trim() === detailApp.eaa_number?.trim())?.first_name}{" "}
+                      {existingMembers.find((m) => m.eaa_number?.trim() === detailApp.eaa_number?.trim())?.last_name} –{" "}
+                      {existingMembers.find((m) => m.eaa_number?.trim() === detailApp.eaa_number?.trim())?.member_type},{" "}
+                      {existingMembers.find((m) => m.eaa_number?.trim() === detailApp.eaa_number?.trim())?.current_standing}).
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-muted-foreground">First Name</span>
                 <p className="font-medium">{detailApp.first_name}</p>
@@ -334,6 +378,7 @@ export default function NewMemberApplications() {
                   </p>
                 </div>
               )}
+              </div>
             </div>
           )}
         </DialogContent>
