@@ -44,6 +44,63 @@ export type Database = {
         }
         Relationships: []
       }
+      buddy_assignments: {
+        Row: {
+          application_id: string
+          assigned_at: string
+          created_at: string
+          id: string
+          volunteer_key_id: number
+        }
+        Insert: {
+          application_id: string
+          assigned_at?: string
+          created_at?: string
+          id?: string
+          volunteer_key_id: number
+        }
+        Update: {
+          application_id?: string
+          assigned_at?: string
+          created_at?: string
+          id?: string
+          volunteer_key_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buddy_assignments_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: true
+            referencedRelation: "new_member_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buddy_assignments_volunteer_key_id_fkey"
+            columns: ["volunteer_key_id"]
+            isOneToOne: false
+            referencedRelation: "buddy_volunteers"
+            referencedColumns: ["key_id"]
+          },
+        ]
+      }
+      buddy_volunteers: {
+        Row: {
+          created_at: string
+          id: string
+          key_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_id?: number
+        }
+        Relationships: []
+      }
       chapter_fees: {
         Row: {
           amount: number
