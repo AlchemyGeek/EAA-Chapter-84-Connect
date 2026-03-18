@@ -865,6 +865,7 @@ export type Database = {
         Args: { _email: string; _user_id: string }
         Returns: undefined
       }
+      reassign_buddy: { Args: { _application_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "member" | "officer"

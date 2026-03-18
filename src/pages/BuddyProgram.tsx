@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, UserPlus, Search, Trash2, UserCheck } from "lucide-react";
+import { Users, UserPlus, Search, Trash2, UserCheck, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
@@ -153,6 +153,22 @@ export default function BuddyProgram() {
       queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
       setRemoveVolunteer(null);
       toast({ title: "Volunteer removed" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const reassignBuddy = useMutation({
+    mutationFn: async (applicationId: string) => {
+      const { error } = await supabase.rpc("reassign_buddy", {
+        _application_id: applicationId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
+      toast({ title: "Buddy reassigned" });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -330,15 +346,27 @@ export default function BuddyProgram() {
                       )}
                     </div>
                     {assignment ? (
-                      <p className="text-xs flex items-center gap-1.5">
-                        <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-muted-foreground">Buddy:</span>
-                        <span className="font-medium">
-                          {assignedVolunteer
-                            ? `${assignedVolunteer.last_name}, ${assignedVolunteer.first_name}`
-                            : `Volunteer #${assignment.volunteer_key_id}`}
-                        </span>
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs flex items-center gap-1.5">
+                          <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">Buddy:</span>
+                          <span className="font-medium">
+                            {assignedVolunteer
+                              ? `${assignedVolunteer.last_name}, ${assignedVolunteer.first_name}`
+                              : `Volunteer #${assignment.volunteer_key_id}`}
+                          </span>
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs gap-1"
+                          onClick={() => reassignBuddy.mutate(app.id)}
+                          disabled={reassignBuddy.isPending || sortedVolunteers.length < 2}
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Reassign
+                        </Button>
+                      </div>
                     ) : (
                       <p className="text-xs text-muted-foreground italic">
                         No buddy assigned — add volunteers above to enable auto-assignment.
