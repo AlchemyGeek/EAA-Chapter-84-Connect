@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, UserPlus, Search, Trash2, UserCheck } from "lucide-react";
+import { Users, UserPlus, Search, Trash2, UserCheck, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
