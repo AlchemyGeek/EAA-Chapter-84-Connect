@@ -18,7 +18,7 @@ import {
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
-  UserCog, BadgeCheck, HandHelping, UserPlus, Mail,
+  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import {
