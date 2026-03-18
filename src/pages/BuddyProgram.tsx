@@ -95,6 +95,8 @@ export default function BuddyProgram() {
         .select("key_id, first_name, last_name, eaa_number, email")
         .or(`first_name.ilike.${term},last_name.ilike.${term}`)
         .neq("member_type", "Prospect")
+        .not("email", "is", null)
+        .neq("email", "")
         .order("last_name")
         .limit(10);
       if (error) throw error;
