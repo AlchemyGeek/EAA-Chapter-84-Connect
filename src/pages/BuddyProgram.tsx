@@ -159,46 +159,6 @@ export default function BuddyProgram() {
     },
   });
 
-  const assignBuddy = useMutation({
-    mutationFn: async ({ applicationId, volunteerKeyId }: { applicationId: string; volunteerKeyId: number }) => {
-      // Upsert: if already assigned, update
-      const existing = assignments.find((a) => a.application_id === applicationId);
-      if (existing) {
-        const { error } = await supabase
-          .from("buddy_assignments")
-          .update({ volunteer_key_id: volunteerKeyId, assigned_at: new Date().toISOString() })
-          .eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("buddy_assignments")
-          .insert({ application_id: applicationId, volunteer_key_id: volunteerKeyId });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
-      toast({ title: "Buddy assigned" });
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const unassignBuddy = useMutation({
-    mutationFn: async (assignmentId: string) => {
-      const { error } = await supabase
-        .from("buddy_assignments")
-        .delete()
-        .eq("id", assignmentId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
-      toast({ title: "Buddy unassigned" });
-    },
-  });
-
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
