@@ -79,7 +79,7 @@ export default function BuddyProgram() {
   // Fetch completed applications
   const { data: completedApps = [] } = useQuery({
     queryKey: ["completed-applications-buddy"],
-    queryFn: async () => {
+    staleTime: 0,
       const { data, error } = await supabase
         .from("new_member_applications")
         .select("id, first_name, last_name, eaa_number, email, created_at")
