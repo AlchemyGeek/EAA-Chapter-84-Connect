@@ -182,8 +182,8 @@ export default function BuddyProgram() {
       <div>
         <h1 className="text-xl font-bold">New Member Buddy Program</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Pair new members with experienced chapter volunteers to help them get oriented. 
-          Volunteers with the fewest active assignments are suggested first when assigning buddies.
+          Pair new members with experienced chapter volunteers to help them get oriented.
+          Buddies are automatically assigned to the volunteer with the fewest active assignments when an application is completed.
         </p>
       </div>
 
