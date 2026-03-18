@@ -329,43 +329,21 @@ export default function BuddyProgram() {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={assignment?.volunteer_key_id?.toString() ?? ""}
-                        onValueChange={(val) => {
-                          if (val) {
-                            assignBuddy.mutate({
-                              applicationId: app.id,
-                              volunteerKeyId: Number(val),
-                            });
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-9 text-sm flex-1">
-                          <SelectValue placeholder="Assign a buddy volunteer..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sortedVolunteers.map((v) => (
-                            <SelectItem key={v.key_id} value={v.key_id.toString()}>
-                              {v.member
-                                ? `${v.member.last_name}, ${v.member.first_name}`
-                                : `Key #${v.key_id}`}{" "}
-                              ({v.active} active)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {assignment && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-muted-foreground hover:text-destructive shrink-0"
-                          onClick={() => unassignBuddy.mutate(assignment.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
+                    {assignment ? (
+                      <p className="text-xs flex items-center gap-1.5">
+                        <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground">Buddy:</span>
+                        <span className="font-medium">
+                          {assignedVolunteer
+                            ? `${assignedVolunteer.last_name}, ${assignedVolunteer.first_name}`
+                            : `Volunteer #${assignment.volunteer_key_id}`}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">
+                        No buddy assigned — add volunteers above to enable auto-assignment.
+                      </p>
+                    )}
                   </div>
                 );
               })}
