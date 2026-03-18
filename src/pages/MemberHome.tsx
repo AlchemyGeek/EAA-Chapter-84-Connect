@@ -18,7 +18,7 @@ import {
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
-  UserCog, BadgeCheck, HandHelping, UserPlus, Mail,
+  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import {
@@ -530,6 +530,7 @@ export default function MemberHome() {
               <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
               <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Manage Chapter Volunteering" />
               <AdminLink to="/new-member-applications" icon={UserPlus} label={`New Member Applications${pendingAppCount > 0 ? ` (${pendingAppCount})` : ""}`} />
+              <AdminLink to="/buddy-program" icon={Heart} label="New Member Buddy Program" />
             </CardContent>
           </Card>
         )}
