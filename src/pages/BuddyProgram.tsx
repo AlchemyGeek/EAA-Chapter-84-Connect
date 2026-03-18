@@ -8,13 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -166,46 +159,6 @@ export default function BuddyProgram() {
     },
   });
 
-  const assignBuddy = useMutation({
-    mutationFn: async ({ applicationId, volunteerKeyId }: { applicationId: string; volunteerKeyId: number }) => {
-      // Upsert: if already assigned, update
-      const existing = assignments.find((a) => a.application_id === applicationId);
-      if (existing) {
-        const { error } = await supabase
-          .from("buddy_assignments")
-          .update({ volunteer_key_id: volunteerKeyId, assigned_at: new Date().toISOString() })
-          .eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("buddy_assignments")
-          .insert({ application_id: applicationId, volunteer_key_id: volunteerKeyId });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
-      toast({ title: "Buddy assigned" });
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const unassignBuddy = useMutation({
-    mutationFn: async (assignmentId: string) => {
-      const { error } = await supabase
-        .from("buddy_assignments")
-        .delete()
-        .eq("id", assignmentId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
-      toast({ title: "Buddy unassigned" });
-    },
-  });
-
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -229,8 +182,8 @@ export default function BuddyProgram() {
       <div>
         <h1 className="text-xl font-bold">New Member Buddy Program</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Pair new members with experienced chapter volunteers to help them get oriented. 
-          Volunteers with the fewest active assignments are suggested first when assigning buddies.
+          Pair new members with experienced chapter volunteers to help them get oriented.
+          Buddies are automatically assigned to the volunteer with the fewest active assignments when an application is completed.
         </p>
       </div>
 
@@ -376,43 +329,21 @@ export default function BuddyProgram() {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={assignment?.volunteer_key_id?.toString() ?? ""}
-                        onValueChange={(val) => {
-                          if (val) {
-                            assignBuddy.mutate({
-                              applicationId: app.id,
-                              volunteerKeyId: Number(val),
-                            });
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-9 text-sm flex-1">
-                          <SelectValue placeholder="Assign a buddy volunteer..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sortedVolunteers.map((v) => (
-                            <SelectItem key={v.key_id} value={v.key_id.toString()}>
-                              {v.member
-                                ? `${v.member.last_name}, ${v.member.first_name}`
-                                : `Key #${v.key_id}`}{" "}
-                              ({v.active} active)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {assignment && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-muted-foreground hover:text-destructive shrink-0"
-                          onClick={() => unassignBuddy.mutate(assignment.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
+                    {assignment ? (
+                      <p className="text-xs flex items-center gap-1.5">
+                        <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground">Buddy:</span>
+                        <span className="font-medium">
+                          {assignedVolunteer
+                            ? `${assignedVolunteer.last_name}, ${assignedVolunteer.first_name}`
+                            : `Volunteer #${assignment.volunteer_key_id}`}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">
+                        No buddy assigned — add volunteers above to enable auto-assignment.
+                      </p>
+                    )}
                   </div>
                 );
               })}
