@@ -368,9 +368,23 @@ export default function BuddyProgram() {
                         </Button>
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground italic">
-                        No buddy assigned — add volunteers above to enable auto-assignment.
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground italic">
+                          No buddy assigned yet.
+                        </p>
+                        {sortedVolunteers.length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => reassignBuddy.mutate(app.id)}
+                            disabled={reassignBuddy.isPending}
+                          >
+                            <UserCheck className="h-3 w-3" />
+                            Assign Buddy
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
