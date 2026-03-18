@@ -331,19 +331,26 @@ export default function BuddyProgram() {
                           EAA #{app.eaa_number} · {app.email}
                         </p>
                       </div>
-                      {assignment && (
-                        <div className="flex items-center gap-1.5">
-                          {isActive ? (
-                            <Badge className="text-xs bg-green-50 text-green-700 border-green-200" variant="outline">
-                              Active
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-xs">
-                              Expired
-                            </Badge>
-                          )}
-                        </div>
-                      )}
+                    {assignment && (() => {
+                        const daysElapsed = Math.floor((now - new Date(assignment.assigned_at).getTime()) / (24 * 60 * 60 * 1000));
+                        const months = Math.floor(daysElapsed / 30);
+                        const days = daysElapsed % 30;
+                        const durationText = months > 0 ? `${months}mo ${days}d` : `${days}d`;
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-muted-foreground">{durationText}</span>
+                            {isActive ? (
+                              <Badge className="text-xs bg-green-50 text-green-700 border-green-200" variant="outline">
+                                Active
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                Alumni Buddy Pair
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     {assignment ? (
                       <div className="flex items-center justify-between">
