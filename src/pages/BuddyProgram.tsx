@@ -159,6 +159,22 @@ export default function BuddyProgram() {
     },
   });
 
+  const reassignBuddy = useMutation({
+    mutationFn: async (applicationId: string) => {
+      const { error } = await supabase.rpc("reassign_buddy", {
+        _application_id: applicationId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
+      toast({ title: "Buddy reassigned" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
