@@ -35,7 +35,7 @@ const Auth = () => {
     try {
       if (mode === "signin") {
         await sendOtp();
-        toast({ title: "Code sent!", description: "Check your email for a 6-digit code." });
+        toast({ title: "Code sent!", description: "Check your email for an 8-digit code." });
         setMode("signin-otp");
       } else if (mode === "signup") {
         const { data: matchFound, error: rpcError } = await supabase.rpc("check_email_and_eaa_in_roster", {
@@ -52,7 +52,7 @@ const Auth = () => {
 
         setRosterError(false);
         await sendOtp();
-        toast({ title: "Code sent!", description: "Check your email for a 6-digit code." });
+        toast({ title: "Code sent!", description: "Check your email for an 8-digit code." });
         setMode("signup-otp");
       } else if (isOtpStep) {
         const { error } = await supabase.auth.verifyOtp({
@@ -74,7 +74,7 @@ const Auth = () => {
     setLoading(true);
     try {
       await sendOtp();
-      toast({ title: "Code resent!", description: "Check your email for a new 6-digit code." });
+      toast({ title: "Code resent!", description: "Check your email for a new 8-digit code." });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -116,7 +116,7 @@ const Auth = () => {
           )}
           {isOtpStep && (
             <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-              We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>. Enter it below to continue.
+              We sent an 8-digit code to <span className="font-medium text-foreground">{email}</span>. Enter it below to continue.
             </p>
           )}
         </CardHeader>
@@ -137,7 +137,7 @@ const Auth = () => {
             {isOtpStep && (
               <div className="flex flex-col items-center space-y-2">
                 <Label>Verification code</Label>
-                <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                <InputOTP maxLength={8} value={otp} onChange={setOtp}>
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
@@ -145,11 +145,13 @@ const Auth = () => {
                     <InputOTPSlot index={3} />
                     <InputOTPSlot index={4} />
                     <InputOTPSlot index={5} />
+                    <InputOTPSlot index={6} />
+                    <InputOTPSlot index={7} />
                   </InputOTPGroup>
                 </InputOTP>
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading || (isOtpStep && otp.length < 6)}>
+            <Button type="submit" className="w-full" disabled={loading || (isOtpStep && otp.length < 8)}>
               {loading ? "Loading..." : buttonLabel}
             </Button>
           </form>
