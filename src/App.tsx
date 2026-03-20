@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
+
 import MemberHome from "./pages/MemberHome";
 import AppLayout from "./components/AppLayout";
 import Members from "./pages/Members";
