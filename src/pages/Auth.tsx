@@ -151,7 +151,7 @@ const Auth = () => {
                 </InputOTP>
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading || (isOtpStep && otp.length < 6)}>
+            <Button type="submit" className="w-full" disabled={loading || (isOtpStep && otp.length < 8)}>
               {loading ? "Loading..." : buttonLabel}
             </Button>
           </form>
