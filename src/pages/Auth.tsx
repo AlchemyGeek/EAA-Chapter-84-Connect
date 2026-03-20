@@ -137,7 +137,7 @@ const Auth = () => {
             {isOtpStep && (
               <div className="flex flex-col items-center space-y-2">
                 <Label>Verification code</Label>
-                <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                <InputOTP maxLength={8} value={otp} onChange={setOtp}>
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
@@ -145,6 +145,8 @@ const Auth = () => {
                     <InputOTPSlot index={3} />
                     <InputOTPSlot index={4} />
                     <InputOTPSlot index={5} />
+                    <InputOTPSlot index={6} />
+                    <InputOTPSlot index={7} />
                   </InputOTPGroup>
                 </InputOTP>
               </div>
