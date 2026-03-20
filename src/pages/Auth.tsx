@@ -52,7 +52,7 @@ const Auth = () => {
 
         setRosterError(false);
         await sendOtp();
-        toast({ title: "Code sent!", description: "Check your email for a 6-digit code." });
+        toast({ title: "Code sent!", description: "Check your email for an 8-digit code." });
         setMode("signup-otp");
       } else if (isOtpStep) {
         const { error } = await supabase.auth.verifyOtp({
