@@ -4,7 +4,6 @@ import * as React from 'npm:react@18.3.1'
 
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
@@ -15,28 +14,26 @@ import {
 
 interface MagicLinkEmailProps {
   siteName: string
-  confirmationUrl: string
+  token: string
 }
 
 export const MagicLinkEmail = ({
   siteName,
-  confirmationUrl,
+  token,
 }: MagicLinkEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your login link for {siteName}</Preview>
+    <Preview>Your sign-in code for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Your login link</Heading>
+        <Heading style={h1}>Your sign-in code</Heading>
         <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
+          Enter the code below to sign in to {siteName}. This code will expire
           shortly.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Log In
-        </Button>
+        <Text style={codeStyle}>{token}</Text>
         <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
+          If you didn't request this code, you can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -50,21 +47,22 @@ const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: 'hsl(220, 20%, 12%)',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
+  color: 'hsl(215, 12%, 46%)',
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
+const codeStyle = {
+  fontFamily: 'Courier, monospace',
+  fontSize: '32px',
+  fontWeight: 'bold' as const,
+  letterSpacing: '6px',
+  color: 'hsl(215, 70%, 18%)',
+  margin: '0 0 30px',
+  textAlign: 'center' as const,
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
