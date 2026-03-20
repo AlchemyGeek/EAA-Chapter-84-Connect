@@ -35,7 +35,7 @@ const Auth = () => {
     try {
       if (mode === "signin") {
         await sendOtp();
-        toast({ title: "Code sent!", description: "Check your email for an 8-digit code." });
+        toast({ title: "Code sent!", description: "Check your email for a 6-digit code." });
         setMode("signin-otp");
       } else if (mode === "signup") {
         const { data: matchFound, error: rpcError } = await supabase.rpc("check_email_and_eaa_in_roster", {
