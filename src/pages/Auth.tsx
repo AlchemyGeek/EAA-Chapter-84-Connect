@@ -116,7 +116,7 @@ const Auth = () => {
           )}
           {isOtpStep && (
             <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-              We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>. Enter it below to continue.
+              We sent an 8-digit code to <span className="font-medium text-foreground">{email}</span>. Enter it below to continue.
             </p>
           )}
         </CardHeader>
