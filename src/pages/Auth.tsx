@@ -74,7 +74,7 @@ const Auth = () => {
     setLoading(true);
     try {
       await sendOtp();
-      toast({ title: "Code resent!", description: "Check your email for a new 6-digit code." });
+      toast({ title: "Code resent!", description: "Check your email for a new 8-digit code." });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
