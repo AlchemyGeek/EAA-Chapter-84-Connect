@@ -1,42 +1,72 @@
 
 
-## Passwordless Auth: OTP Sign-In + Password-Free Sign-Up
+## Buddy Program Emails: Intro + Reminder with Admin-Editable Templates
 
 ### Overview
-Replace password-based authentication with email OTP codes. Both sign-in and sign-up will be passwordless.
+When a buddy is assigned or reassigned, the system sends two emails: an intro email immediately and a reminder email after 3 days. Email templates are editable by admins in Website Configuration. During the test phase, emails go to `membership@eaa84.org` with the actual recipients shown in the email body.
 
-### Changes
+### 1. Database: New tables (migration)
 
-**1. Update Auth modes and state (`src/pages/Auth.tsx`)**
-- Change `AuthMode` to: `"signin" | "signin-otp" | "signup" | "signup-otp"`
-- Remove the `password` state variable entirely
-- Add `otp` state for the 6-digit code
-- Remove the "forgot password" mode (no longer needed with passwordless)
+**`buddy_email_templates`** — Stores the two editable email templates
+- `id` (uuid, PK)
+- `template_key` (text, unique) — `'intro'` or `'reminder'`
+- `subject` (text)
+- `body` (text) — supports `[NewMemberName]` and `[BuddyName]` placeholders
+- `updated_at` (timestamptz)
+- RLS: admins can manage, authenticated can read
 
-**2. Sign-in flow (two steps)**
-- Step 1 ("signin"): User enters email, clicks "Send Code". Calls `supabase.auth.signInWithOtp({ email })`. Transitions to "signin-otp".
-- Step 2 ("signin-otp"): User enters 6-digit code via InputOTP component. Calls `supabase.auth.verifyOtp({ email, token: otp, type: 'email' })`. On success, navigate to `/home`.
+Seed with default intro and reminder content.
 
-**3. Sign-up flow (two steps)**
-- Step 1 ("signup"): User enters email + EAA number. Roster validation runs as today. If valid, calls `supabase.auth.signInWithOtp({ email })` (this creates the account if it doesn't exist). Transitions to "signup-otp".
-- Step 2 ("signup-otp"): Same OTP verification as sign-in. On success, navigate to `/home`.
+**`buddy_email_log`** — Tracks which emails have been sent per assignment
+- `id` (uuid, PK)
+- `assignment_id` (uuid, references buddy_assignments)
+- `email_type` (text) — `'intro'` or `'reminder'`
+- `sent_at` (timestamptz, default now())
+- RLS: officers/admins can read and insert
 
-**4. UI updates**
-- Remove all password input fields
-- Remove "Forgot your password?" link
-- Add InputOTP component (already exists in the project) for the code entry steps
-- Show "Check your email for a 6-digit code" message on OTP steps
-- Add "Resend code" button on OTP steps
-- Add "Back" button to return to email entry
+### 2. Edge Function: `buddy-email-send`
 
-**5. Cleanup**
-- Remove or simplify `src/pages/ResetPassword.tsx` route (no longer needed since there are no passwords)
-- Remove the `/reset-password` route from `App.tsx`
+A new edge function that:
+1. Accepts `{ assignment_id, email_type }` (intro or reminder)
+2. Looks up the assignment → gets new member name/email and buddy name/email from roster
+3. Fetches the matching template from `buddy_email_templates`
+4. Replaces `[NewMemberName]` and `[BuddyName]` placeholders
+5. **Test phase**: Sends to `membership@eaa84.org` with first line in body showing `To: buddy@email.com, new_member@email.com CC: membership@eaa84.org`
+6. Uses Resend API (already configured) to send the email from `notify@notify.eaa84.org`
+7. Logs the send in `buddy_email_log`
+
+### 3. Scheduled Reminder: `buddy-reminder-cron`
+
+A new edge function triggered by pg_cron (daily) that:
+1. Finds assignments where intro was sent 3+ days ago but no reminder sent yet
+2. Calls `buddy-email-send` for each pending reminder
+
+### 4. UI: Buddy Program page updates (`BuddyProgram.tsx`)
+
+In the New Members list, each assignment row shows email status tags:
+- **"Intro Sent"** (green badge) — when intro email logged
+- **"Reminder Sent"** (blue badge) — when reminder email logged
+- No tag if not yet sent
+
+Add a "Send Intro" button on each assignment that triggers the intro email manually. This allows officers to control when the first email goes out.
+
+### 5. UI: Website Configuration — Buddy Program section (`SiteConfig.tsx`)
+
+Add a new "Buddy Program Emails" card with:
+- Two editable templates (intro and reminder), each with subject + body (textarea)
+- Display placeholder reference: `[NewMemberName]`, `[BuddyName]`
+- Edit via dialog, save to `buddy_email_templates`
+
+### 6. Future switchover notes
+
+When ready to go live:
+- Change the edge function to send to actual participants with CC/Reply-To headers
+- Remove the test-phase "To:/CC:" first line from the body
 
 ### Technical Details
-- `signInWithOtp({ email })` handles both new and existing users — it sends an OTP and creates the account on first use
-- The roster check still happens before sending OTP during sign-up to prevent non-members from creating accounts
-- The existing `check_email_and_eaa_in_roster` RPC is reused unchanged
-- No database migrations needed
-- No edge functions needed
+
+- Email sending uses the existing Resend API key (already in secrets)
+- The edge function sends directly via Resend (not through the transactional email system) since these emails need custom CC/Reply-To headers for the future reply-all workflow
+- pg_cron job runs daily to check for pending 3-day reminders
+- Template placeholders are simple string replacement before sending
 
