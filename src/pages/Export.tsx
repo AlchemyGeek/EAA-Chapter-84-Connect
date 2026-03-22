@@ -97,6 +97,13 @@ export default function Export() {
     new_value: c.new_value,
   }));
 
+  if (authLoading) {
+    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>;
+  }
+  if (!user || !isOfficerOrAbove) {
+    return <Navigate to="/home" replace />;
+  }
+
   return (
     <div className="p-4 md:p-6 max-w-4xl space-y-6">
       <h1 className="text-xl md:text-2xl font-bold">Export Data</h1>
