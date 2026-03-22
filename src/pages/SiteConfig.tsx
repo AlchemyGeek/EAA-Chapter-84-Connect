@@ -254,7 +254,7 @@ export default function SiteConfig() {
               <CardHeader className="pb-2 cursor-pointer hover:bg-muted/50 transition-colors">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>div>div>&]:rotate-90" />
+                    <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${linksOpen ? "rotate-90" : ""}`} />
                     <LinkIcon className="h-4 w-4 text-secondary" />
                     Site Links
                   </CardTitle>
