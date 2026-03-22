@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
     const { error: enqueueError } = await supabase.rpc('enqueue_email', {
       queue_name: 'transactional_emails',
       payload: {
-        to: 'membership@eaa84.org',
+        to: 'stathis@gmail.com',
         from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
         sender_domain: 'notify.eaa84.org',
         subject: processedSubject,
