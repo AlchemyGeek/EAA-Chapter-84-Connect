@@ -362,6 +362,7 @@ export default function BuddyProgram() {
                 const isActive = assignment
                   ? now - new Date(assignment.assigned_at).getTime() < THREE_MONTHS_MS
                   : false;
+                const emailStatus = assignment ? getEmailStatus(assignment.id) : null;
 
                 return (
                   <div
@@ -383,7 +384,7 @@ export default function BuddyProgram() {
                         const days = daysElapsed % 30;
                         const durationText = months > 0 ? `${months}mo ${days}d` : `${days}d`;
                         return (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs text-muted-foreground">{durationText}</span>
                             {isActive ? (
                               <Badge className="text-xs bg-green-50 text-green-700 border-green-200" variant="outline">
@@ -394,12 +395,34 @@ export default function BuddyProgram() {
                                 Alumni Buddy Pair
                               </Badge>
                             )}
+                            {emailStatus?.introSent && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                                    <Mail className="h-3 w-3 mr-1" />
+                                    Intro Sent
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>Introduction email has been sent</TooltipContent>
+                              </Tooltip>
+                            )}
+                            {emailStatus?.reminderSent && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                    <Mail className="h-3 w-3 mr-1" />
+                                    Reminder Sent
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>3-day reminder email has been sent</TooltipContent>
+                              </Tooltip>
+                            )}
                           </div>
                         );
                       })()}
                     </div>
                     {assignment ? (
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <p className="text-xs flex items-center gap-1.5">
                           <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="text-muted-foreground">Buddy:</span>
@@ -409,16 +432,30 @@ export default function BuddyProgram() {
                               : `Volunteer #${assignment.volunteer_key_id}`}
                           </span>
                         </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs gap-1"
-                          onClick={() => reassignBuddy.mutate(app.id)}
-                          disabled={reassignBuddy.isPending || sortedVolunteers.length < 2}
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                          Reassign
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {!emailStatus?.introSent && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs gap-1"
+                              onClick={() => sendIntroEmail.mutate(assignment.id)}
+                              disabled={sendIntroEmail.isPending}
+                            >
+                              <Send className="h-3 w-3" />
+                              Send Intro
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => reassignBuddy.mutate(app.id)}
+                            disabled={reassignBuddy.isPending || sortedVolunteers.length < 2}
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                            Reassign
+                          </Button>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between">
