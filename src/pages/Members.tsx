@@ -31,6 +31,28 @@ export default function Members() {
     },
   });
 
+  const { data: chapterDataList = [] } = useQuery({
+    queryKey: ["members-chapter-visibility"],
+    networkMode: "always",
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_chapter_data")
+        .select("key_id, contact_visible_in_directory, aviation_visible_in_directory");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Build visibility map: key_id -> { contact, aviation }
+  const visibilityMap = new Map<number, { contact: boolean; aviation: boolean }>();
+  for (const cd of chapterDataList) {
+    visibilityMap.set(cd.key_id, {
+      contact: cd.contact_visible_in_directory,
+      aviation: cd.aviation_visible_in_directory,
+    });
+  }
+
   const { data: leadership = [] } = useQuery({
     queryKey: ["chapter-leadership"],
     networkMode: "always",
@@ -54,12 +76,19 @@ export default function Members() {
 
   const filtered = members.filter((m) => {
     const q = search.toLowerCase();
-    const searchableFields = [
-      m.first_name, m.last_name, m.nickname, m.eaa_number,
-      m.email, m.cell_phone, m.home_phone,
-      m.preferred_city, m.preferred_state,
-      m.ratings, m.aircraft_owned, m.aircraft_project, m.aircraft_built,
-    ];
+    const vis = visibilityMap.get(m.key_id);
+    const contactVisible = vis?.contact ?? true;
+    const aviationVisible = vis?.aviation ?? true;
+
+    const baseFields = [m.first_name, m.last_name, m.nickname, m.eaa_number];
+    const contactFields = contactVisible
+      ? [m.email, m.cell_phone, m.home_phone, m.preferred_city, m.preferred_state]
+      : [];
+    const aviationFields = aviationVisible
+      ? [m.ratings, m.aircraft_owned, m.aircraft_project, m.aircraft_built]
+      : [];
+    const searchableFields = [...baseFields, ...contactFields, ...aviationFields];
+
     const textMatch = !q || searchableFields.some((f) => f?.toLowerCase().includes(q));
     const roleMatch = !roleOnly || roleMap.has(m.key_id);
     return textMatch && roleMatch;
