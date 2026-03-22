@@ -156,19 +156,22 @@ export function ChapterLeadership() {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <Crown className="h-4 w-4 text-secondary" />
-          Chapter Leadership
-        </CardTitle>
-        <p className="text-xs text-muted-foreground mt-1">
-          Assign leadership roles to chapter members.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Add new assignment */}
-        <div className="space-y-3 rounded-lg border p-3 bg-muted/30">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-2 cursor-pointer hover:bg-muted/50 transition-colors">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-90" : ""}`} />
+              <Crown className="h-4 w-4 text-secondary" />
+              Chapter Leadership
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Assign leadership roles to chapter members.
+            </p>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
