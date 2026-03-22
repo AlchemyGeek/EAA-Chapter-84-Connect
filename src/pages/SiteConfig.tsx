@@ -247,121 +247,139 @@ export default function SiteConfig() {
         </div>
 
         {/* Site Links Section */}
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <LinkIcon className="h-4 w-4 text-secondary" />
-                Site Links
-              </CardTitle>
-              <Button size="sm" onClick={openAdd} className="h-8">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Link
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Manage links displayed to members across the site.
-            </p>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-sm text-muted-foreground animate-pulse py-4">Loading links...</div>
-            ) : links.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">
-                No links configured yet. Click "Add Link" to get started.
-              </p>
-            ) : (
-              <div className="divide-y divide-border">
-                {links.map((link) => (
-                  <div key={link.id} className="flex items-center gap-3 py-2.5 group">
-                    <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{link.name}</p>
-                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                        <ExternalLink className="h-3 w-3 shrink-0" />
-                        {link.url}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(link)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => deleteMutation.mutate(link.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-2 cursor-pointer hover:bg-muted/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>div>div>&]:rotate-90" />
+                    <LinkIcon className="h-4 w-4 text-secondary" />
+                    Site Links
+                  </CardTitle>
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs text-muted-foreground">
+                    Manage links displayed to members across the site.
+                  </p>
+                  <Button size="sm" onClick={openAdd} className="h-8">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Link
+                  </Button>
+                </div>
+                {isLoading ? (
+                  <div className="text-sm text-muted-foreground animate-pulse py-4">Loading links...</div>
+                ) : links.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">
+                    No links configured yet. Click "Add Link" to get started.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {links.map((link) => (
+                      <div key={link.id} className="flex items-center gap-3 py-2.5 group">
+                        <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{link.name}</p>
+                          <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                            <ExternalLink className="h-3 w-3 shrink-0" />
+                            {link.url}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(link)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => deleteMutation.mutate(link.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Fees Section */}
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <CircleDollarSign className="h-4 w-4 text-secondary" />
-                Fees
-              </CardTitle>
-              <Button size="sm" onClick={openAddFee} className="h-8">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Fee
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Define fee names and amounts referenced across the site.
-            </p>
-          </CardHeader>
-          <CardContent>
-            {feesLoading ? (
-              <div className="text-sm text-muted-foreground animate-pulse py-4">Loading fees...</div>
-            ) : fees.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">
-                No fees configured yet. Click "Add Fee" to get started.
-              </p>
-            ) : (
-              <div className="divide-y divide-border">
-                {fees.map((fee) => (
-                  <div key={fee.id} className="flex items-center gap-3 py-2.5 group">
-                    <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{fee.name}</p>
-                      {fee.payment_url && (
-                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                          <ExternalLink className="h-3 w-3 shrink-0" />
-                          <a href={fee.payment_url} target="_blank" rel="noopener noreferrer" className="hover:underline">{fee.payment_url}</a>
-                        </p>
-                      )}
-                    </div>
-                    <span className="text-sm font-semibold tabular-nums">
-                      ${Number(fee.amount).toFixed(2)}
-                    </span>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFee(fee)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => deleteFeeMutation.mutate(fee.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-2 cursor-pointer hover:bg-muted/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>div>div>&]:rotate-90" />
+                    <CircleDollarSign className="h-4 w-4 text-secondary" />
+                    Fees
+                  </CardTitle>
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs text-muted-foreground">
+                    Define fee names and amounts referenced across the site.
+                  </p>
+                  <Button size="sm" onClick={openAddFee} className="h-8">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Fee
+                  </Button>
+                </div>
+                {feesLoading ? (
+                  <div className="text-sm text-muted-foreground animate-pulse py-4">Loading fees...</div>
+                ) : fees.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">
+                    No fees configured yet. Click "Add Fee" to get started.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {fees.map((fee) => (
+                      <div key={fee.id} className="flex items-center gap-3 py-2.5 group">
+                        <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{fee.name}</p>
+                          {fee.payment_url && (
+                            <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                              <ExternalLink className="h-3 w-3 shrink-0" />
+                              <a href={fee.payment_url} target="_blank" rel="noopener noreferrer" className="hover:underline">{fee.payment_url}</a>
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-sm font-semibold tabular-nums">
+                          ${Number(fee.amount).toFixed(2)}
+                        </span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFee(fee)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => deleteFeeMutation.mutate(fee.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Buddy Program Emails Section */}
         <BuddyEmailTemplates />
