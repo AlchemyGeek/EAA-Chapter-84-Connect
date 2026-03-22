@@ -357,6 +357,9 @@ export default function SiteConfig() {
           </CardContent>
         </Card>
 
+        {/* Buddy Program Emails Section */}
+        <BuddyEmailTemplates />
+
         {/* Chapter Leadership Section */}
         <ChapterLeadership />
       </div>
