@@ -29,6 +29,7 @@ import {
   ExternalLink,
   Link as LinkIcon,
   CircleDollarSign,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
