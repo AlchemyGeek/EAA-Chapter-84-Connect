@@ -12,7 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Crown, Search, Plus, X } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Crown, Search, Plus, X, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const LEADERSHIP_ROLES = [
