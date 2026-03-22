@@ -74,6 +74,19 @@ export default function BuddyProgram() {
     },
   });
 
+  // Fetch email logs for assignments
+  const { data: emailLogs = [] } = useQuery({
+    queryKey: ["buddy-email-logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("buddy_email_log" as any)
+        .select("assignment_id, email_type, sent_at")
+        .order("sent_at", { ascending: false });
+      if (error) throw error;
+      return data as { assignment_id: string; email_type: string; sent_at: string }[];
+    },
+  });
+
   // Fetch completed applications
   const { data: completedApps = [] } = useQuery({
     queryKey: ["completed-applications-buddy"],
