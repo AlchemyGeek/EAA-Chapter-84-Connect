@@ -10,6 +10,8 @@ import { format } from "date-fns";
 import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import GroupedDiffView from "@/components/diff/GroupedDiffView";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
 
 
 export default function Export() {
