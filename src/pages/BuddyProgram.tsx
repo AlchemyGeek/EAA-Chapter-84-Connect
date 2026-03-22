@@ -83,7 +83,7 @@ export default function BuddyProgram() {
         .select("assignment_id, email_type, sent_at")
         .order("sent_at", { ascending: false });
       if (error) throw error;
-      return data as { assignment_id: string; email_type: string; sent_at: string }[];
+      return (data as any[]) as { assignment_id: string; email_type: string; sent_at: string }[];
     },
   });
 
