@@ -75,7 +75,7 @@ export default function Members() {
       <div className="flex items-center gap-4">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input id="member-search" placeholder="Search by name..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input id="member-search" placeholder="Search by name, city, aircraft, ratings..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex items-center gap-2">
           <Switch id="role-filter" checked={roleOnly} onCheckedChange={setRoleOnly} />
