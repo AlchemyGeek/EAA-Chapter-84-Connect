@@ -23,7 +23,7 @@ export default function Members() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, eaa_number, first_name, last_name, nickname, member_type")
+        .select("key_id, eaa_number, first_name, last_name, nickname, member_type, email, cell_phone, home_phone, preferred_city, preferred_state, ratings, aircraft_owned, aircraft_project, aircraft_built")
         .eq("current_standing", "Active")
         .order("last_name");
       if (error) throw error;
@@ -54,11 +54,15 @@ export default function Members() {
 
   const filtered = members.filter((m) => {
     const q = search.toLowerCase();
-    const nameMatch = !q ||
-      m.first_name?.toLowerCase().includes(q) ||
-      m.last_name?.toLowerCase().includes(q);
+    const searchableFields = [
+      m.first_name, m.last_name, m.nickname, m.eaa_number,
+      m.email, m.cell_phone, m.home_phone,
+      m.preferred_city, m.preferred_state,
+      m.ratings, m.aircraft_owned, m.aircraft_project, m.aircraft_built,
+    ];
+    const textMatch = !q || searchableFields.some((f) => f?.toLowerCase().includes(q));
     const roleMatch = !roleOnly || roleMap.has(m.key_id);
-    return nameMatch && roleMatch;
+    return textMatch && roleMatch;
   });
 
   return (
@@ -71,7 +75,7 @@ export default function Members() {
       <div className="flex items-center gap-4">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input id="member-search" placeholder="Search by name..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input id="member-search" placeholder="Search by name, city, aircraft, ratings..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex items-center gap-2">
           <Switch id="role-filter" checked={roleOnly} onCheckedChange={setRoleOnly} />
