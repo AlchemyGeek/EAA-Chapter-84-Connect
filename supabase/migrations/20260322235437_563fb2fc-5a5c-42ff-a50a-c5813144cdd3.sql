@@ -1,0 +1,1 @@
+DELETE FROM public.buddy_email_log;
