@@ -12,7 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Crown, Search, Plus, X } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Crown, Search, Plus, X, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const LEADERSHIP_ROLES = [
@@ -52,6 +57,7 @@ export function ChapterLeadership() {
   const [search, setSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState<MemberOption | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   // Fetch current leadership assignments
   const { data: leadership = [], isLoading } = useQuery({
@@ -150,20 +156,25 @@ export function ChapterLeadership() {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <Crown className="h-4 w-4 text-secondary" />
-          Chapter Leadership
-        </CardTitle>
-        <p className="text-xs text-muted-foreground mt-1">
-          Assign leadership roles to chapter members.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Add new assignment */}
-        <div className="space-y-3 rounded-lg border p-3 bg-muted/30">
-          <div className="relative">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-2 cursor-pointer hover:bg-muted/50 transition-colors">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-90" : ""}`} />
+              <Crown className="h-4 w-4 text-secondary" />
+              Chapter Leadership
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Assign leadership roles to chapter members.
+            </p>
+            {/* Add new assignment */}
+            <div className="space-y-3 rounded-lg border p-3 bg-muted/30">
+            <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search member by name..."
@@ -268,7 +279,9 @@ export function ChapterLeadership() {
             </table>
           </div>
         )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }

@@ -7,12 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Mail } from "lucide-react";
+import { Pencil, Mail, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface BuddyEmailTemplate {
@@ -34,6 +39,7 @@ export function BuddyEmailTemplates() {
   const [editingTemplate, setEditingTemplate] = useState<BuddyEmailTemplate | null>(null);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["buddy-email-templates"],
@@ -82,19 +88,24 @@ export function BuddyEmailTemplates() {
 
   return (
     <>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <Mail className="h-4 w-4 text-secondary" />
-            Buddy Program Emails
-          </CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
-            Edit the email templates sent to buddy pairs. Use{" "}
-            <code className="text-xs bg-muted px-1 rounded">[NewMemberName]</code> and{" "}
-            <code className="text-xs bg-muted px-1 rounded">[BuddyName]</code> as placeholders.
-          </p>
-        </CardHeader>
-        <CardContent>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="pb-2 cursor-pointer hover:bg-muted/50 transition-colors">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                <Mail className="h-4 w-4 text-secondary" />
+                Buddy Program Emails
+              </CardTitle>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground mb-3">
+                Edit the email templates sent to buddy pairs. Use{" "}
+                <code className="text-xs bg-muted px-1 rounded">[NewMemberName]</code> and{" "}
+                <code className="text-xs bg-muted px-1 rounded">[BuddyName]</code> as placeholders.
+              </p>
           {isLoading ? (
             <div className="text-sm text-muted-foreground animate-pulse py-4">Loading templates...</div>
           ) : templates.length === 0 ? (
@@ -123,8 +134,10 @@ export function BuddyEmailTemplates() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
