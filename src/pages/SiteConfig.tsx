@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChapterLeadership } from "@/components/admin/ChapterLeadership";
+import { BuddyEmailTemplates } from "@/components/admin/BuddyEmailTemplates";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -355,6 +356,9 @@ export default function SiteConfig() {
             )}
           </CardContent>
         </Card>
+
+        {/* Buddy Program Emails Section */}
+        <BuddyEmailTemplates />
 
         {/* Chapter Leadership Section */}
         <ChapterLeadership />
