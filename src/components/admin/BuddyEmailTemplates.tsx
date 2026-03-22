@@ -39,6 +39,7 @@ export function BuddyEmailTemplates() {
   const [editingTemplate, setEditingTemplate] = useState<BuddyEmailTemplate | null>(null);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["buddy-email-templates"],
