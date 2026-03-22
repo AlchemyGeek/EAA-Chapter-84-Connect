@@ -31,6 +31,28 @@ export default function Members() {
     },
   });
 
+  const { data: chapterDataList = [] } = useQuery({
+    queryKey: ["members-chapter-visibility"],
+    networkMode: "always",
+    retry: 1,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_chapter_data")
+        .select("key_id, contact_visible_in_directory, aviation_visible_in_directory");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Build visibility map: key_id -> { contact, aviation }
+  const visibilityMap = new Map<number, { contact: boolean; aviation: boolean }>();
+  for (const cd of chapterDataList) {
+    visibilityMap.set(cd.key_id, {
+      contact: cd.contact_visible_in_directory,
+      aviation: cd.aviation_visible_in_directory,
+    });
+  }
+
   const { data: leadership = [] } = useQuery({
     queryKey: ["chapter-leadership"],
     networkMode: "always",
