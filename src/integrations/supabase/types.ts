@@ -83,6 +83,59 @@ export type Database = {
           },
         ]
       }
+      buddy_email_log: {
+        Row: {
+          assignment_id: string
+          email_type: string
+          id: string
+          sent_at: string
+        }
+        Insert: {
+          assignment_id: string
+          email_type: string
+          id?: string
+          sent_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          email_type?: string
+          id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buddy_email_log_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "buddy_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buddy_email_templates: {
+        Row: {
+          body: string
+          id: string
+          subject: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          id?: string
+          subject: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          id?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       buddy_volunteers: {
         Row: {
           created_at: string
