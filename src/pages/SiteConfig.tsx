@@ -16,6 +16,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   ArrowLeft,
   Plus,
   Pencil,
