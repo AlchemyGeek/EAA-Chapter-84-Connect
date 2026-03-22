@@ -248,7 +248,7 @@ export default function SiteConfig() {
         </div>
 
         {/* Site Links Section */}
-        <Collapsible defaultOpen={false}>
+        <Collapsible open={linksOpen} onOpenChange={setLinksOpen}>
           <Card>
             <CollapsibleTrigger asChild>
               <CardHeader className="pb-2 cursor-pointer hover:bg-muted/50 transition-colors">
