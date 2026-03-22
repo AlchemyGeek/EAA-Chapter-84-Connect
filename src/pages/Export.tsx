@@ -15,6 +15,7 @@ import { Navigate } from "react-router-dom";
 
 
 export default function Export() {
+  const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
