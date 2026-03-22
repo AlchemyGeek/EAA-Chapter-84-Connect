@@ -277,7 +277,8 @@ export function ChapterLeadership() {
             </table>
           </div>
         )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
-}
