@@ -11,9 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-    if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY not configured')
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -118,24 +115,32 @@ Deno.serve(async (req) => {
     const intendedTo = [app.email, buddy.email].filter(Boolean).join(', ')
     const testBody = `To: ${intendedTo}\nCC: membership@eaa84.org\n\n${processedBody}`
 
-    // Send via Resend
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Convert plain text to simple HTML
+    const htmlBody = testBody.replace(/\n/g, '<br>')
+
+    // Generate a unique message ID for idempotency
+    const messageId = crypto.randomUUID()
+
+    // Enqueue via the transactional email queue
+    const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+      queue_name: 'transactional_emails',
+      payload: {
+        to: 'membership@eaa84.org',
         from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
-        to: ['membership@eaa84.org'],
+        sender_domain: 'notify.eaa84.org',
         subject: processedSubject,
+        html: htmlBody,
         text: testBody,
-      }),
+        purpose: 'transactional',
+        label: `buddy_${email_type}`,
+        idempotency_key: `buddy-${assignment_id}-${email_type}`,
+        message_id: messageId,
+        queued_at: new Date().toISOString(),
+      },
     })
 
-    if (!res.ok) {
-      const errBody = await res.text()
-      throw new Error(`Resend API error [${res.status}]: ${errBody}`)
+    if (enqueueError) {
+      throw new Error(`Failed to enqueue email: ${enqueueError.message}`)
     }
 
     // Log the send
