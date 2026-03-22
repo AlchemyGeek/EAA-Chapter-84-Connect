@@ -120,12 +120,38 @@ Deno.serve(async (req) => {
 
     // Generate a unique message ID for idempotency
     const messageId = crypto.randomUUID()
+    const testRecipient = 'stathis@gmail.com'
+
+    const { data: existingUnsubscribeToken, error: tokenLookupError } = await supabase
+      .from('email_unsubscribe_tokens')
+      .select('token')
+      .eq('email', testRecipient)
+      .is('used_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (tokenLookupError) {
+      throw new Error(`Failed to load unsubscribe token: ${tokenLookupError.message}`)
+    }
+
+    const unsubscribeToken = existingUnsubscribeToken?.token ?? crypto.randomUUID()
+
+    if (!existingUnsubscribeToken) {
+      const { error: tokenInsertError } = await supabase
+        .from('email_unsubscribe_tokens')
+        .insert({ email: testRecipient, token: unsubscribeToken })
+
+      if (tokenInsertError) {
+        throw new Error(`Failed to create unsubscribe token: ${tokenInsertError.message}`)
+      }
+    }
 
     // Enqueue via the transactional email queue
     const { error: enqueueError } = await supabase.rpc('enqueue_email', {
       queue_name: 'transactional_emails',
       payload: {
-        to: 'stathis@gmail.com',
+        to: testRecipient,
         from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
         sender_domain: 'notify.eaa84.org',
         subject: processedSubject,
@@ -134,6 +160,7 @@ Deno.serve(async (req) => {
         purpose: 'transactional',
         label: `buddy_${email_type}`,
         idempotency_key: `buddy-${assignment_id}-${email_type}`,
+        unsubscribe_token: unsubscribeToken,
         message_id: messageId,
         queued_at: new Date().toISOString(),
       },
