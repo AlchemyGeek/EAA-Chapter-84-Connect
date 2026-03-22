@@ -57,7 +57,8 @@ export default function SiteConfig() {
   const [editingLink, setEditingLink] = useState<SiteLink | null>(null);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
-
+  const [linksOpen, setLinksOpen] = useState(false);
+  const [feesOpen, setFeesOpen] = useState(false);
   // Fee state
   const [feeDialogOpen, setFeeDialogOpen] = useState(false);
   const [editingFee, setEditingFee] = useState<ChapterFee | null>(null);
