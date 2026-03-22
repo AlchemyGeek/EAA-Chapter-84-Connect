@@ -57,6 +57,7 @@ export function ChapterLeadership() {
   const [search, setSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState<MemberOption | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   // Fetch current leadership assignments
   const { data: leadership = [], isLoading } = useQuery({
