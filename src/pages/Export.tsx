@@ -10,9 +10,12 @@ import { format } from "date-fns";
 import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import GroupedDiffView from "@/components/diff/GroupedDiffView";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
 
 
 export default function Export() {
+  const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(
@@ -93,6 +96,13 @@ export default function Export() {
     old_value: c.old_value,
     new_value: c.new_value,
   }));
+
+  if (authLoading) {
+    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>;
+  }
+  if (!user || !isOfficerOrAbove) {
+    return <Navigate to="/home" replace />;
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-4xl space-y-6">
