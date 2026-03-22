@@ -54,11 +54,15 @@ export default function Members() {
 
   const filtered = members.filter((m) => {
     const q = search.toLowerCase();
-    const nameMatch = !q ||
-      m.first_name?.toLowerCase().includes(q) ||
-      m.last_name?.toLowerCase().includes(q);
+    const searchableFields = [
+      m.first_name, m.last_name, m.nickname, m.eaa_number,
+      m.email, m.cell_phone, m.home_phone,
+      m.preferred_city, m.preferred_state,
+      m.ratings, m.aircraft_owned, m.aircraft_project, m.aircraft_built,
+    ];
+    const textMatch = !q || searchableFields.some((f) => f?.toLowerCase().includes(q));
     const roleMatch = !roleOnly || roleMap.has(m.key_id);
-    return nameMatch && roleMatch;
+    return textMatch && roleMatch;
   });
 
   return (
