@@ -195,6 +195,32 @@ export default function BuddyProgram() {
     },
   });
 
+  const sendIntroEmail = useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const { data, error } = await supabase.functions.invoke("buddy-email-send", {
+        body: { assignment_id: assignmentId, email_type: "intro" },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["buddy-email-logs"] });
+      toast({ title: "Intro email sent" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error sending email", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // Helper to get email status for an assignment
+  const getEmailStatus = (assignmentId: string) => {
+    const logs = emailLogs.filter((l) => l.assignment_id === assignmentId);
+    return {
+      introSent: logs.some((l) => l.email_type === "intro"),
+      reminderSent: logs.some((l) => l.email_type === "reminder"),
+    };
+  };
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
