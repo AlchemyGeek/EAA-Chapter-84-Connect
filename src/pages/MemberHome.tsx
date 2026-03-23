@@ -281,11 +281,30 @@ export default function MemberHome() {
 
 
   const handleSave = async (updates: Record<string, any>) => {
-    const { error } = await supabase
-      .from("roster_members")
-      .update(updates)
-      .eq("key_id", member!.key_id);
-    if (error) throw error;
+    if (isAdmin) {
+      // Admins use direct update (allowed by admin RLS policy)
+      const { error } = await supabase
+        .from("roster_members")
+        .update(updates)
+        .eq("key_id", member!.key_id);
+      if (error) throw error;
+    } else {
+      // Members use the restricted RPC function
+      const rpcParams: Record<string, any> = { _key_id: member!.key_id };
+      const allowedFields = [
+        'email', 'cell_phone', 'home_phone', 'street_address_1', 'street_address_2',
+        'preferred_city', 'preferred_state', 'zip_code', 'country', 'nickname', 'spouse',
+        'ratings', 'aircraft_owned', 'aircraft_project', 'aircraft_built', 'other_info',
+        'cell_phone_private', 'home_phone_private', 'address_private', 'email_private',
+      ];
+      for (const [key, value] of Object.entries(updates)) {
+        if (allowedFields.includes(key)) {
+          rpcParams[`_${key}`] = value;
+        }
+      }
+      const { error } = await supabase.rpc('member_update_own_record', rpcParams as any);
+      if (error) throw error;
+    }
     queryClient.invalidateQueries({ queryKey: ["my-member"] });
     queryClient.invalidateQueries({ queryKey: ["impersonate-member"] });
   };
