@@ -39,9 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth
       .getSession()
-      .then(({ data: { session } }) => {
+      .then(({ data: { session }, error }) => {
         if (!mounted) return;
-        setUser(session?.user ?? null);
+        if (error?.message?.includes('Refresh Token') || error?.code === 'refresh_token_not_found') {
+          supabase.auth.signOut();
+          setUser(null);
+        } else {
+          setUser(session?.user ?? null);
+        }
         initialized = true;
         setLoading(false);
       })
