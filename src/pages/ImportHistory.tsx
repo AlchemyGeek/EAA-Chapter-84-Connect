@@ -7,6 +7,7 @@ import { Link, Navigate } from "react-router-dom";
 import { format } from "date-fns";
 import { CheckCircle, AlertCircle, ChevronRight, Plus, Minus, RefreshCw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 
 function StatusBadge({ status }: { status: string }) {
   const isCompleted = status === "completed";
