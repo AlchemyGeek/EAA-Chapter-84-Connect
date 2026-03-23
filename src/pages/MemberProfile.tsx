@@ -35,15 +35,10 @@ export default function MemberProfile() {
   const { data: member, isLoading: memberLoading } = useQuery({
     queryKey: ["directory-member", keyId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_members")
-        .select(
-          "key_id, first_name, last_name, nickname, eaa_number, member_type, current_standing, email, cell_phone, home_phone, street_address_1, street_address_2, preferred_city, preferred_state, zip_code, country, ratings, aircraft_owned, aircraft_project, aircraft_built, young_eagle_pilot, young_eagle_volunteer, eagle_pilot, eagle_flight_volunteer, imc, vmc"
-        )
-        .eq("key_id", Number(keyId))
-        .single();
+      const { data, error } = await supabase.rpc("get_directory_members");
       if (error) throw error;
-      return data;
+      const found = (data ?? []).find((m: any) => m.key_id === Number(keyId));
+      return found ?? null;
     },
   });
 

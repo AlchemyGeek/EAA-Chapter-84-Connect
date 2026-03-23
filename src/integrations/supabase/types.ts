@@ -1010,6 +1010,37 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_directory_members: {
+        Args: never
+        Returns: {
+          aircraft_built: string
+          aircraft_owned: string
+          aircraft_project: string
+          cell_phone: string
+          country: string
+          current_standing: string
+          eaa_number: string
+          eagle_flight_volunteer: boolean
+          eagle_pilot: boolean
+          email: string
+          first_name: string
+          home_phone: string
+          imc: boolean
+          key_id: number
+          last_name: string
+          member_type: string
+          nickname: string
+          preferred_city: string
+          preferred_state: string
+          ratings: string
+          street_address_1: string
+          street_address_2: string
+          vmc: boolean
+          young_eagle_pilot: boolean
+          young_eagle_volunteer: boolean
+          zip_code: string
+        }[]
+      }
       get_user_emails_by_ids: {
         Args: { _user_ids: string[] }
         Returns: {
