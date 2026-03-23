@@ -20,6 +20,11 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function ImportHistory() {
   const isMobile = useIsMobile();
+  const { loading, isOfficerOrAbove, user } = useAuth();
+
+  if (loading) return <p className="p-6 text-muted-foreground">Loading...</p>;
+  if (!user || !isOfficerOrAbove) return <Navigate to="/home" replace />;
+
   const { data: imports = [], isLoading } = useQuery({
     queryKey: ["imports"],
     queryFn: async () => {
