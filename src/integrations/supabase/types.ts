@@ -1064,6 +1064,7 @@ export type Database = {
           total_members: number
         }[]
       }
+      is_officer: { Args: { _user_email: string }; Returns: boolean }
       member_update_own_record: {
         Args: {
           _address_private?: boolean
