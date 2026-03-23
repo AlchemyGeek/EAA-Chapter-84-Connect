@@ -394,13 +394,6 @@ export type Database = {
             referencedRelation: "roster_members"
             referencedColumns: ["key_id"]
           },
-          {
-            foreignKeyName: "member_chapter_data_key_id_fkey"
-            columns: ["key_id"]
-            isOneToOne: true
-            referencedRelation: "roster_members_directory"
-            referencedColumns: ["key_id"]
-          },
         ]
       }
       member_images: {
@@ -1001,93 +994,7 @@ export type Database = {
       }
     }
     Views: {
-      roster_members_directory: {
-        Row: {
-          aircraft_built: string | null
-          aircraft_owned: string | null
-          aircraft_project: string | null
-          cell_phone: string | null
-          country: string | null
-          current_standing: string | null
-          eaa_number: string | null
-          eagle_flight_volunteer: boolean | null
-          eagle_pilot: boolean | null
-          email: string | null
-          first_name: string | null
-          home_phone: string | null
-          imc: boolean | null
-          key_id: number | null
-          last_name: string | null
-          member_type: string | null
-          nickname: string | null
-          preferred_city: string | null
-          preferred_state: string | null
-          ratings: string | null
-          street_address_1: string | null
-          street_address_2: string | null
-          vmc: boolean | null
-          young_eagle_pilot: boolean | null
-          young_eagle_volunteer: boolean | null
-          zip_code: string | null
-        }
-        Insert: {
-          aircraft_built?: string | null
-          aircraft_owned?: string | null
-          aircraft_project?: string | null
-          cell_phone?: never
-          country?: never
-          current_standing?: string | null
-          eaa_number?: string | null
-          eagle_flight_volunteer?: boolean | null
-          eagle_pilot?: boolean | null
-          email?: never
-          first_name?: string | null
-          home_phone?: never
-          imc?: boolean | null
-          key_id?: number | null
-          last_name?: string | null
-          member_type?: string | null
-          nickname?: string | null
-          preferred_city?: never
-          preferred_state?: never
-          ratings?: string | null
-          street_address_1?: never
-          street_address_2?: never
-          vmc?: boolean | null
-          young_eagle_pilot?: boolean | null
-          young_eagle_volunteer?: boolean | null
-          zip_code?: never
-        }
-        Update: {
-          aircraft_built?: string | null
-          aircraft_owned?: string | null
-          aircraft_project?: string | null
-          cell_phone?: never
-          country?: never
-          current_standing?: string | null
-          eaa_number?: string | null
-          eagle_flight_volunteer?: boolean | null
-          eagle_pilot?: boolean | null
-          email?: never
-          first_name?: string | null
-          home_phone?: never
-          imc?: boolean | null
-          key_id?: number | null
-          last_name?: string | null
-          member_type?: string | null
-          nickname?: string | null
-          preferred_city?: never
-          preferred_state?: never
-          ratings?: string | null
-          street_address_1?: never
-          street_address_2?: never
-          vmc?: boolean | null
-          young_eagle_pilot?: boolean | null
-          young_eagle_volunteer?: boolean | null
-          zip_code?: never
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       check_email_and_eaa_in_roster: {
@@ -1102,6 +1009,37 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_directory_members: {
+        Args: never
+        Returns: {
+          aircraft_built: string
+          aircraft_owned: string
+          aircraft_project: string
+          cell_phone: string
+          country: string
+          current_standing: string
+          eaa_number: string
+          eagle_flight_volunteer: boolean
+          eagle_pilot: boolean
+          email: string
+          first_name: string
+          home_phone: string
+          imc: boolean
+          key_id: number
+          last_name: string
+          member_type: string
+          nickname: string
+          preferred_city: string
+          preferred_state: string
+          ratings: string
+          street_address_1: string
+          street_address_2: string
+          vmc: boolean
+          young_eagle_pilot: boolean
+          young_eagle_volunteer: boolean
+          zip_code: string
+        }[]
       }
       get_user_emails_by_ids: {
         Args: { _user_ids: string[] }
