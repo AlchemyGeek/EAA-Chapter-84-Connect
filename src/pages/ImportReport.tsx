@@ -6,9 +6,15 @@ import { ArrowLeft, Plus, RefreshCw, Minus } from "lucide-react";
 import { format } from "date-fns";
 import { exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
 import GroupedDiffView from "@/components/diff/GroupedDiffView";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
 
 export default function ImportReport() {
   const { importId } = useParams();
+  const { loading, isOfficerOrAbove, user } = useAuth();
+
+  if (loading) return <p className="p-6 text-muted-foreground">Loading...</p>;
+  if (!user || !isOfficerOrAbove) return <Navigate to="/home" replace />;
 
   const { data: importRecord } = useQuery({
     queryKey: ["import", importId],

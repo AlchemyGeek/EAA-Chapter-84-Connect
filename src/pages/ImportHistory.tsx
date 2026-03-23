@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { format } from "date-fns";
 import { CheckCircle, AlertCircle, ChevronRight, Plus, Minus, RefreshCw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 
 function StatusBadge({ status }: { status: string }) {
   const isCompleted = status === "completed";
@@ -20,6 +21,11 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function ImportHistory() {
   const isMobile = useIsMobile();
+  const { loading, isOfficerOrAbove, user } = useAuth();
+
+  if (loading) return <p className="p-6 text-muted-foreground">Loading...</p>;
+  if (!user || !isOfficerOrAbove) return <Navigate to="/home" replace />;
+
   const { data: imports = [], isLoading } = useQuery({
     queryKey: ["imports"],
     queryFn: async () => {
