@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { format } from "date-fns";
 import { CheckCircle, AlertCircle, ChevronRight, Plus, Minus, RefreshCw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
