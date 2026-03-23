@@ -13,7 +13,48 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+
+    // Verify caller is authenticated and has officer/admin role
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token)
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const userId = claimsData.claims.sub as string
+
+    // Check officer or admin role
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey)
+    const { data: isAdmin } = await adminClient.rpc('has_role', { _user_id: userId, _role: 'admin' })
+    const { data: isOfficerRow } = await adminClient
+      .from('chapter_leadership')
+      .select('id')
+      .eq('key_id', (await adminClient.from('roster_members').select('key_id').ilike('email', claimsData.claims.email as string).limit(1).single()).data?.key_id ?? -1)
+      .limit(1)
+      .maybeSingle()
+
+    if (!isAdmin && !isOfficerRow) {
+      return new Response(JSON.stringify({ error: 'Forbidden: officer or admin role required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const supabase = adminClient
 
     const { assignment_id, email_type } = await req.json()
     if (!assignment_id || !email_type) {
