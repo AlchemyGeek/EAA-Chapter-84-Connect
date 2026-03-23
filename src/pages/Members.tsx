@@ -21,13 +21,9 @@ export default function Members() {
     networkMode: "always",
     retry: 1,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_members")
-        .select("key_id, eaa_number, first_name, last_name, nickname, member_type, email, cell_phone, home_phone, preferred_city, preferred_state, ratings, aircraft_owned, aircraft_project, aircraft_built")
-        .eq("current_standing", "Active")
-        .order("last_name");
+      const { data, error } = await supabase.rpc("get_directory_members");
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
