@@ -1,0 +1,1 @@
+DELETE FROM buddy_email_log WHERE id = 'a35da4cc-e0f3-4fcc-a3dc-9a7768f27482';
