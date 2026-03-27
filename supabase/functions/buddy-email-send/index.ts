@@ -13,9 +13,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
-    // Verify caller is authenticated and has officer/admin role (or is service_role from cron)
+    // Verify caller is authenticated
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -27,25 +26,25 @@ Deno.serve(async (req) => {
     const token = authHeader.replace('Bearer ', '')
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Check if this is a service_role call (from cron/internal)
+    // Accept service role key directly (from cron/internal calls)
     const isServiceRole = token === supabaseServiceKey
 
     if (!isServiceRole) {
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
       const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } },
       })
-      const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token)
-      if (claimsError || !claimsData?.claims) {
+      const { data: { user }, error: userError } = await anonClient.auth.getUser()
+      if (userError || !user) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
-      const userId = claimsData.claims.sub as string
 
       // Check officer or admin role
-      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' })
-      const rosterLookup = await supabase.from('roster_members').select('key_id').ilike('email', claimsData.claims.email as string).limit(1).maybeSingle()
+      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+      const rosterLookup = await supabase.from('roster_members').select('key_id').ilike('email', user.email ?? '').limit(1).maybeSingle()
       const { data: isOfficerRow } = await supabase
         .from('chapter_leadership')
         .select('id')
@@ -60,8 +59,6 @@ Deno.serve(async (req) => {
         })
       }
     }
-
-    const supabase = adminClient
 
     const { assignment_id, email_type } = await req.json()
     if (!assignment_id || !email_type) {
@@ -159,7 +156,7 @@ Deno.serve(async (req) => {
       .replace(/\[NewMemberName\]/g, newMemberName)
       .replace(/\[BuddyName\]/g, buddyName)
 
-    // Test phase: add intended recipients as first line, send to membership@eaa84.org
+    // Test phase: add intended recipients as first line, send to test email
     const intendedTo = [app.email, buddy.email].filter(Boolean).join(', ')
     const testBody = `To: ${intendedTo}\nCC: membership@eaa84.org\n\n${processedBody}`
 
@@ -170,7 +167,7 @@ Deno.serve(async (req) => {
     const messageId = crypto.randomUUID()
     const testRecipient = 'stathis@gmail.com'
 
-    const { data: existingUnsubscribeToken, error: tokenLookupError } = await supabase
+    const { data: existingUnsubscribeToken } = await supabase
       .from('email_unsubscribe_tokens')
       .select('token')
       .eq('email', testRecipient)
@@ -179,20 +176,12 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle()
 
-    if (tokenLookupError) {
-      throw new Error(`Failed to load unsubscribe token: ${tokenLookupError.message}`)
-    }
-
     const unsubscribeToken = existingUnsubscribeToken?.token ?? crypto.randomUUID()
 
     if (!existingUnsubscribeToken) {
-      const { error: tokenInsertError } = await supabase
+      await supabase
         .from('email_unsubscribe_tokens')
         .insert({ email: testRecipient, token: unsubscribeToken })
-
-      if (tokenInsertError) {
-        throw new Error(`Failed to create unsubscribe token: ${tokenInsertError.message}`)
-      }
     }
 
     // Enqueue via the transactional email queue
