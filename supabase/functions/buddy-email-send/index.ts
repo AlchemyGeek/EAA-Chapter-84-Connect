@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
         text: testBody,
         purpose: 'transactional',
         label: `buddy_${email_type}`,
-        idempotency_key: `buddy-${assignment_id}-${email_type}`,
+        idempotency_key: `buddy-${assignment_id}-${email_type}-${messageId}`,
         unsubscribe_token: unsubscribeToken,
         message_id: messageId,
         queued_at: new Date().toISOString(),
