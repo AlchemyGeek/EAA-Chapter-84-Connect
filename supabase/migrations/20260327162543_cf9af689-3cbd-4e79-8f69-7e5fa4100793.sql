@@ -1,0 +1,1 @@
+DELETE FROM buddy_email_log WHERE assignment_id = '449d481f-d92c-46f1-a7ec-a3115378a55e' AND email_type = 'intro';
