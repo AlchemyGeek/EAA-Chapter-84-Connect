@@ -13,9 +13,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
-    // Verify caller is authenticated (service role from cron or officer/admin)
+    // Verify caller is service role (from cron) or authenticated officer/admin
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -24,36 +23,41 @@ Deno.serve(async (req) => {
       })
     }
 
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    })
     const token = authHeader.replace('Bearer ', '')
-    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token)
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Accept service role key directly (from cron job)
+    const isServiceRole = token === supabaseServiceKey
+
+    if (!isServiceRole) {
+      // Validate as user JWT
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+      const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
       })
+      const { data: { user }, error: userError } = await anonClient.auth.getUser()
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+      const { data: isOfficerRow } = await supabase
+        .from('chapter_leadership')
+        .select('id')
+        .eq('key_id', (await supabase.from('roster_members').select('key_id').ilike('email', user.email ?? '').limit(1).single()).data?.key_id ?? -1)
+        .limit(1)
+        .maybeSingle()
+
+      if (!isAdmin && !isOfficerRow) {
+        return new Response(JSON.stringify({ error: 'Forbidden: officer or admin role required' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
     }
-    const userId = claimsData.claims.sub as string
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey)
-
-    const { data: isAdmin } = await adminClient.rpc('has_role', { _user_id: userId, _role: 'admin' })
-    const { data: isOfficerRow } = await adminClient
-      .from('chapter_leadership')
-      .select('id')
-      .eq('key_id', (await adminClient.from('roster_members').select('key_id').ilike('email', claimsData.claims.email as string).limit(1).single()).data?.key_id ?? -1)
-      .limit(1)
-      .maybeSingle()
-
-    if (!isAdmin && !isOfficerRow) {
-      return new Response(JSON.stringify({ error: 'Forbidden: officer or admin role required' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const supabase = adminClient
 
     // Find assignments where intro was sent 3+ days ago but no reminder sent
     const { data: introLogs, error: logErr } = await supabase
