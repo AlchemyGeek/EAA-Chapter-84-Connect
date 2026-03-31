@@ -521,8 +521,8 @@ export default function HangarTalk() {
           <MessageSquare className="h-4 w-4 text-primary" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-[15px] font-semibold text-foreground leading-tight">Hangar Talk</h1>
-          <p className="text-[12px] text-muted-foreground leading-tight">Chapter community chat</p>
+          <h1 className="text-sm font-semibold text-foreground leading-tight">Hangar Talk</h1>
+          <p className="text-xs text-muted-foreground leading-tight">Chapter community chat</p>
         </div>
       </div>
 
@@ -587,7 +587,7 @@ export default function HangarTalk() {
                 {showDateDivider && (
                   <div className="flex items-center gap-3 my-4">
                     <div className="flex-1 h-px bg-border" />
-                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide shrink-0">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide shrink-0">
                       {currentDateKey}
                     </span>
                     <div className="flex-1 h-px bg-border" />
@@ -598,7 +598,7 @@ export default function HangarTalk() {
                 <div className={`group relative hover:bg-muted/20 rounded-sm px-2 -mx-2 transition-colors ${isContinuation ? "py-px pl-[52px]" : "flex gap-3 pt-1.5 pb-0.5 mt-3 first:mt-0"}`}>
                   {/* Avatar — only for first in group */}
                   {!isContinuation && (
-                    <div className={`h-10 w-10 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-[11px] font-bold shrink-0`}>
+                    <div className={`h-10 w-10 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-xs font-bold shrink-0`}>
                       {initials}
                     </div>
                   )}
@@ -608,15 +608,15 @@ export default function HangarTalk() {
                     {/* Name line — only for first in group */}
                     {!isContinuation && (
                       <div className="flex items-baseline gap-1.5 flex-wrap">
-                        <span className="text-[15px] font-semibold text-foreground">
+                        <span className="text-sm font-semibold text-foreground">
                           {msg.author_name}
                         </span>
                         {badges.map((b, bi) => (
-                          <span key={bi} className={`text-[10px] font-medium rounded-full px-2 py-px ${b.cls}`}>
+                          <span key={bi} className={`text-xs font-medium rounded-full px-2 py-px ${b.cls}`}>
                             {b.label}
                           </span>
                         ))}
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                           {new Date(msg.created_at).toLocaleString(undefined, {
                             month: "short",
                             day: "numeric",
@@ -638,7 +638,7 @@ export default function HangarTalk() {
 
                     {/* Message text */}
                     {msg.content && (
-                      <p className="text-[15px] text-foreground whitespace-pre-wrap break-words" style={{ lineHeight: "1.45" }}>
+                      <p className="text-sm text-foreground whitespace-pre-wrap break-words">
                         {renderContent(msg.content)}
                       </p>
                     )}
@@ -670,7 +670,7 @@ export default function HangarTalk() {
                               href={url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] bg-muted/50 hover:bg-muted transition-colors"
+                              className="flex items-center gap-2 rounded-md px-3 py-2 text-xs bg-muted/50 hover:bg-muted transition-colors"
                               style={{ border: "0.5px solid hsl(var(--border))" }}
                             >
                               <FileText className="h-4 w-4 text-destructive shrink-0" />
@@ -693,7 +693,7 @@ export default function HangarTalk() {
                             <button
                               key={emoji}
                               onClick={() => toggleReaction(msg.id, emoji)}
-                              className={`text-[12px] rounded-full px-2 py-0.5 transition-colors ${
+                              className={`text-xs rounded-full px-2 py-0.5 transition-colors ${
                                 data.myReaction
                                   ? "bg-blue-50 text-blue-700"
                                   : "bg-transparent text-muted-foreground hover:bg-muted"
@@ -706,7 +706,7 @@ export default function HangarTalk() {
                         })}
                         <Popover>
                           <PopoverTrigger asChild>
-                            <button className="text-[12px] rounded-full px-2 py-0.5 text-muted-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100" style={{ border: "0.5px solid transparent" }}>
+                            <button className="text-xs rounded-full px-2 py-0.5 text-muted-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100" style={{ border: "0.5px solid transparent" }}>
                               +
                             </button>
                           </PopoverTrigger>
@@ -796,7 +796,7 @@ export default function HangarTalk() {
               value={content}
               onChange={handleContentChange}
               placeholder="Write a message…"
-              className="resize-none min-h-[44px] max-h-32 text-[14px] pr-12 rounded-full px-4 py-2.5"
+              className="resize-none min-h-[44px] max-h-32 text-sm pr-12 rounded-full px-4 py-2.5"
               style={{ border: "0.5px solid hsl(var(--border))" }}
               rows={1}
               onKeyDown={(e) => {
@@ -808,7 +808,7 @@ export default function HangarTalk() {
             />
             {content.length > MAX_CHARS * 0.9 && (
               <span
-                className={`absolute bottom-1.5 right-3 text-[11px] ${
+                className={`absolute bottom-1.5 right-3 text-xs ${
                   content.length > MAX_CHARS
                     ? "text-destructive"
                     : "text-muted-foreground"
