@@ -504,19 +504,31 @@ export default function HangarTalk() {
     return acc;
   }, {});
 
+  // Group messages by date for date dividers
+  const getDateKey = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  };
+
   return (
-    <div className="flex flex-col h-[100dvh] bg-background">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground px-4 py-3 flex items-center gap-3 shrink-0">
-        <Link to="/home" className="p-1 -ml-1 rounded-md hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px] flex items-center justify-center">
-          <ArrowLeft className="h-5 w-5" />
+    <div className="flex flex-col h-[100dvh]">
+      {/* Channel header */}
+      <div className="px-4 py-3 flex items-center gap-3 shrink-0 border-b" style={{ borderBottomWidth: "0.5px" }}>
+        <Link to="/home" className="p-1 -ml-1 rounded-md hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+          <ArrowLeft className="h-5 w-5 text-foreground" />
         </Link>
-        <h1 className="text-lg font-semibold">Hangar Talk</h1>
+        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <MessageSquare className="h-4 w-4 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="text-[15px] font-semibold text-foreground leading-tight">Hangar Talk</h1>
+          <p className="text-[12px] text-muted-foreground leading-tight">Chapter community chat</p>
+        </div>
       </div>
 
       {/* Impersonation banner */}
       {isImpersonating && viewAsMember && (
-        <div className="bg-accent/10 border-b border-accent/30 px-4 py-2 text-xs text-accent font-medium flex items-center justify-between shrink-0">
+        <div className="bg-accent/10 px-4 py-2 text-xs text-accent font-medium flex items-center justify-between shrink-0 border-b" style={{ borderBottomWidth: "0.5px" }}>
           <span>Posting as: {viewAsMember.first_name} {viewAsMember.last_name}</span>
           <Link to="/hangar-talk" className="underline hover:no-underline">Stop impersonating</Link>
         </div>
@@ -526,10 +538,10 @@ export default function HangarTalk() {
       <div
         ref={feedRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-3 space-y-1"
+        className="flex-1 overflow-y-auto px-4 py-3"
       >
         {hasMore && messages.length > 0 && (
-          <div className="text-center">
+          <div className="text-center mb-4">
             <Button variant="ghost" size="sm" onClick={loadOlder} className="text-xs text-muted-foreground">
               Load older messages
             </Button>
@@ -545,126 +557,164 @@ export default function HangarTalk() {
             No messages yet. Be the first to say something!
           </div>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, idx) => {
             const msgAttachments = attachmentsByMsg[msg.id] ?? [];
             const msgReactions = reactionsByMsg[msg.id] ?? {};
-            const isOwnMessage = activeMember && msg.key_id === activeMember.key_id;
+            const tint = getAvatarTint(msg.key_id);
+            const badges = getBadgesForMember(msg.key_id);
+            const initials = msg.author_name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase();
+
+            // Date divider
+            const prevMsg = idx > 0 ? messages[idx - 1] : null;
+            const currentDateKey = getDateKey(msg.created_at);
+            const showDateDivider = !prevMsg || getDateKey(prevMsg.created_at) !== currentDateKey;
 
             return (
-              <div key={msg.id} className="group relative pl-10 hover:bg-muted/30 rounded-md px-2 py-1 -mx-2 transition-colors">
-                {/* Avatar - positioned absolutely to the left */}
-                <div className="absolute left-0 top-1 h-7 w-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
-                  {msg.author_name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase()}
-                </div>
-                {/* Name + timestamp + content inline */}
-                <div className="min-w-0">
-                  <span className="text-[13px] font-semibold text-foreground">
-                    {msg.author_name}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground ml-1.5">
-                    {new Date(msg.created_at).toLocaleString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                  {isAdmin && (
-                    <button
-                      onClick={() => deleteMutation.mutate(msg.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive ml-2 p-0.5 align-middle inline-flex"
-                      title="Delete message"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  )}
-                  {msg.content && (
-                    <p className="text-[13px] text-foreground/90 whitespace-pre-wrap break-words leading-snug">
-                      {renderContent(msg.content)}
-                    </p>
-                  )}
-                  {/* Attachments */}
-                  {msgAttachments.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {msgAttachments.map((att) => {
-                        const url = getPublicUrl(att.storage_path);
-                        if (att.file_type === "image") {
-                          return (
-                            <button
-                              key={att.id}
-                              onClick={() => setExpandedImage(url)}
-                              className="rounded overflow-hidden border max-w-[180px]"
-                            >
-                              <img
-                                src={url}
-                                alt={att.file_name}
-                                className="max-h-36 object-cover"
-                                loading="lazy"
-                              />
-                            </button>
-                          );
-                        }
-                        return (
-                          <a
-                            key={att.id}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 rounded border px-2 py-1 text-xs hover:bg-muted transition-colors"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-destructive" />
-                            <span className="truncate max-w-[120px]">
-                              {att.file_name}
-                            </span>
-                          </a>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {/* Reactions */}
-                  <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                    {EMOJIS.map((emoji) => {
-                      const data = msgReactions[emoji];
-                      if (!data) return null;
-                      return (
+              <div key={msg.id}>
+                {/* Date divider */}
+                {showDateDivider && (
+                  <div className="flex items-center gap-3 my-5">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide shrink-0">
+                      {currentDateKey}
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                )}
+
+                {/* Message row */}
+                <div className="group relative flex gap-3 hover:bg-muted/20 rounded-md px-2 py-2 -mx-2 transition-colors" style={{ marginBottom: "18px" }}>
+                  {/* Avatar */}
+                  <div className={`h-9 w-9 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5`}>
+                    {initials}
+                  </div>
+
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    {/* Name line */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[14px] font-medium text-foreground leading-tight">
+                        {msg.author_name}
+                      </span>
+                      {badges.map((b, bi) => (
+                        <span key={bi} className={`text-[10px] font-medium rounded-full px-2 py-px ${b.cls}`}>
+                          {b.label}
+                        </span>
+                      ))}
+                      <span className="text-[11px] text-muted-foreground leading-tight">
+                        {new Date(msg.created_at).toLocaleString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                      {isAdmin && (
                         <button
-                          key={emoji}
-                          onClick={() => toggleReaction(msg.id, emoji)}
-                          className={`text-[11px] rounded-full px-1.5 py-px border transition-colors ${
-                            data.myReaction
-                              ? "bg-primary/10 border-primary/30 text-primary"
-                              : "bg-muted/50 border-transparent text-muted-foreground hover:border-border"
-                          }`}
+                          onClick={() => deleteMutation.mutate(msg.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive p-0.5 inline-flex"
+                          title="Delete message"
                         >
-                          {emoji} {data.count}
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
-                      );
-                    })}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="text-[11px] rounded-full px-1.5 py-px border border-transparent text-muted-foreground hover:bg-muted hover:border-border transition-colors opacity-0 group-hover:opacity-100">
-                          +
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-1.5" side="top">
-                        <div className="flex gap-0.5">
-                          {EMOJIS.map((emoji) => (
+                      )}
+                    </div>
+
+                    {/* Message text */}
+                    {msg.content && (
+                      <p className="text-[14px] text-foreground whitespace-pre-wrap break-words mt-0.5" style={{ lineHeight: "1.55" }}>
+                        {renderContent(msg.content)}
+                      </p>
+                    )}
+
+                    {/* Attachments */}
+                    {msgAttachments.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {msgAttachments.map((att) => {
+                          const url = getPublicUrl(att.storage_path);
+                          if (att.file_type === "image") {
+                            return (
+                              <button
+                                key={att.id}
+                                onClick={() => setExpandedImage(url)}
+                                className="rounded-md overflow-hidden max-w-[200px]" style={{ border: "0.5px solid hsl(var(--border))" }}
+                              >
+                                <img
+                                  src={url}
+                                  alt={att.file_name}
+                                  className="max-h-40 object-cover"
+                                  loading="lazy"
+                                />
+                              </button>
+                            );
+                          }
+                          return (
+                            <a
+                              key={att.id}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] bg-muted/50 hover:bg-muted transition-colors"
+                              style={{ border: "0.5px solid hsl(var(--border))" }}
+                            >
+                              <FileText className="h-4 w-4 text-destructive shrink-0" />
+                              <span className="truncate max-w-[140px]">
+                                {att.file_name}
+                              </span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Reactions */}
+                    {(Object.keys(msgReactions).length > 0 || true) && (
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        {EMOJIS.map((emoji) => {
+                          const data = msgReactions[emoji];
+                          if (!data) return null;
+                          return (
                             <button
                               key={emoji}
                               onClick={() => toggleReaction(msg.id, emoji)}
-                              className="text-base hover:scale-125 transition-transform p-0.5"
+                              className={`text-[12px] rounded-full px-2 py-0.5 transition-colors ${
+                                data.myReaction
+                                  ? "bg-blue-50 text-blue-700"
+                                  : "bg-transparent text-muted-foreground hover:bg-muted"
+                              }`}
+                              style={{ border: "0.5px solid hsl(var(--border))" }}
                             >
-                              {emoji}
+                              {emoji} <span className="ml-0.5 font-medium">{data.count}</span>
                             </button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                          );
+                        })}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="text-[12px] rounded-full px-2 py-0.5 text-muted-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100" style={{ border: "0.5px solid transparent" }}>
+                              +
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-1.5" side="top">
+                            <div className="flex gap-1">
+                              {EMOJIS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => toggleReaction(msg.id, emoji)}
+                                  className="text-lg hover:scale-125 transition-transform p-1"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -675,7 +725,7 @@ export default function HangarTalk() {
 
       {/* @mention dropdown */}
       {mentionSearch !== null && filteredMentions.length > 0 && (
-        <div className="border-t bg-card px-4 py-2 max-h-40 overflow-y-auto">
+        <div className="px-4 py-2 max-h-40 overflow-y-auto" style={{ borderTop: "0.5px solid hsl(var(--border))" }}>
           {filteredMentions.map((m) => (
             <button
               key={m.key_id}
@@ -690,17 +740,18 @@ export default function HangarTalk() {
 
       {/* Pending files preview */}
       {pendingFiles.length > 0 && (
-        <div className="border-t px-4 py-2 flex gap-2 overflow-x-auto bg-card">
+        <div className="px-4 py-2 flex gap-2 overflow-x-auto" style={{ borderTop: "0.5px solid hsl(var(--border))" }}>
           {pendingFiles.map((pf, i) => (
             <div key={i} className="relative shrink-0">
               {pf.preview ? (
                 <img
                   src={pf.preview}
                   alt={pf.file.name}
-                  className="h-16 w-16 rounded-md object-cover border"
+                  className="h-16 w-16 rounded-md object-cover"
+                  style={{ border: "0.5px solid hsl(var(--border))" }}
                 />
               ) : (
-                <div className="h-16 w-16 rounded-md border flex items-center justify-center bg-muted">
+                <div className="h-16 w-16 rounded-md flex items-center justify-center bg-muted" style={{ border: "0.5px solid hsl(var(--border))" }}>
                   <FileText className="h-6 w-6 text-muted-foreground" />
                 </div>
               )}
@@ -715,10 +766,10 @@ export default function HangarTalk() {
         </div>
       )}
 
-      {/* Input bar */}
-      <div className="border-t bg-card px-4 py-3 shrink-0">
+      {/* Compose bar */}
+      <div className="px-4 py-3 shrink-0" style={{ borderTop: "0.5px solid hsl(var(--border))" }}>
         <div className="flex items-end gap-2 max-w-2xl mx-auto">
-          <label className="cursor-pointer p-2 rounded-md hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+          <label className="cursor-pointer p-2 rounded-full hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
             <Paperclip className="h-5 w-5 text-muted-foreground" />
             <input
               type="file"
@@ -733,8 +784,9 @@ export default function HangarTalk() {
               ref={inputRef}
               value={content}
               onChange={handleContentChange}
-              placeholder="Type a message..."
-              className="resize-none min-h-[44px] max-h-32 text-sm pr-12"
+              placeholder="Write a message…"
+              className="resize-none min-h-[44px] max-h-32 text-[14px] pr-12 rounded-full px-4 py-2.5"
+              style={{ border: "0.5px solid hsl(var(--border))" }}
               rows={1}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -745,7 +797,7 @@ export default function HangarTalk() {
             />
             {content.length > MAX_CHARS * 0.9 && (
               <span
-                className={`absolute bottom-1 right-2 text-xs ${
+                className={`absolute bottom-1.5 right-3 text-[11px] ${
                   content.length > MAX_CHARS
                     ? "text-destructive"
                     : "text-muted-foreground"
@@ -763,7 +815,7 @@ export default function HangarTalk() {
               content.length > MAX_CHARS
             }
             size="icon"
-            className="min-h-[44px] min-w-[44px]"
+            className="min-h-[44px] min-w-[44px] rounded-full"
           >
             <Send className="h-5 w-5" />
           </Button>
