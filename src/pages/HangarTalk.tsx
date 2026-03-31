@@ -466,6 +466,14 @@ export default function HangarTalk() {
         <h1 className="text-lg font-semibold">Hangar Talk</h1>
       </div>
 
+      {/* Impersonation banner */}
+      {isImpersonating && viewAsMember && (
+        <div className="bg-accent/10 border-b border-accent/30 px-4 py-2 text-xs text-accent font-medium flex items-center justify-between shrink-0">
+          <span>Posting as: {viewAsMember.first_name} {viewAsMember.last_name}</span>
+          <Link to="/hangar-talk" className="underline hover:no-underline">Stop impersonating</Link>
+        </div>
+      )}
+
       {/* Message feed */}
       <div
         ref={feedRef}
