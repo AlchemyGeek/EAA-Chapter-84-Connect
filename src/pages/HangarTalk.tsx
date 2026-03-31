@@ -131,6 +131,26 @@ export default function HangarTalk() {
   // Access is gated on the real user being active (admin always has an active record)
   const isActive = myMember?.current_standing === "Active";
 
+  // Fetch chapter leadership for role badges
+  const { data: leadership = [] } = useQuery({
+    queryKey: ["chapter-leadership-chat"],
+    enabled: isActive,
+    queryFn: async () => {
+      const { data } = await supabase.from("chapter_leadership").select("key_id, role");
+      return data ?? [];
+    },
+  });
+
+  // Fetch buddy volunteers for role badges
+  const { data: buddyVols = [] } = useQuery({
+    queryKey: ["buddy-volunteers-chat"],
+    enabled: isActive,
+    queryFn: async () => {
+      const { data } = await supabase.from("buddy_volunteers").select("key_id");
+      return data ?? [];
+    },
+  });
+
   // Fetch messages
   const { data: messages = [], isLoading: msgsLoading } = useQuery({
     queryKey: ["hangar-talk-messages"],
@@ -150,6 +170,17 @@ export default function HangarTalk() {
       return sorted;
     },
   });
+
+  // Build role badges lookup
+  const leaderKeyIds = new Set(leadership.map((l) => l.key_id));
+  const buddyKeyIds = new Set(buddyVols.map((b) => b.key_id));
+  const getBadgesForMember = (keyId: number) => {
+    const badges: { label: string; cls: string }[] = [];
+    const leaderRole = leadership.find((l) => l.key_id === keyId);
+    if (leaderRole) badges.push({ label: leaderRole.role, cls: "bg-blue-50 text-blue-700" });
+    if (buddyKeyIds.has(keyId)) badges.push({ label: "Buddy Volunteer", cls: "bg-teal-50 text-teal-700" });
+    return badges;
+  };
 
   // Fetch attachments for loaded messages
   const messageIds = messages.map((m) => m.id);
