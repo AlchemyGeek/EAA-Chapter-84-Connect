@@ -33,6 +33,22 @@ const MAX_FILES = 3;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
 
+// Avatar color rotation
+const AVATAR_TINTS = [
+  { bg: "bg-blue-100", text: "text-blue-700" },
+  { bg: "bg-teal-100", text: "text-teal-700" },
+  { bg: "bg-amber-100", text: "text-amber-700" },
+  { bg: "bg-rose-100", text: "text-rose-700" },
+];
+const getAvatarTint = (keyId: number) => AVATAR_TINTS[keyId % AVATAR_TINTS.length];
+
+// Role detection helpers
+const getRoleBadges = (keyId: number, authorName: string) => {
+  // These could be enriched with real data; for now derive from directory/member data
+  const badges: { label: string; cls: string }[] = [];
+  return badges;
+};
+
 type Message = {
   id: string;
   key_id: number;
