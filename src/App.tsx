@@ -26,6 +26,7 @@ import MemberVolunteering from "./pages/MemberVolunteering";
 import NewMemberApplication from "./pages/NewMemberApplication";
 import NewMemberApplications from "./pages/NewMemberApplications";
 import BuddyProgram from "./pages/BuddyProgram";
+import HangarTalk from "./pages/HangarTalk";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
