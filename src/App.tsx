@@ -26,6 +26,7 @@ import MemberVolunteering from "./pages/MemberVolunteering";
 import NewMemberApplication from "./pages/NewMemberApplication";
 import NewMemberApplications from "./pages/NewMemberApplications";
 import BuddyProgram from "./pages/BuddyProgram";
+import HangarTalk from "./pages/HangarTalk";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
             <Route path="/join" element={<NewMemberApplication />} />
+            <Route path="/hangar-talk" element={<HangarTalk />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

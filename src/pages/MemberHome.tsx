@@ -18,7 +18,7 @@ import {
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
-  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart,
+  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import {
@@ -529,6 +529,7 @@ export default function MemberHome() {
                   icon={HandHelping} 
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
+                <AdminLink to="/hangar-talk" icon={MessageSquare} label="Hangar Talk" />
               </>
             )}
           </CardContent>
