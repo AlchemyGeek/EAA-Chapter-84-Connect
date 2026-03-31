@@ -340,6 +340,97 @@ export type Database = {
         }
         Relationships: []
       }
+      hangar_talk_attachments: {
+        Row: {
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          message_id: string
+          storage_path: string
+        }
+        Insert: {
+          file_name: string
+          file_size?: number
+          file_type: string
+          id?: string
+          message_id: string
+          storage_path: string
+        }
+        Update: {
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          message_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hangar_talk_messages: {
+        Row: {
+          author_name: string
+          content: string
+          created_at: string
+          id: string
+          key_id: number
+        }
+        Insert: {
+          author_name: string
+          content: string
+          created_at?: string
+          id?: string
+          key_id: number
+        }
+        Update: {
+          author_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          key_id?: number
+        }
+        Relationships: []
+      }
+      hangar_talk_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          key_id: number
+          message_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          key_id: number
+          message_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          key_id?: number
+          message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_chapter_data: {
         Row: {
           application_status: string | null
