@@ -588,9 +588,9 @@ export default function HangarTalk() {
                 )}
 
                 {/* Message row */}
-                <div className="group relative flex gap-3 hover:bg-muted/20 rounded-md px-2 py-1.5 -mx-2 transition-colors">
+                <div className="group relative flex gap-2.5 hover:bg-muted/20 rounded-md px-2 py-1 -mx-2 transition-colors mb-1">
                   {/* Avatar */}
-                  <div className={`h-9 w-9 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5`}>
+                  <div className={`h-8 w-8 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5`}>
                     {initials}
                   </div>
 
@@ -627,7 +627,7 @@ export default function HangarTalk() {
 
                     {/* Message text */}
                     {msg.content && (
-                      <p className="text-[14px] text-foreground whitespace-pre-wrap break-words mt-0.5" style={{ lineHeight: "1.55" }}>
+                      <p className="text-[14px] text-foreground whitespace-pre-wrap break-words" style={{ lineHeight: "1.55" }}>
                         {renderContent(msg.content)}
                       </p>
                     )}
