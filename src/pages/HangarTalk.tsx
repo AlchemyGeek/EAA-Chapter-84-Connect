@@ -14,6 +14,7 @@ import {
   FileText,
   X,
   ImageIcon,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
