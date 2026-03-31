@@ -529,6 +529,7 @@ export default function MemberHome() {
                   icon={HandHelping} 
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
+                <AdminLink to="/hangar-talk" icon={MessageSquare} label="Hangar Talk" />
               </>
             )}
           </CardContent>
