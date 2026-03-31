@@ -529,7 +529,7 @@ export default function MemberHome() {
                   icon={HandHelping} 
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
-                <AdminLink to={impersonateKeyId ? `/hangar-talk?viewAs=${impersonateKeyId}` : "/hangar-talk"} icon={MessageSquare} label="Hangar Talk" />
+                {/* <AdminLink to={impersonateKeyId ? `/hangar-talk?viewAs=${impersonateKeyId}` : "/hangar-talk"} icon={MessageSquare} label="Hangar Talk" /> */}
               </>
             )}
           </CardContent>
