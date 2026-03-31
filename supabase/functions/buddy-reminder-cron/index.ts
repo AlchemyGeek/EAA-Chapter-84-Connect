@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
 
     if (logErr) throw logErr
 
-    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+    const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
     const eligibleIntros = (introLogs || []).filter(
       (log) => new Date(log.sent_at) <= threeDaysAgo
     )
