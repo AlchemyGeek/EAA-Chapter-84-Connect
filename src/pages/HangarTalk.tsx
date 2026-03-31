@@ -261,6 +261,8 @@ export default function HangarTalk() {
       setContent("");
       setPendingFiles([]);
       isAtBottomRef.current = true;
+      // Force refetch to show new message immediately
+      await queryClient.invalidateQueries({ queryKey: ["hangar-talk-messages"] });
     } catch (e: any) {
       toast({ title: "Failed to send message", description: e.message, variant: "destructive" });
     } finally {
