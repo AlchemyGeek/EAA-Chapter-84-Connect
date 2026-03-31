@@ -70,7 +70,7 @@ const App = () => (
             <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
             <Route path="/join" element={<NewMemberApplication />} />
-            <Route path="/hangar-talk" element={<HangarTalk />} />
+            {/* <Route path="/hangar-talk" element={<HangarTalk />} /> */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
