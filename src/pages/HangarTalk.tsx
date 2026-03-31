@@ -697,7 +697,7 @@ export default function HangarTalk() {
                       </div>
                     )}
 
-                    {/* Reactions */}
+                    {/* Reactions (existing counts) */}
                     {Object.keys(msgReactions).length > 0 && (
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {EMOJIS.map((emoji) => {
@@ -718,26 +718,8 @@ export default function HangarTalk() {
                             </button>
                           );
                         })}
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button className="text-xs rounded-full px-2 py-0.5 text-muted-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100" style={{ border: "0.5px solid transparent" }}>
-                              +
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-1.5" side="top">
-                            <div className="flex gap-1">
-                              {EMOJIS.map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => toggleReaction(msg.id, emoji)}
-                                  className="text-lg hover:scale-125 transition-transform p-1"
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                      </div>
+                    )}
                       </div>
                     )}
                   </div>
