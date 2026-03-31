@@ -588,7 +588,7 @@ export default function HangarTalk() {
                 )}
 
                 {/* Message row */}
-                <div className="group relative flex gap-3 hover:bg-muted/20 rounded-md px-2 py-2 -mx-2 transition-colors" style={{ marginBottom: "18px" }}>
+                <div className="group relative flex gap-3 hover:bg-muted/20 rounded-md px-2 py-1.5 -mx-2 transition-colors">
                   {/* Avatar */}
                   <div className={`h-9 w-9 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5`}>
                     {initials}
