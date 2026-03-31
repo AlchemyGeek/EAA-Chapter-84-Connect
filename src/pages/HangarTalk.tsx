@@ -720,10 +720,9 @@ export default function HangarTalk() {
                         })}
                       </div>
                     )}
-                  </div>
-                  </div>
                 </div>
               </div>
+            </div>
             );
           })
         )}
