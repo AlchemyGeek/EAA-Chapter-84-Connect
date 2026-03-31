@@ -574,11 +574,18 @@ export default function HangarTalk() {
             const currentDateKey = getDateKey(msg.created_at);
             const showDateDivider = !prevMsg || getDateKey(prevMsg.created_at) !== currentDateKey;
 
+            // Collapse: same author within 5 minutes, no date divider between
+            const isContinuation =
+              !showDateDivider &&
+              prevMsg &&
+              prevMsg.key_id === msg.key_id &&
+              new Date(msg.created_at).getTime() - new Date(prevMsg.created_at).getTime() < 5 * 60 * 1000;
+
             return (
               <div key={msg.id}>
                 {/* Date divider */}
                 {showDateDivider && (
-                  <div className="flex items-center gap-3 my-5">
+                  <div className="flex items-center gap-3 my-4">
                     <div className="flex-1 h-px bg-border" />
                     <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide shrink-0">
                       {currentDateKey}
@@ -588,53 +595,57 @@ export default function HangarTalk() {
                 )}
 
                 {/* Message row */}
-                <div className="group relative flex gap-2.5 hover:bg-muted/20 rounded-md px-2 py-1 -mx-2 transition-colors mb-1">
-                  {/* Avatar */}
-                  <div className={`h-8 w-8 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5`}>
-                    {initials}
-                  </div>
+                <div className={`group relative hover:bg-muted/20 rounded-sm px-2 -mx-2 transition-colors ${isContinuation ? "py-px pl-[52px]" : "flex gap-3 pt-1.5 pb-0.5 mt-3 first:mt-0"}`}>
+                  {/* Avatar — only for first in group */}
+                  {!isContinuation && (
+                    <div className={`h-10 w-10 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-[11px] font-bold shrink-0`}>
+                      {initials}
+                    </div>
+                  )}
 
                   {/* Content */}
                   <div className="min-w-0 flex-1">
-                    {/* Name line */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[14px] font-medium text-foreground leading-tight">
-                        {msg.author_name}
-                      </span>
-                      {badges.map((b, bi) => (
-                        <span key={bi} className={`text-[10px] font-medium rounded-full px-2 py-px ${b.cls}`}>
-                          {b.label}
+                    {/* Name line — only for first in group */}
+                    {!isContinuation && (
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-[15px] font-semibold text-foreground">
+                          {msg.author_name}
                         </span>
-                      ))}
-                      <span className="text-[11px] text-muted-foreground leading-tight">
-                        {new Date(msg.created_at).toLocaleString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                      {isAdmin && (
-                        <button
-                          onClick={() => deleteMutation.mutate(msg.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive p-0.5 inline-flex"
-                          title="Delete message"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
+                        {badges.map((b, bi) => (
+                          <span key={bi} className={`text-[10px] font-medium rounded-full px-2 py-px ${b.cls}`}>
+                            {b.label}
+                          </span>
+                        ))}
+                        <span className="text-[11px] text-muted-foreground">
+                          {new Date(msg.created_at).toLocaleString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        {isAdmin && (
+                          <button
+                            onClick={() => deleteMutation.mutate(msg.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive p-0.5 inline-flex"
+                            title="Delete message"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                     {/* Message text */}
                     {msg.content && (
-                      <p className="text-[14px] text-foreground whitespace-pre-wrap break-words" style={{ lineHeight: "1.55" }}>
+                      <p className="text-[15px] text-foreground whitespace-pre-wrap break-words" style={{ lineHeight: "1.45" }}>
                         {renderContent(msg.content)}
                       </p>
                     )}
 
                     {/* Attachments */}
                     {msgAttachments.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-1 flex flex-wrap gap-2">
                         {msgAttachments.map((att) => {
                           const url = getPublicUrl(att.storage_path);
                           if (att.file_type === "image") {
@@ -673,8 +684,8 @@ export default function HangarTalk() {
                     )}
 
                     {/* Reactions */}
-                    {(Object.keys(msgReactions).length > 0 || true) && (
-                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    {Object.keys(msgReactions).length > 0 && (
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {EMOJIS.map((emoji) => {
                           const data = msgReactions[emoji];
                           if (!data) return null;
