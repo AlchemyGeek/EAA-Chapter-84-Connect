@@ -627,7 +627,7 @@ export default function HangarTalk() {
 
                     {/* Message text */}
                     {msg.content && (
-                      <p className="text-[14px] text-foreground whitespace-pre-wrap break-words mt-0.5" style={{ lineHeight: "1.55" }}>
+                      <p className="text-[14px] text-foreground whitespace-pre-wrap break-words" style={{ lineHeight: "1.55" }}>
                         {renderContent(msg.content)}
                       </p>
                     )}
