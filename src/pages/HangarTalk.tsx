@@ -638,7 +638,7 @@ export default function HangarTalk() {
 
                     {/* Message text */}
                     {msg.content && (
-                      <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-snug">
+                      <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-snug m-0 -mt-px">
                         {renderContent(msg.content)}
                       </p>
                     )}
