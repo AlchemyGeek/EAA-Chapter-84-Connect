@@ -65,6 +65,8 @@ type PendingFile = {
 export default function HangarTalk() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const viewAsKeyId = searchParams.get("viewAs");
   const [content, setContent] = useState("");
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [sending, setSending] = useState(false);
@@ -77,7 +79,7 @@ export default function HangarTalk() {
   const [oldestLoaded, setOldestLoaded] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  // Get current member
+  // Get current member (the logged-in user's own record)
   const { data: myMember, isLoading: memberLoading } = useQuery({
     queryKey: ["my-member-chat", user?.email],
     enabled: !!user?.email,
@@ -93,6 +95,24 @@ export default function HangarTalk() {
     },
   });
 
+  // Get impersonated member record if admin is viewing as another member
+  const { data: viewAsMember } = useQuery({
+    queryKey: ["view-as-member-chat", viewAsKeyId],
+    enabled: !!viewAsKeyId && isAdmin,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, current_standing, email")
+        .eq("key_id", Number(viewAsKeyId))
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const isImpersonating = !!viewAsKeyId && isAdmin && !!viewAsMember;
+  // For posting messages, use the impersonated member if applicable; otherwise use own record
+  const activeMember = isImpersonating ? viewAsMember : myMember;
+  // Access is gated on the real user being active (admin always has an active record)
   const isActive = myMember?.current_standing === "Active";
 
   // Fetch messages
