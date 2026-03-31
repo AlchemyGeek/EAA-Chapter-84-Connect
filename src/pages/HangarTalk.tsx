@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from "react-router-dom";
 import { Navigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,6 +65,8 @@ type PendingFile = {
 export default function HangarTalk() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const viewAsKeyId = searchParams.get("viewAs");
   const [content, setContent] = useState("");
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [sending, setSending] = useState(false);
@@ -76,7 +79,7 @@ export default function HangarTalk() {
   const [oldestLoaded, setOldestLoaded] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  // Get current member
+  // Get current member (the logged-in user's own record)
   const { data: myMember, isLoading: memberLoading } = useQuery({
     queryKey: ["my-member-chat", user?.email],
     enabled: !!user?.email,
@@ -92,6 +95,24 @@ export default function HangarTalk() {
     },
   });
 
+  // Get impersonated member record if admin is viewing as another member
+  const { data: viewAsMember } = useQuery({
+    queryKey: ["view-as-member-chat", viewAsKeyId],
+    enabled: !!viewAsKeyId && isAdmin,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, current_standing, email")
+        .eq("key_id", Number(viewAsKeyId))
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const isImpersonating = !!viewAsKeyId && isAdmin && !!viewAsMember;
+  // For posting messages, use the impersonated member if applicable; otherwise use own record
+  const activeMember = isImpersonating ? viewAsMember : myMember;
+  // Access is gated on the real user being active (admin always has an active record)
   const isActive = myMember?.current_standing === "Active";
 
   // Fetch messages
@@ -223,15 +244,15 @@ export default function HangarTalk() {
 
   // Send message
   const sendMessage = async () => {
-    if (!myMember || (!content.trim() && pendingFiles.length === 0)) return;
+    if (!activeMember || (!content.trim() && pendingFiles.length === 0)) return;
     if (content.length > MAX_CHARS) return;
     setSending(true);
     try {
       const { data: msg, error: msgErr } = await supabase
         .from("hangar_talk_messages")
         .insert({
-          key_id: myMember.key_id,
-          author_name: `${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim(),
+          key_id: activeMember.key_id,
+          author_name: `${activeMember.first_name ?? ""} ${activeMember.last_name ?? ""}`.trim(),
           content: content.trim(),
         })
         .select()
@@ -286,16 +307,16 @@ export default function HangarTalk() {
 
   // Toggle reaction
   const toggleReaction = async (messageId: string, emoji: string) => {
-    if (!myMember) return;
+    if (!activeMember) return;
     const existing = reactions.find(
-      (r) => r.message_id === messageId && r.key_id === myMember.key_id && r.emoji === emoji
+      (r) => r.message_id === messageId && r.key_id === activeMember.key_id && r.emoji === emoji
     );
     if (existing) {
       await supabase.from("hangar_talk_reactions").delete().eq("id", existing.id);
     } else {
       await supabase.from("hangar_talk_reactions").insert({
         message_id: messageId,
-        key_id: myMember.key_id,
+        key_id: activeMember.key_id,
         emoji,
       });
     }
@@ -430,7 +451,7 @@ export default function HangarTalk() {
     if (!acc[r.message_id][r.emoji])
       acc[r.message_id][r.emoji] = { count: 0, myReaction: false };
     acc[r.message_id][r.emoji].count++;
-    if (myMember && r.key_id === myMember.key_id)
+    if (activeMember && r.key_id === activeMember.key_id)
       acc[r.message_id][r.emoji].myReaction = true;
     return acc;
   }, {});
@@ -444,6 +465,14 @@ export default function HangarTalk() {
         </Link>
         <h1 className="text-lg font-semibold">Hangar Talk</h1>
       </div>
+
+      {/* Impersonation banner */}
+      {isImpersonating && viewAsMember && (
+        <div className="bg-accent/10 border-b border-accent/30 px-4 py-2 text-xs text-accent font-medium flex items-center justify-between shrink-0">
+          <span>Posting as: {viewAsMember.first_name} {viewAsMember.last_name}</span>
+          <Link to="/hangar-talk" className="underline hover:no-underline">Stop impersonating</Link>
+        </div>
+      )}
 
       {/* Message feed */}
       <div
@@ -471,7 +500,7 @@ export default function HangarTalk() {
           messages.map((msg) => {
             const msgAttachments = attachmentsByMsg[msg.id] ?? [];
             const msgReactions = reactionsByMsg[msg.id] ?? {};
-            const isOwnMessage = myMember && msg.key_id === myMember.key_id;
+            const isOwnMessage = activeMember && msg.key_id === activeMember.key_id;
 
             return (
               <div key={msg.id} className="group">
