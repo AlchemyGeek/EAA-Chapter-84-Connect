@@ -533,7 +533,7 @@ export default function HangarTalk() {
       <div
         ref={feedRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-3"
+        className="flex-1 overflow-y-auto px-4 pt-5 pb-3"
       >
         {hasMore && messages.length > 0 && (
           <div className="text-center mb-4">
