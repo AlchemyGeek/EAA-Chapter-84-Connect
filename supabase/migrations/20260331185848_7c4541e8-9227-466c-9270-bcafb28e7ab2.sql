@@ -1,0 +1,1 @@
+DELETE FROM buddy_email_log WHERE email_type = 'reminder' AND assignment_id IN ('449d481f-d92c-46f1-a7ec-a3115378a55e', '370b31e1-2253-4de3-baf7-b3cc1998af74');
