@@ -307,16 +307,16 @@ export default function HangarTalk() {
 
   // Toggle reaction
   const toggleReaction = async (messageId: string, emoji: string) => {
-    if (!myMember) return;
+    if (!activeMember) return;
     const existing = reactions.find(
-      (r) => r.message_id === messageId && r.key_id === myMember.key_id && r.emoji === emoji
+      (r) => r.message_id === messageId && r.key_id === activeMember.key_id && r.emoji === emoji
     );
     if (existing) {
       await supabase.from("hangar_talk_reactions").delete().eq("id", existing.id);
     } else {
       await supabase.from("hangar_talk_reactions").insert({
         message_id: messageId,
-        key_id: myMember.key_id,
+        key_id: activeMember.key_id,
         emoji,
       });
     }
