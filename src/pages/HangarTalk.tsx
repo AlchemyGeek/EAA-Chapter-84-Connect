@@ -244,15 +244,15 @@ export default function HangarTalk() {
 
   // Send message
   const sendMessage = async () => {
-    if (!myMember || (!content.trim() && pendingFiles.length === 0)) return;
+    if (!activeMember || (!content.trim() && pendingFiles.length === 0)) return;
     if (content.length > MAX_CHARS) return;
     setSending(true);
     try {
       const { data: msg, error: msgErr } = await supabase
         .from("hangar_talk_messages")
         .insert({
-          key_id: myMember.key_id,
-          author_name: `${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim(),
+          key_id: activeMember.key_id,
+          author_name: `${activeMember.first_name ?? ""} ${activeMember.last_name ?? ""}`.trim(),
           content: content.trim(),
         })
         .select()
