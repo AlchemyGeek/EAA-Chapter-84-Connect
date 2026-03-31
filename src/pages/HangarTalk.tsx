@@ -503,123 +503,120 @@ export default function HangarTalk() {
             const isOwnMessage = activeMember && msg.key_id === activeMember.key_id;
 
             return (
-              <div key={msg.id} className="group">
-                <div className="flex items-start gap-2">
-                  {/* Avatar circle */}
-                  <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5">
-                    {msg.author_name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-semibold text-foreground">
-                        {msg.author_name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(msg.created_at).toLocaleString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                      {isAdmin && (
-                        <button
-                          onClick={() => deleteMutation.mutate(msg.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive ml-auto p-1"
-                          title="Delete message"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                    {msg.content && (
-                      <p className="text-sm text-foreground mt-0.5 whitespace-pre-wrap break-words">
-                        {renderContent(msg.content)}
-                      </p>
-                    )}
-                    {/* Attachments */}
-                    {msgAttachments.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {msgAttachments.map((att) => {
-                          const url = getPublicUrl(att.storage_path);
-                          if (att.file_type === "image") {
-                            return (
-                              <button
-                                key={att.id}
-                                onClick={() => setExpandedImage(url)}
-                                className="rounded-md overflow-hidden border max-w-[200px]"
-                              >
-                                <img
-                                  src={url}
-                                  alt={att.file_name}
-                                  className="max-h-40 object-cover"
-                                  loading="lazy"
-                                />
-                              </button>
-                            );
-                          }
+              <div key={msg.id} className="group relative pl-10 hover:bg-muted/30 rounded-md px-2 py-1 -mx-2 transition-colors">
+                {/* Avatar - positioned absolutely to the left */}
+                <div className="absolute left-0 top-1 h-7 w-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
+                  {msg.author_name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </div>
+                {/* Name + timestamp + content inline */}
+                <div className="min-w-0">
+                  <span className="text-[13px] font-semibold text-foreground">
+                    {msg.author_name}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground ml-1.5">
+                    {new Date(msg.created_at).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  {isAdmin && (
+                    <button
+                      onClick={() => deleteMutation.mutate(msg.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive ml-2 p-0.5 align-middle inline-flex"
+                      title="Delete message"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                  {msg.content && (
+                    <p className="text-[13px] text-foreground/90 whitespace-pre-wrap break-words leading-snug">
+                      {renderContent(msg.content)}
+                    </p>
+                  )}
+                  {/* Attachments */}
+                  {msgAttachments.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {msgAttachments.map((att) => {
+                        const url = getPublicUrl(att.storage_path);
+                        if (att.file_type === "image") {
                           return (
-                            <a
+                            <button
                               key={att.id}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted transition-colors"
+                              onClick={() => setExpandedImage(url)}
+                              className="rounded overflow-hidden border max-w-[180px]"
                             >
-                              <FileText className="h-4 w-4 text-destructive" />
-                              <span className="truncate max-w-[150px]">
-                                {att.file_name}
-                              </span>
-                            </a>
+                              <img
+                                src={url}
+                                alt={att.file_name}
+                                className="max-h-36 object-cover"
+                                loading="lazy"
+                              />
+                            </button>
                           );
-                        })}
-                      </div>
-                    )}
-                    {/* Reactions */}
-                    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                      {EMOJIS.map((emoji) => {
-                        const data = msgReactions[emoji];
-                        if (!data) return null;
+                        }
                         return (
-                          <button
-                            key={emoji}
-                            onClick={() => toggleReaction(msg.id, emoji)}
-                            className={`text-xs rounded-full px-2 py-0.5 border transition-colors ${
-                              data.myReaction
-                                ? "bg-primary/10 border-primary/30 text-primary"
-                                : "bg-muted border-transparent text-muted-foreground hover:border-border"
-                            }`}
+                          <a
+                            key={att.id}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 rounded border px-2 py-1 text-xs hover:bg-muted transition-colors"
                           >
-                            {emoji} {data.count}
-                          </button>
+                            <FileText className="h-3.5 w-3.5 text-destructive" />
+                            <span className="truncate max-w-[120px]">
+                              {att.file_name}
+                            </span>
+                          </a>
                         );
                       })}
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className="text-xs rounded-full px-2 py-0.5 border border-transparent text-muted-foreground hover:bg-muted hover:border-border transition-colors opacity-0 group-hover:opacity-100">
-                            +
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-2" side="top">
-                          <div className="flex gap-1">
-                            {EMOJIS.map((emoji) => (
-                              <button
-                                key={emoji}
-                                onClick={() => toggleReaction(msg.id, emoji)}
-                                className="text-lg hover:scale-125 transition-transform p-1"
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
                     </div>
+                  )}
+                  {/* Reactions */}
+                  <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                    {EMOJIS.map((emoji) => {
+                      const data = msgReactions[emoji];
+                      if (!data) return null;
+                      return (
+                        <button
+                          key={emoji}
+                          onClick={() => toggleReaction(msg.id, emoji)}
+                          className={`text-[11px] rounded-full px-1.5 py-px border transition-colors ${
+                            data.myReaction
+                              ? "bg-primary/10 border-primary/30 text-primary"
+                              : "bg-muted/50 border-transparent text-muted-foreground hover:border-border"
+                          }`}
+                        >
+                          {emoji} {data.count}
+                        </button>
+                      );
+                    })}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="text-[11px] rounded-full px-1.5 py-px border border-transparent text-muted-foreground hover:bg-muted hover:border-border transition-colors opacity-0 group-hover:opacity-100">
+                          +
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-1.5" side="top">
+                        <div className="flex gap-0.5">
+                          {EMOJIS.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => toggleReaction(msg.id, emoji)}
+                              className="text-base hover:scale-125 transition-transform p-0.5"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </div>
