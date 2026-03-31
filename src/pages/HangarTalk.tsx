@@ -35,6 +35,10 @@ const AVATAR_TINTS = [
   { bg: "bg-teal-100", text: "text-teal-700" },
   { bg: "bg-amber-100", text: "text-amber-700" },
   { bg: "bg-rose-100", text: "text-rose-700" },
+  { bg: "bg-violet-100", text: "text-violet-700" },
+  { bg: "bg-emerald-100", text: "text-emerald-700" },
+  { bg: "bg-orange-100", text: "text-orange-700" },
+  { bg: "bg-indigo-100", text: "text-indigo-700" },
 ];
 const getAvatarTint = (keyId: number) => AVATAR_TINTS[keyId % AVATAR_TINTS.length];
 
