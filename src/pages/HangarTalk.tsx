@@ -492,7 +492,7 @@ export default function HangarTalk() {
           messages.map((msg) => {
             const msgAttachments = attachmentsByMsg[msg.id] ?? [];
             const msgReactions = reactionsByMsg[msg.id] ?? {};
-            const isOwnMessage = myMember && msg.key_id === myMember.key_id;
+            const isOwnMessage = activeMember && msg.key_id === activeMember.key_id;
 
             return (
               <div key={msg.id} className="group">
