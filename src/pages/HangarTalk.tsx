@@ -451,7 +451,7 @@ export default function HangarTalk() {
     if (!acc[r.message_id][r.emoji])
       acc[r.message_id][r.emoji] = { count: 0, myReaction: false };
     acc[r.message_id][r.emoji].count++;
-    if (myMember && r.key_id === myMember.key_id)
+    if (activeMember && r.key_id === activeMember.key_id)
       acc[r.message_id][r.emoji].myReaction = true;
     return acc;
   }, {});
