@@ -607,7 +607,7 @@ export default function HangarTalk() {
                   <div className="min-w-0 flex-1">
                     {/* Name line — only for first in group */}
                     {!isContinuation && (
-                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <div className="flex items-baseline gap-1.5 flex-wrap leading-none">
                         <span className="text-sm font-semibold text-foreground">
                           {msg.author_name}
                         </span>
@@ -638,7 +638,7 @@ export default function HangarTalk() {
 
                     {/* Message text */}
                     {msg.content && (
-                      <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                      <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-snug">
                         {renderContent(msg.content)}
                       </p>
                     )}
