@@ -18,11 +18,6 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
@@ -596,6 +591,29 @@ export default function HangarTalk() {
 
                 {/* Message row */}
                 <div className={`group relative hover:bg-muted/20 rounded-sm px-2 -mx-2 transition-colors ${isContinuation ? "py-px pl-[52px]" : "flex gap-3 pt-1.5 pb-0.5 mt-3 first:mt-0"}`}>
+                  {/* Hover action bar — top right, Discord-style */}
+                  <div className="absolute -top-3 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center bg-card rounded-md shadow-sm" style={{ border: "0.5px solid hsl(var(--border))" }}>
+                    {EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => toggleReaction(msg.id, emoji)}
+                        className="text-sm hover:bg-muted px-1.5 py-1 transition-colors first:rounded-l-md last:rounded-r-md"
+                        title={`React with ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                    {isAdmin && (
+                      <button
+                        onClick={() => deleteMutation.mutate(msg.id)}
+                        className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive px-1.5 py-1 transition-colors rounded-r-md"
+                        title="Delete message"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+
                   {/* Avatar — only for first in group */}
                   {!isContinuation && (
                     <div className={`h-10 w-10 rounded-full ${tint.bg} ${tint.text} flex items-center justify-center text-xs font-bold shrink-0`}>
@@ -624,15 +642,6 @@ export default function HangarTalk() {
                             minute: "2-digit",
                           })}
                         </span>
-                        {isAdmin && (
-                          <button
-                            onClick={() => deleteMutation.mutate(msg.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive p-0.5 inline-flex"
-                            title="Delete message"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
                       </div>
                     )}
 
@@ -683,7 +692,7 @@ export default function HangarTalk() {
                       </div>
                     )}
 
-                    {/* Reactions */}
+                    {/* Reactions (existing counts) */}
                     {Object.keys(msgReactions).length > 0 && (
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {EMOJIS.map((emoji) => {
@@ -704,31 +713,11 @@ export default function HangarTalk() {
                             </button>
                           );
                         })}
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button className="text-xs rounded-full px-2 py-0.5 text-muted-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100" style={{ border: "0.5px solid transparent" }}>
-                              +
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-1.5" side="top">
-                            <div className="flex gap-1">
-                              {EMOJIS.map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => toggleReaction(msg.id, emoji)}
-                                  className="text-lg hover:scale-125 transition-transform p-1"
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
                       </div>
                     )}
-                  </div>
                 </div>
               </div>
+            </div>
             );
           })
         )}
