@@ -22,11 +22,6 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
-function getPublicUrl(path: string) {
-  return `${SUPABASE_URL}/storage/v1/object/public/member-images/${path}`;
-}
 
 export default function MemberProfile() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
