@@ -121,8 +121,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const getPublicUrl = (path: string) =>
-    `${SUPABASE_URL}/storage/v1/object/public/member-images/${path}`;
+  const getImageUrl = (img: typeof images[number]) => img.signedUrl;
 
   if (isLoading) return null;
   if (!editable && images.length === 0) return null;
