@@ -170,7 +170,7 @@ export default function MemberProfile() {
                 {images.map((img) => (
                   <button
                     key={img.id}
-                    onClick={() => setLightboxUrl(getPublicUrl(img.storage_path))}
+                    onClick={() => setLightboxUrl(img.signedUrl)}
                     className="rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <img
