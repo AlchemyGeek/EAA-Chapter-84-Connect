@@ -9,19 +9,18 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { useToast } from "@/hooks/use-toast";
 
-type AuthMode = "signin" | "signin-otp" | "signup" | "signup-otp";
+type AuthStep = "email" | "otp";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [eaaNumber, setEaaNumber] = useState("");
   const [otp, setOtp] = useState("");
-  const [mode, setMode] = useState<AuthMode>("signin");
+  const [step, setStep] = useState<AuthStep>("email");
+  const [needsEaa, setNeedsEaa] = useState(false);
   const [rosterError, setRosterError] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const isOtpStep = mode === "signin-otp" || mode === "signup-otp";
 
   const sendOtp = async () => {
     const { error } = await supabase.auth.signInWithOtp({ email });
@@ -33,11 +32,32 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (mode === "signin") {
-        await sendOtp();
-        toast({ title: "Code sent!", description: "Check your email for a 6-digit code." });
-        setMode("signin-otp");
-      } else if (mode === "signup") {
+      if (step === "email") {
+        // Check if user already exists by trying to see if email is in roster
+        // For first-time users, we need EAA number verification
+        if (!needsEaa) {
+          // First attempt: try sending OTP directly
+          // If user exists in auth, this works. If not, Supabase auto-creates.
+          // But we need roster verification for new users.
+          // Check if email exists in roster first
+          const { data: inRoster } = await supabase.rpc("check_email_in_roster", { _email: email });
+          
+          if (!inRoster) {
+            setLoading(false);
+            setRosterError(true);
+            return;
+          }
+
+          setRosterError(false);
+
+          // Check if this is a first-time user by requiring EAA number
+          // We'll ask for EAA number to verify identity
+          setNeedsEaa(true);
+          setLoading(false);
+          return;
+        }
+
+        // Verify email + EAA number match
         const { data: matchFound, error: rpcError } = await supabase.rpc("check_email_and_eaa_in_roster", {
           _email: email,
           _eaa_number: eaaNumber,
@@ -53,8 +73,8 @@ const Auth = () => {
         setRosterError(false);
         await sendOtp();
         toast({ title: "Code sent!", description: "Check your email for a 6-digit code." });
-        setMode("signup-otp");
-      } else if (isOtpStep) {
+        setStep("otp");
+      } else {
         const { error } = await supabase.auth.verifyOtp({
           email,
           token: otp,
@@ -83,18 +103,15 @@ const Auth = () => {
   };
 
   const handleBack = () => {
-    setOtp("");
-    if (mode === "signin-otp") setMode("signin");
-    if (mode === "signup-otp") setMode("signup");
+    if (step === "otp") {
+      setOtp("");
+      setStep("email");
+    } else if (needsEaa) {
+      setNeedsEaa(false);
+      setEaaNumber("");
+      setRosterError(false);
+    }
   };
-
-  const title = isOtpStep
-    ? "Enter your code"
-    : mode === "signup"
-      ? "Create an account"
-      : "Sign in to continue";
-
-  const buttonLabel = isOtpStep ? "Verify Code" : "Send Code";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -104,17 +121,21 @@ const Auth = () => {
             <img src={chapterLogo} alt="EAA Chapter 84 logo" className="h-16 w-16 rounded-full" />
           </div>
           <CardTitle className="text-2xl">Chapter 84 Connect</CardTitle>
-          <CardDescription>{title}</CardDescription>
-          {mode === "signup" && (
+          <CardDescription>
+            {step === "otp" ? "Enter your code" : "Sign in to continue"}
+          </CardDescription>
+          {step === "email" && !needsEaa && (
             <p className="text-sm text-muted-foreground mt-3 text-left leading-relaxed">
-              Chapter 84 Connect is the services portal for our chapter. To sign up, use the email address you have registered with the chapter and your EAA Membership number. If you don't remember which email you used, or if you did not provide one, please contact{" "}
-              <a href="mailto:membership@eaa84.org" className="text-primary underline hover:text-primary/80">membership@eaa84.org</a>{" "}
-              for assistance. If you are not yet a chapter member, please use the{" "}
-              <a href="/join" className="text-primary underline hover:text-primary/80">New Member Application</a>{" "}
-              to join.
+              Please use the email address you use for chapter communications. If you are not certain which email you use, please contact{" "}
+              <a href="mailto:membership@eaa84.org" className="text-primary underline hover:text-primary/80">membership@eaa84.org</a>.
             </p>
           )}
-          {isOtpStep && (
+          {step === "email" && needsEaa && (
+            <p className="text-sm text-muted-foreground mt-3 text-left leading-relaxed">
+              To verify your identity, please enter your EAA Membership Number.
+            </p>
+          )}
+          {step === "otp" && (
             <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
               We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>. Enter it below to continue.
             </p>
@@ -122,19 +143,36 @@ const Auth = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isOtpStep && (
-              <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
-                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
+            {step === "email" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setRosterError(false); }}
+                    required
+                    disabled={needsEaa}
+                  />
+                </div>
+                {needsEaa && (
+                  <div className="space-y-2">
+                    <Label htmlFor="eaa-number">EAA Membership Number</Label>
+                    <Input
+                      id="eaa-number"
+                      type="text"
+                      placeholder="123456"
+                      value={eaaNumber}
+                      onChange={(e) => { setEaaNumber(e.target.value); setRosterError(false); }}
+                      required
+                    />
+                  </div>
+                )}
+              </>
             )}
-            {mode === "signup" && (
-              <div className="space-y-2">
-                <Label htmlFor="eaa-number">EAA Membership Number</Label>
-                <Input id="eaa-number" type="text" placeholder="123456" value={eaaNumber} onChange={(e) => setEaaNumber(e.target.value)} required />
-              </div>
-            )}
-            {isOtpStep && (
+            {step === "otp" && (
               <div className="flex flex-col items-center space-y-2">
                 <Label>Verification code</Label>
                 <InputOTP maxLength={6} value={otp} onChange={setOtp}>
@@ -149,11 +187,11 @@ const Auth = () => {
                 </InputOTP>
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading || (isOtpStep && otp.length < 6)}>
-              {loading ? "Loading..." : buttonLabel}
+            <Button type="submit" className="w-full" disabled={loading || (step === "otp" && otp.length < 6)}>
+              {loading ? "Loading..." : step === "otp" ? "Verify Code" : needsEaa ? "Send Code" : "Continue"}
             </Button>
           </form>
-          {isOtpStep && (
+          {step === "otp" && (
             <div className="mt-4 flex justify-between text-sm">
               <button type="button" className="text-muted-foreground underline hover:text-foreground" onClick={handleBack}>
                 Back
@@ -163,31 +201,27 @@ const Auth = () => {
               </button>
             </div>
           )}
-          {rosterError && mode === "signup" && (
+          {needsEaa && step === "email" && (
+            <div className="mt-4 text-center">
+              <button type="button" className="text-sm text-muted-foreground underline hover:text-foreground" onClick={handleBack}>
+                Use a different email
+              </button>
+            </div>
+          )}
+          {rosterError && (
             <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               <p>
-                The email and EAA membership number you entered do not match our records. Please verify your information and try again. If you believe this is an error, please contact{" "}
-                <a href="mailto:membership@eaa84.org" className="underline font-medium hover:text-destructive/80">membership@eaa84.org</a>{" "}
-                for assistance.
+                {needsEaa
+                  ? "The email and EAA membership number you entered do not match our records. Please verify your information and try again."
+                  : "This email address was not found in our chapter records."
+                }
+                {" "}If you believe this is an error, please contact{" "}
+                <a href="mailto:membership@eaa84.org" className="underline font-medium hover:text-destructive/80">membership@eaa84.org</a>.
               </p>
               <p className="mt-2">
                 If you are not yet a member and would like to join the chapter, please complete the{" "}
                 <a href="/join" className="underline font-medium hover:text-destructive/80">New Member Application</a>.
               </p>
-            </div>
-          )}
-          {!isOtpStep && (
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              {mode === "signin" && (
-                <button type="button" className="underline hover:text-foreground" onClick={() => setMode("signup")}>
-                  Need an account? Sign up
-                </button>
-              )}
-              {mode === "signup" && (
-                <button type="button" className="underline hover:text-foreground" onClick={() => setMode("signin")}>
-                  Already have an account? Sign in
-                </button>
-              )}
             </div>
           )}
         </CardContent>
