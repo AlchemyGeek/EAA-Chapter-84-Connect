@@ -42,7 +42,17 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
         .eq("key_id", keyId)
         .order("sort_order");
       if (error) throw error;
-      return data;
+
+      // Generate signed URLs for each image
+      const withUrls = await Promise.all(
+        (data ?? []).map(async (img) => {
+          const { data: urlData } = await supabase.storage
+            .from("member-images")
+            .createSignedUrl(img.storage_path, 3600);
+          return { ...img, signedUrl: urlData?.signedUrl ?? "" };
+        })
+      );
+      return withUrls;
     },
   });
 
