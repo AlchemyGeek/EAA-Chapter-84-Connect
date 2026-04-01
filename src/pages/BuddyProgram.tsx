@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -22,10 +29,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, UserPlus, Search, Trash2, UserCheck, RefreshCw, Mail, Send } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Users, UserPlus, Search, Trash2, UserCheck, RefreshCw,
+  Mail, Send, GraduationCap, Clock, Plus,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
+const TWO_MONTHS_MS = 60 * 24 * 60 * 60 * 1000;
 
 export default function BuddyProgram() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
@@ -33,6 +51,12 @@ export default function BuddyProgram() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [removeVolunteer, setRemoveVolunteer] = useState<number | null>(null);
+  const [assignDialog, setAssignDialog] = useState<{ appId: string; currentVolKeyId?: number } | null>(null);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<string>("");
+  const [manualEntrySearch, setManualEntrySearch] = useState("");
+  const [manualEntryDialog, setManualEntryDialog] = useState(false);
+  const [graduateConfirm, setGraduateConfirm] = useState<string | null>(null);
+  const [viewTab, setViewTab] = useState<"active" | "graduated">("active");
 
   // Fetch buddy volunteers with roster info
   const { data: volunteers = [], isLoading: volLoading } = useQuery({
@@ -48,7 +72,6 @@ export default function BuddyProgram() {
 
   const volunteerKeyIds = volunteers.map((v) => v.key_id);
 
-  // Fetch roster info for volunteers
   const { data: volunteerMembers = [] } = useQuery({
     queryKey: ["buddy-volunteer-members", volunteerKeyIds],
     enabled: volunteerKeyIds.length > 0,
@@ -62,19 +85,17 @@ export default function BuddyProgram() {
     },
   });
 
-  // Fetch all buddy assignments
   const { data: assignments = [] } = useQuery({
     queryKey: ["buddy-assignments"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("buddy_assignments")
-        .select("id, volunteer_key_id, application_id, assigned_at");
+        .select("id, volunteer_key_id, application_id, assigned_at, graduated_at");
       if (error) throw error;
-      return data;
+      return data as any[];
     },
   });
 
-  // Fetch email logs for assignments
   const { data: emailLogs = [] } = useQuery({
     queryKey: ["buddy-email-logs"],
     queryFn: async () => {
@@ -87,14 +108,13 @@ export default function BuddyProgram() {
     },
   });
 
-  // Fetch completed applications
   const { data: completedApps = [] } = useQuery({
     queryKey: ["completed-applications-buddy"],
     staleTime: 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("new_member_applications")
-        .select("id, first_name, last_name, eaa_number, email, created_at")
+        .select("id, first_name, last_name, eaa_number, email, created_at, roster_key_id")
         .eq("processed", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -122,18 +142,34 @@ export default function BuddyProgram() {
     },
   });
 
-  // Compute volunteer stats
+  // Search roster for manual new member entry
+  const { data: manualSearchResults = [] } = useQuery({
+    queryKey: ["buddy-manual-search", manualEntrySearch],
+    enabled: manualEntrySearch.length >= 2 && manualEntryDialog,
+    queryFn: async () => {
+      const term = `%${manualEntrySearch}%`;
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, eaa_number, email")
+        .or(`first_name.ilike.${term},last_name.ilike.${term}`)
+        .eq("current_standing", "Active")
+        .order("last_name")
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const now = Date.now();
   const getVolunteerStats = (keyId: number) => {
-    const volAssignments = assignments.filter((a) => a.volunteer_key_id === keyId);
-    const active = volAssignments.filter(
-      (a) => now - new Date(a.assigned_at).getTime() < THREE_MONTHS_MS
-    ).length;
-    const total = volAssignments.length;
+    const volAssignments = assignments.filter(
+      (a) => a.volunteer_key_id === keyId && !a.graduated_at
+    );
+    const active = volAssignments.length;
+    const total = assignments.filter((a) => a.volunteer_key_id === keyId).length;
     return { active, total };
   };
 
-  // Sort volunteers by active count (lowest first) for assignment dropdown
   const sortedVolunteers = [...volunteers]
     .map((v) => {
       const member = volunteerMembers.find((m) => m.key_id === v.key_id);
@@ -179,44 +215,144 @@ export default function BuddyProgram() {
     },
   });
 
-  const reassignBuddy = useMutation({
-    mutationFn: async (applicationId: string) => {
-      const { error } = await supabase.rpc("reassign_buddy", {
-        _application_id: applicationId,
+  // Manual assign / reassign: insert or update assignment, then send intro email
+  const manualAssign = useMutation({
+    mutationFn: async ({
+      applicationId,
+      volunteerKeyId,
+      existingAssignmentId,
+    }: {
+      applicationId: string;
+      volunteerKeyId: number;
+      existingAssignmentId?: string;
+    }) => {
+      let assignmentId: string;
+
+      if (existingAssignmentId) {
+        // Reassign
+        const { error } = await supabase
+          .from("buddy_assignments")
+          .update({
+            volunteer_key_id: volunteerKeyId,
+            assigned_at: new Date().toISOString(),
+          })
+          .eq("id", existingAssignmentId);
+        if (error) throw error;
+        assignmentId = existingAssignmentId;
+      } else {
+        // New assignment
+        const { data, error } = await supabase
+          .from("buddy_assignments")
+          .insert({
+            application_id: applicationId,
+            volunteer_key_id: volunteerKeyId,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        assignmentId = data.id;
+      }
+
+      // Send intro email
+      const { error: emailError } = await supabase.functions.invoke("buddy-email-send", {
+        body: { assignment_id: assignmentId, email_type: "intro" },
       });
-      if (error) throw error;
+      if (emailError) {
+        console.error("Intro email failed:", emailError);
+        // Don't throw - assignment was successful even if email fails
+      }
+
+      return assignmentId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
-      toast({ title: "Buddy reassigned" });
+      queryClient.invalidateQueries({ queryKey: ["buddy-email-logs"] });
+      setAssignDialog(null);
+      setSelectedVolunteer("");
+      toast({ title: "Buddy assigned and intro email queued" });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
 
-  const sendIntroEmail = useMutation({
+  const sendReminderEmail = useMutation({
     mutationFn: async (assignmentId: string) => {
-      const { data, error } = await supabase.functions.invoke("buddy-email-send", {
-        body: { assignment_id: assignmentId, email_type: "intro" },
+      const { error } = await supabase.functions.invoke("buddy-email-send", {
+        body: { assignment_id: assignmentId, email_type: "reminder" },
       });
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["buddy-email-logs"] });
-      toast({ title: "Intro email sent" });
+      toast({ title: "Reminder email sent" });
     },
     onError: (err: any) => {
       toast({ title: "Error sending email", description: err.message, variant: "destructive" });
     },
   });
 
-  // Helper to get email status for an assignment
+  const graduateMember = useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const { error } = await supabase
+        .from("buddy_assignments")
+        .update({ graduated_at: new Date().toISOString() })
+        .eq("id", assignmentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
+      setGraduateConfirm(null);
+      toast({ title: "Member graduated from buddy program" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // Manual entry: add a roster member as a new member in the buddy program
+  // Creates a pseudo-application entry or directly creates an assignment
+  const addManualEntry = useMutation({
+    mutationFn: async (member: { key_id: number; first_name: string; last_name: string; email: string; eaa_number: string }) => {
+      // Create a new_member_application entry so the buddy system has an application_id
+      const { data, error } = await supabase
+        .from("new_member_applications")
+        .insert({
+          first_name: member.first_name,
+          last_name: member.last_name,
+          email: member.email || "",
+          eaa_number: member.eaa_number || "",
+          address: "N/A",
+          city: "N/A",
+          state: "N/A",
+          zip_code: "N/A",
+          quarter_applied: `Q${Math.ceil((new Date().getMonth() + 1) / 3)} ${new Date().getFullYear()}`,
+          fee_amount: 0,
+          processed: true,
+          processed_at: new Date().toISOString(),
+          roster_key_id: member.key_id,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["completed-applications-buddy"] });
+      setManualEntryDialog(false);
+      setManualEntrySearch("");
+      toast({ title: "Member added to buddy program" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const getEmailStatus = (assignmentId: string) => {
     const logs = emailLogs.filter((l) => l.assignment_id === assignmentId);
     return {
       introSent: logs.some((l) => l.email_type === "intro"),
+      introSentAt: logs.find((l) => l.email_type === "intro")?.sent_at,
       reminderSent: logs.some((l) => l.email_type === "reminder"),
     };
   };
@@ -236,16 +372,26 @@ export default function BuddyProgram() {
     (r) => !volunteerKeyIds.includes(r.key_id)
   );
 
-  // Applications that don't have an assignment yet, or all for management
-  const assignedAppIds = new Set(assignments.map((a) => a.application_id));
+  // Filter manual entry results: exclude those already in the program
+  const existingAppRosterKeyIds = new Set(completedApps.map((a) => a.roster_key_id).filter(Boolean));
+  const filteredManualResults = manualSearchResults.filter(
+    (r) => !existingAppRosterKeyIds.has(r.key_id)
+  );
+
+  // Split assignments into active and graduated
+  const activeAssignments = assignments.filter((a) => !a.graduated_at);
+  const graduatedAssignments = assignments.filter((a) => a.graduated_at);
+
+  // Get apps that are in the program (have completed applications)
+  const getAppForAssignment = (applicationId: string) =>
+    completedApps.find((a) => a.id === applicationId);
 
   return (
     <div className="p-4 md:p-6 max-w-2xl lg:max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-bold">New Member Buddy Program</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Pair new members with experienced chapter volunteers to help them get oriented.
-          Buddies are automatically assigned to the volunteer with the fewest active assignments when an application is completed.
+          Pair new members with experienced chapter volunteers. Assignments, emails, and graduations are managed manually.
         </p>
       </div>
 
@@ -258,7 +404,6 @@ export default function BuddyProgram() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Search to add */}
           <div className="space-y-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -298,7 +443,6 @@ export default function BuddyProgram() {
             )}
           </div>
 
-          {/* Volunteer list */}
           {volLoading ? (
             <p className="text-sm text-muted-foreground">Loading...</p>
           ) : sortedVolunteers.length === 0 ? (
@@ -342,147 +486,206 @@ export default function BuddyProgram() {
       {/* NEW MEMBERS SECTION */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
-            New Members
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+              New Members
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs gap-1"
+                onClick={() => setManualEntryDialog(true)}
+              >
+                <Plus className="h-3 w-3" />
+                Add Member
+              </Button>
+              <div className="flex border rounded-md">
+                <button
+                  className={`px-3 py-1 text-xs font-medium rounded-l-md transition-colors ${
+                    viewTab === "active"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  }`}
+                  onClick={() => setViewTab("active")}
+                >
+                  Active ({completedApps.filter((a) => {
+                    const assignment = assignments.find((as) => as.application_id === a.id);
+                    return !assignment?.graduated_at;
+                  }).length})
+                </button>
+                <button
+                  className={`px-3 py-1 text-xs font-medium rounded-r-md transition-colors ${
+                    viewTab === "graduated"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  }`}
+                  onClick={() => setViewTab("graduated")}
+                >
+                  Graduated ({graduatedAssignments.length})
+                </button>
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {completedApps.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No completed new member applications found.
-            </p>
+          {viewTab === "active" ? (
+            <ActiveMembersList
+              completedApps={completedApps}
+              assignments={assignments}
+              volunteerMembers={volunteerMembers}
+              sortedVolunteers={sortedVolunteers}
+              emailLogs={emailLogs}
+              now={now}
+              onAssign={(appId, currentVolKeyId) => {
+                setAssignDialog({ appId, currentVolKeyId });
+                setSelectedVolunteer("");
+              }}
+              onSendReminder={(id) => sendReminderEmail.mutate(id)}
+              onGraduate={(id) => setGraduateConfirm(id)}
+              sendReminderPending={sendReminderEmail.isPending}
+              getEmailStatus={getEmailStatus}
+            />
           ) : (
-            <div className="space-y-2">
-              {completedApps.map((app) => {
-                const assignment = assignments.find((a) => a.application_id === app.id);
-                const assignedVolunteer = assignment
-                  ? volunteerMembers.find((m) => m.key_id === assignment.volunteer_key_id)
-                  : null;
-                const isActive = assignment
-                  ? now - new Date(assignment.assigned_at).getTime() < THREE_MONTHS_MS
-                  : false;
-                const emailStatus = assignment ? getEmailStatus(assignment.id) : null;
-
-                return (
-                  <div
-                    key={app.id}
-                    className="border rounded-md p-3 space-y-2"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-sm">
-                          {app.last_name}, {app.first_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          EAA #{app.eaa_number} · {app.email}
-                        </p>
-                      </div>
-                    {assignment && (() => {
-                        const daysElapsed = Math.floor((now - new Date(assignment.assigned_at).getTime()) / (24 * 60 * 60 * 1000));
-                        const months = Math.floor(daysElapsed / 30);
-                        const days = daysElapsed % 30;
-                        const durationText = months > 0 ? `${months}mo ${days}d` : `${days}d`;
-                        return (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs text-muted-foreground">{durationText}</span>
-                            {isActive ? (
-                              <Badge className="text-xs bg-green-50 text-green-700 border-green-200" variant="outline">
-                                Active
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-xs">
-                                Alumni Buddy Pair
-                              </Badge>
-                            )}
-                            {emailStatus?.introSent && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                                    <Mail className="h-3 w-3 mr-1" />
-                                    Intro Sent
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>Introduction email has been sent</TooltipContent>
-                              </Tooltip>
-                            )}
-                            {emailStatus?.reminderSent && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                    <Mail className="h-3 w-3 mr-1" />
-                                    Reminder Sent
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>3-day reminder email has been sent</TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                    {assignment ? (
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs flex items-center gap-1.5">
-                          <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-muted-foreground">Buddy:</span>
-                          <span className="font-medium">
-                            {assignedVolunteer
-                              ? `${assignedVolunteer.last_name}, ${assignedVolunteer.first_name}`
-                              : `Volunteer #${assignment.volunteer_key_id}`}
-                          </span>
-                        </p>
-                        <div className="flex items-center gap-1">
-                          {!emailStatus?.introSent && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs gap-1"
-                              onClick={() => sendIntroEmail.mutate(assignment.id)}
-                              disabled={sendIntroEmail.isPending}
-                            >
-                              <Send className="h-3 w-3" />
-                              Send Intro
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs gap-1"
-                            onClick={() => reassignBuddy.mutate(app.id)}
-                            disabled={reassignBuddy.isPending || sortedVolunteers.length < 2}
-                          >
-                            <RefreshCw className="h-3 w-3" />
-                            Reassign
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground italic">
-                          No buddy assigned yet.
-                        </p>
-                        {sortedVolunteers.length > 0 && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs gap-1"
-                            onClick={() => reassignBuddy.mutate(app.id)}
-                            disabled={reassignBuddy.isPending}
-                          >
-                            <UserCheck className="h-3 w-3" />
-                            Assign Buddy
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <GraduatedMembersList
+              graduatedAssignments={graduatedAssignments}
+              completedApps={completedApps}
+              volunteerMembers={volunteerMembers}
+            />
           )}
         </CardContent>
       </Card>
+
+      {/* Assign / Reassign Dialog */}
+      <Dialog open={!!assignDialog} onOpenChange={() => { setAssignDialog(null); setSelectedVolunteer(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {assignDialog?.currentVolKeyId ? "Reassign Buddy" : "Assign Buddy"}
+            </DialogTitle>
+            <DialogDescription>
+              Select a volunteer to pair with this new member. An introduction email will be sent automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <Select value={selectedVolunteer} onValueChange={setSelectedVolunteer}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a volunteer..." />
+            </SelectTrigger>
+            <SelectContent>
+              {sortedVolunteers
+                .filter((v) => v.key_id !== assignDialog?.currentVolKeyId)
+                .map((v) => (
+                  <SelectItem key={v.key_id} value={String(v.key_id)}>
+                    {v.member
+                      ? `${v.member.last_name}, ${v.member.first_name}`
+                      : `Key #${v.key_id}`}{" "}
+                    ({v.active} active)
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setAssignDialog(null); setSelectedVolunteer(""); }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!selectedVolunteer || manualAssign.isPending}
+              onClick={() => {
+                if (!assignDialog || !selectedVolunteer) return;
+                const existingAssignment = assignments.find(
+                  (a) => a.application_id === assignDialog.appId
+                );
+                manualAssign.mutate({
+                  applicationId: assignDialog.appId,
+                  volunteerKeyId: Number(selectedVolunteer),
+                  existingAssignmentId: existingAssignment?.id,
+                });
+              }}
+            >
+              {manualAssign.isPending ? "Assigning..." : "Assign & Send Intro"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Entry Dialog */}
+      <Dialog open={manualEntryDialog} onOpenChange={(open) => { setManualEntryDialog(open); if (!open) setManualEntrySearch(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Member to Buddy Program</DialogTitle>
+            <DialogDescription>
+              Search for an active roster member to add to the buddy program manually.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name..."
+              value={manualEntrySearch}
+              onChange={(e) => setManualEntrySearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          {manualEntrySearch.length >= 2 && filteredManualResults.length > 0 && (
+            <div className="border rounded-md divide-y max-h-60 overflow-auto">
+              {filteredManualResults.map((m) => (
+                <div
+                  key={m.key_id}
+                  className="flex items-center justify-between px-3 py-2 text-sm hover:bg-muted/50"
+                >
+                  <div>
+                    <span className="font-medium">{m.last_name}, {m.first_name}</span>
+                    <span className="text-muted-foreground ml-2">· EAA #{m.eaa_number}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => addManualEntry.mutate({
+                      key_id: m.key_id,
+                      first_name: m.first_name || "",
+                      last_name: m.last_name || "",
+                      email: m.email || "",
+                      eaa_number: m.eaa_number || "",
+                    })}
+                    disabled={addManualEntry.isPending}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          {manualEntrySearch.length >= 2 && filteredManualResults.length === 0 && (
+            <p className="text-xs text-muted-foreground">No matching active members found.</p>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Graduate Confirmation */}
+      <AlertDialog open={!!graduateConfirm} onOpenChange={() => setGraduateConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Graduate from Buddy Program?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will mark the member as graduated. They will appear in the Graduated list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => graduateConfirm && graduateMember.mutate(graduateConfirm)}
+              disabled={graduateMember.isPending}
+            >
+              Graduate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Remove volunteer confirmation */}
       <AlertDialog open={removeVolunteer !== null} onOpenChange={() => setRemoveVolunteer(null)}>
@@ -490,7 +693,7 @@ export default function BuddyProgram() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Volunteer?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the volunteer and all their buddy assignments. This action cannot be undone.
+              This will remove the volunteer from the buddy program. Existing assignments will not be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -504,6 +707,254 @@ export default function BuddyProgram() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+// Active members sub-component
+function ActiveMembersList({
+  completedApps,
+  assignments,
+  volunteerMembers,
+  sortedVolunteers,
+  emailLogs,
+  now,
+  onAssign,
+  onSendReminder,
+  onGraduate,
+  sendReminderPending,
+  getEmailStatus,
+}: {
+  completedApps: any[];
+  assignments: any[];
+  volunteerMembers: any[];
+  sortedVolunteers: any[];
+  emailLogs: any[];
+  now: number;
+  onAssign: (appId: string, currentVolKeyId?: number) => void;
+  onSendReminder: (assignmentId: string) => void;
+  onGraduate: (assignmentId: string) => void;
+  sendReminderPending: boolean;
+  getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; reminderSent: boolean };
+}) {
+  // Show apps that are not graduated
+  const activeApps = completedApps.filter((app) => {
+    const assignment = assignments.find((a) => a.application_id === app.id);
+    return !assignment?.graduated_at;
+  });
+
+  if (activeApps.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No active new members in the buddy program.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {activeApps.map((app) => {
+        const assignment = assignments.find((a) => a.application_id === app.id);
+        const assignedVolunteer = assignment
+          ? volunteerMembers.find((m) => m.key_id === assignment.volunteer_key_id)
+          : null;
+        const emailStatus = assignment ? getEmailStatus(assignment.id) : null;
+
+        // Calculate days to second email (2 months from intro sent)
+        let daysToReminder: number | null = null;
+        let reminderOverdue = false;
+        if (emailStatus?.introSent && emailStatus.introSentAt && !emailStatus.reminderSent) {
+          const introDate = new Date(emailStatus.introSentAt).getTime();
+          const reminderDue = introDate + TWO_MONTHS_MS;
+          const daysLeft = Math.ceil((reminderDue - now) / (24 * 60 * 60 * 1000));
+          daysToReminder = daysLeft;
+          reminderOverdue = daysLeft <= 0;
+        }
+
+        const daysElapsed = assignment
+          ? Math.floor((now - new Date(assignment.assigned_at).getTime()) / (24 * 60 * 60 * 1000))
+          : 0;
+        const months = Math.floor(daysElapsed / 30);
+        const days = daysElapsed % 30;
+        const durationText = months > 0 ? `${months}mo ${days}d` : `${days}d`;
+
+        return (
+          <div key={app.id} className="border rounded-md p-3 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-medium text-sm">
+                  {app.last_name}, {app.first_name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  EAA #{app.eaa_number} · {app.email}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {assignment && (
+                  <span className="text-xs text-muted-foreground">{durationText}</span>
+                )}
+                {emailStatus?.introSent && (
+                  <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                    <Mail className="h-3 w-3 mr-1" />
+                    Intro Sent
+                  </Badge>
+                )}
+                {emailStatus?.reminderSent && (
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                    <Mail className="h-3 w-3 mr-1" />
+                    Reminder Sent
+                  </Badge>
+                )}
+                {daysToReminder !== null && !emailStatus?.reminderSent && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs gap-1 ${
+                          reminderOverdue
+                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        <Clock className="h-3 w-3" />
+                        {reminderOverdue
+                          ? `Reminder due (${Math.abs(daysToReminder!)}d overdue)`
+                          : `${daysToReminder}d to reminder`}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Second email is due 2 months after the intro email
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+
+            {assignment ? (
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs flex items-center gap-1.5">
+                  <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-muted-foreground">Buddy:</span>
+                  <span className="font-medium">
+                    {assignedVolunteer
+                      ? `${assignedVolunteer.last_name}, ${assignedVolunteer.first_name}`
+                      : `Volunteer #${assignment.volunteer_key_id}`}
+                  </span>
+                </p>
+                <div className="flex items-center gap-1">
+                  {emailStatus?.introSent && !emailStatus.reminderSent && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => onSendReminder(assignment.id)}
+                      disabled={sendReminderPending}
+                    >
+                      <Send className="h-3 w-3" />
+                      Send Reminder
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => onAssign(app.id, assignment.volunteer_key_id)}
+                    disabled={sortedVolunteers.length < 2}
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    Reassign
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => onGraduate(assignment.id)}
+                  >
+                    <GraduationCap className="h-3 w-3" />
+                    Graduate
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground italic">
+                  No buddy assigned yet.
+                </p>
+                {sortedVolunteers.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => onAssign(app.id)}
+                  >
+                    <UserCheck className="h-3 w-3" />
+                    Assign Buddy
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Graduated members sub-component
+function GraduatedMembersList({
+  graduatedAssignments,
+  completedApps,
+  volunteerMembers,
+}: {
+  graduatedAssignments: any[];
+  completedApps: any[];
+  volunteerMembers: any[];
+}) {
+  if (graduatedAssignments.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No graduated members yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {graduatedAssignments
+        .sort((a, b) => new Date(b.graduated_at).getTime() - new Date(a.graduated_at).getTime())
+        .map((assignment) => {
+          const app = completedApps.find((a) => a.id === assignment.application_id);
+          const buddy = volunteerMembers.find((m) => m.key_id === assignment.volunteer_key_id);
+
+          const assignedDate = new Date(assignment.assigned_at);
+          const graduatedDate = new Date(assignment.graduated_at);
+          const durationDays = Math.floor(
+            (graduatedDate.getTime() - assignedDate.getTime()) / (24 * 60 * 60 * 1000)
+          );
+          const months = Math.floor(durationDays / 30);
+          const days = durationDays % 30;
+          const durationText = months > 0 ? `${months}mo ${days}d` : `${days}d`;
+
+          return (
+            <div key={assignment.id} className="border rounded-md p-3 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">
+                  {app ? `${app.last_name}, ${app.first_name}` : "Unknown Member"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Buddy: {buddy ? `${buddy.last_name}, ${buddy.first_name}` : `#${assignment.volunteer_key_id}`}
+                  {" · "}Duration: {durationText}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  <GraduationCap className="h-3 w-3 mr-1" />
+                  Graduated {graduatedDate.toLocaleDateString()}
+                </Badge>
+              </div>
+            </div>
+          );
+        })}
     </div>
   );
 }
