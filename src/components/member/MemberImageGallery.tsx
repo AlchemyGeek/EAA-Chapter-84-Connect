@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const MAX_IMAGES = 4;
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
 
 interface MemberImageGalleryProps {
   keyId: number;
@@ -42,7 +42,17 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
         .eq("key_id", keyId)
         .order("sort_order");
       if (error) throw error;
-      return data;
+
+      // Generate signed URLs for each image
+      const withUrls = await Promise.all(
+        (data ?? []).map(async (img) => {
+          const { data: urlData } = await supabase.storage
+            .from("member-images")
+            .createSignedUrl(img.storage_path, 3600);
+          return { ...img, signedUrl: urlData?.signedUrl ?? "" };
+        })
+      );
+      return withUrls;
     },
   });
 
@@ -111,8 +121,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const getPublicUrl = (path: string) =>
-    `${SUPABASE_URL}/storage/v1/object/public/member-images/${path}`;
+  const getImageUrl = (img: typeof images[number]) => img.signedUrl;
 
   if (isLoading) return null;
   if (!editable && images.length === 0) return null;
@@ -140,7 +149,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
               {images.map((img) => (
                 <div key={img.id} className="relative group rounded-lg overflow-hidden border bg-muted aspect-square">
                   <img
-                    src={getPublicUrl(img.storage_path)}
+                    src={getImageUrl(img)}
                     alt="Aircraft"
                     className="w-full h-full object-cover"
                     loading="lazy"

@@ -22,11 +22,6 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
-function getPublicUrl(path: string) {
-  return `${SUPABASE_URL}/storage/v1/object/public/member-images/${path}`;
-}
 
 export default function MemberProfile() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -66,7 +61,16 @@ export default function MemberProfile() {
         .eq("key_id", Number(keyId))
         .order("sort_order");
       if (error) throw error;
-      return data;
+
+      const withUrls = await Promise.all(
+        (data ?? []).map(async (img) => {
+          const { data: urlData } = await supabase.storage
+            .from("member-images")
+            .createSignedUrl(img.storage_path, 3600);
+          return { ...img, signedUrl: urlData?.signedUrl ?? "" };
+        })
+      );
+      return withUrls;
     },
   });
 
@@ -166,11 +170,11 @@ export default function MemberProfile() {
                 {images.map((img) => (
                   <button
                     key={img.id}
-                    onClick={() => setLightboxUrl(getPublicUrl(img.storage_path))}
+                    onClick={() => setLightboxUrl(img.signedUrl)}
                     className="rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <img
-                      src={getPublicUrl(img.storage_path)}
+                      src={img.signedUrl}
                       alt={img.caption || "Member photo"}
                       className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
                       loading="lazy"
