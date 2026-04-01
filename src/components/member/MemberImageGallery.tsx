@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const MAX_IMAGES = 4;
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
 
 interface MemberImageGalleryProps {
   keyId: number;
