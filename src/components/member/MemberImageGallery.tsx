@@ -149,7 +149,7 @@ export function MemberImageGallery({ keyId, editable = false }: MemberImageGalle
               {images.map((img) => (
                 <div key={img.id} className="relative group rounded-lg overflow-hidden border bg-muted aspect-square">
                   <img
-                    src={getPublicUrl(img.storage_path)}
+                    src={getImageUrl(img)}
                     alt="Aircraft"
                     className="w-full h-full object-cover"
                     loading="lazy"
