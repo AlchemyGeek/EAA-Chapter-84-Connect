@@ -174,7 +174,7 @@ export default function MemberProfile() {
                     className="rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <img
-                      src={getPublicUrl(img.storage_path)}
+                      src={img.signedUrl}
                       alt={img.caption || "Member photo"}
                       className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
                       loading="lazy"
