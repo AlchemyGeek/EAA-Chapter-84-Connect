@@ -49,6 +49,7 @@ export type Database = {
           application_id: string
           assigned_at: string
           created_at: string
+          graduated_at: string | null
           id: string
           volunteer_key_id: number
         }
@@ -56,6 +57,7 @@ export type Database = {
           application_id: string
           assigned_at?: string
           created_at?: string
+          graduated_at?: string | null
           id?: string
           volunteer_key_id: number
         }
@@ -63,6 +65,7 @@ export type Database = {
           application_id?: string
           assigned_at?: string
           created_at?: string
+          graduated_at?: string | null
           id?: string
           volunteer_key_id?: number
         }
