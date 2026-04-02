@@ -24,7 +24,7 @@ export default function AppLayout() {
           </Button>
           <div className="flex items-center gap-2">
             <img src={chapterLogo} alt="EAA Chapter 84" className="h-7 w-7 rounded-full" />
-            <span className="font-semibold text-sm">EAA 84 Connect</span>
+            <span className="font-semibold text-sm hidden sm:inline">EAA 84 Connect</span>
           </div>
         </div>
         <Button
