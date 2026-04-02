@@ -32,7 +32,7 @@ export default function MemberDetail() {
     { label: "Email", value: member.email },
     { label: "Cell Phone", value: member.cell_phone },
     { label: "Home Phone", value: member.home_phone },
-    { label: "Address", value: [member.street_address_1, member.street_address_2].filter(Boolean).join(", ") || null },
+    { label: "Address", value: [member.street_address_1, member.street_address_2].filter((v) => v?.trim()).join(", ") || null },
     { label: "City", value: member.preferred_city },
     { label: "State", value: member.preferred_state },
     { label: "Zip", value: member.zip_code },
