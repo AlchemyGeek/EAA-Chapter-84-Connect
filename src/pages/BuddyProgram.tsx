@@ -783,57 +783,59 @@ function ActiveMembersList({
         return (
           <div key={app.id} className="border rounded-md p-3 space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium text-sm">
                   {app.last_name}, {app.first_name}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   EAA #{app.eaa_number} · {app.email}
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {assignment && (
-                  <span className="text-xs text-muted-foreground">{durationText}</span>
-                )}
-                {emailStatus?.introSent && (
-                  <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                    <Mail className="h-3 w-3 mr-1" />
-                    Intro Sent
-                  </Badge>
-                )}
-                {emailStatus?.reminderSent && (
-                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                    <Mail className="h-3 w-3 mr-1" />
-                    Reminder Sent
-                  </Badge>
-                )}
-                {daysToReminder !== null && !emailStatus?.reminderSent && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs gap-1 ${
-                          reminderOverdue
-                            ? "bg-amber-50 text-amber-700 border-amber-200"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        <Clock className="h-3 w-3" />
-                        {reminderOverdue
-                          ? `Reminder due (${Math.abs(daysToReminder!)}d overdue)`
-                          : `${daysToReminder}d to reminder`}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Second email is due 2 months after the intro email
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
+              {assignment && (
+                <span className="text-xs text-muted-foreground shrink-0">{durationText}</span>
+              )}
+            </div>
+
+            {/* Status badges */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {emailStatus?.introSent && (
+                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                  <Mail className="h-3 w-3 mr-1" />
+                  Intro Sent
+                </Badge>
+              )}
+              {emailStatus?.reminderSent && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  <Mail className="h-3 w-3 mr-1" />
+                  Reminder Sent
+                </Badge>
+              )}
+              {daysToReminder !== null && !emailStatus?.reminderSent && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs gap-1 ${
+                        reminderOverdue
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      <Clock className="h-3 w-3" />
+                      {reminderOverdue
+                        ? `Due (${Math.abs(daysToReminder!)}d overdue)`
+                        : `${daysToReminder}d to reminder`}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Second email is due 2 months after the intro email
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
 
             {assignment ? (
-              <div className="flex items-center justify-between gap-2">
+              <div className="space-y-2">
                 <p className="text-xs flex items-center gap-1.5">
                   <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-muted-foreground">Buddy:</span>
@@ -843,7 +845,7 @@ function ActiveMembersList({
                       : `Volunteer #${assignment.volunteer_key_id}`}
                   </span>
                 </p>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1">
                   {emailStatus?.introSent && !emailStatus.reminderSent && (
                     <Button
                       size="sm"
@@ -853,7 +855,7 @@ function ActiveMembersList({
                       disabled={sendReminderPending}
                     >
                       <Send className="h-3 w-3" />
-                      Send Reminder
+                      Reminder
                     </Button>
                   )}
                   <Button
