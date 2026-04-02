@@ -323,22 +323,24 @@ export default function UserRoles() {
                 return (
                   <div
                     key={ra.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2.5"
+                    className="flex items-center justify-between rounded-md border px-3 py-2.5 gap-2"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Badge variant={roleBadgeVariant(ra.role)}>
-                        {roleLabel(ra.role)}
-                      </Badge>
-                      <span className="text-sm truncate">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={roleBadgeVariant(ra.role)} className="shrink-0">
+                          {roleLabel(ra.role)}
+                        </Badge>
+                        {member && (
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            EAA #{member.eaa_number}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm mt-1">
                         {member
                           ? `${member.last_name}, ${member.first_name}`
                           : email ?? ra.user_id.slice(0, 8) + "…"}
-                      </span>
-                      {member && (
-                        <span className="text-xs text-muted-foreground">
-                          EAA #{member.eaa_number}
-                        </span>
-                      )}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"
