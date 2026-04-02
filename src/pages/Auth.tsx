@@ -79,7 +79,7 @@ const Auth = () => {
           </CardDescription>
           {step === "email" && (
             <p className="text-sm text-muted-foreground mt-3 text-left leading-relaxed">
-              Please use the email address you use for chapter communications. If you are not certain which email you use, please contact{" "}
+              Please use the email address you have on file with the chapter. If you're not sure which email you used, contact{" "}
               <a href="mailto:membership@eaa84.org" className="text-primary underline hover:text-primary/80">membership@eaa84.org</a>.
             </p>
           )}
