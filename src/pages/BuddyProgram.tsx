@@ -486,12 +486,12 @@ export default function BuddyProgram() {
       {/* NEW MEMBERS SECTION */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
-              New Members
-            </CardTitle>
-            <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-muted-foreground" />
+                New Members
+              </CardTitle>
               <Button
                 size="sm"
                 variant="outline"
@@ -501,31 +501,31 @@ export default function BuddyProgram() {
                 <Plus className="h-3 w-3" />
                 Add Member
               </Button>
-              <div className="flex border rounded-md">
-                <button
-                  className={`px-3 py-1 text-xs font-medium rounded-l-md transition-colors ${
-                    viewTab === "active"
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                  onClick={() => setViewTab("active")}
-                >
-                  Active ({completedApps.filter((a) => {
-                    const assignment = assignments.find((as) => as.application_id === a.id);
-                    return !assignment?.graduated_at;
-                  }).length})
-                </button>
-                <button
-                  className={`px-3 py-1 text-xs font-medium rounded-r-md transition-colors ${
-                    viewTab === "graduated"
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                  onClick={() => setViewTab("graduated")}
-                >
-                  Graduated ({graduatedAssignments.length})
-                </button>
-              </div>
+            </div>
+            <div className="flex border rounded-md self-start">
+              <button
+                className={`px-3 py-1 text-xs font-medium rounded-l-md transition-colors ${
+                  viewTab === "active"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                }`}
+                onClick={() => setViewTab("active")}
+              >
+                Active ({completedApps.filter((a) => {
+                  const assignment = assignments.find((as) => as.application_id === a.id);
+                  return !assignment?.graduated_at;
+                }).length})
+              </button>
+              <button
+                className={`px-3 py-1 text-xs font-medium rounded-r-md transition-colors ${
+                  viewTab === "graduated"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                }`}
+                onClick={() => setViewTab("graduated")}
+              >
+                Graduated ({graduatedAssignments.length})
+              </button>
             </div>
           </div>
         </CardHeader>
