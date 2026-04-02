@@ -1,5 +1,5 @@
 // Fields to skip when diffing current vs snapshot
-const SKIP_DIFF = new Set(["created_at", "updated_at", "last_import_id", "id"]);
+const SKIP_DIFF = new Set(["created_at", "updated_at", "last_import_id", "id", "date_updated"]);
 
 export interface LocalChange {
   key_id: number;
