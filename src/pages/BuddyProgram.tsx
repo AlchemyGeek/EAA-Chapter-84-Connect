@@ -452,30 +452,32 @@ export default function BuddyProgram() {
               {sortedVolunteers.map((v) => (
                 <div
                   key={v.key_id}
-                  className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm hover:bg-muted/50 min-h-[44px]"
+                  className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm hover:bg-muted/50 min-h-[44px] gap-2"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <UserCheck className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="truncate font-medium">
                       {v.member
                         ? `${v.member.last_name}, ${v.member.first_name}`
                         : `Key #${v.key_id}`}
                     </span>
-                    <Badge variant="secondary" className="text-xs shrink-0">
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant="secondary" className="text-xs">
                       {v.active} active
                     </Badge>
-                    <Badge variant="outline" className="text-xs shrink-0">
+                    <Badge variant="outline" className="text-xs hidden sm:inline-flex">
                       {v.total} total
                     </Badge>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => setRemoveVolunteer(v.key_id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                    onClick={() => setRemoveVolunteer(v.key_id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
                 </div>
               ))}
             </div>
