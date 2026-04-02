@@ -13,7 +13,7 @@ export default function Landing() {
         
 
         <div className="space-y-3">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">EAA Chapter 84 Connect
+          <h1 className="hidden text-2xl font-bold text-foreground md:block md:text-3xl">EAA Chapter 84 Connect
 
           </h1>
           <p className="text-sm md:text-base text-muted-foreground leading-relaxed">Chapter 84 Connect is the member services portal for our chapter. Here you can manage your membership, join programs, volunteer, and stay connected with the chapter community.
