@@ -452,30 +452,32 @@ export default function BuddyProgram() {
               {sortedVolunteers.map((v) => (
                 <div
                   key={v.key_id}
-                  className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm hover:bg-muted/50 min-h-[44px]"
+                  className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm hover:bg-muted/50 min-h-[44px] gap-2"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <UserCheck className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="truncate font-medium">
                       {v.member
                         ? `${v.member.last_name}, ${v.member.first_name}`
                         : `Key #${v.key_id}`}
                     </span>
-                    <Badge variant="secondary" className="text-xs shrink-0">
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant="secondary" className="text-xs">
                       {v.active} active
                     </Badge>
-                    <Badge variant="outline" className="text-xs shrink-0">
+                    <Badge variant="outline" className="text-xs hidden sm:inline-flex">
                       {v.total} total
                     </Badge>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => setRemoveVolunteer(v.key_id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                    onClick={() => setRemoveVolunteer(v.key_id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
                 </div>
               ))}
             </div>
@@ -486,12 +488,12 @@ export default function BuddyProgram() {
       {/* NEW MEMBERS SECTION */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
-              New Members
-            </CardTitle>
-            <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-muted-foreground" />
+                New Members
+              </CardTitle>
               <Button
                 size="sm"
                 variant="outline"
@@ -501,31 +503,31 @@ export default function BuddyProgram() {
                 <Plus className="h-3 w-3" />
                 Add Member
               </Button>
-              <div className="flex border rounded-md">
-                <button
-                  className={`px-3 py-1 text-xs font-medium rounded-l-md transition-colors ${
-                    viewTab === "active"
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                  onClick={() => setViewTab("active")}
-                >
-                  Active ({completedApps.filter((a) => {
-                    const assignment = assignments.find((as) => as.application_id === a.id);
-                    return !assignment?.graduated_at;
-                  }).length})
-                </button>
-                <button
-                  className={`px-3 py-1 text-xs font-medium rounded-r-md transition-colors ${
-                    viewTab === "graduated"
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                  onClick={() => setViewTab("graduated")}
-                >
-                  Graduated ({graduatedAssignments.length})
-                </button>
-              </div>
+            </div>
+            <div className="flex border rounded-md self-start">
+              <button
+                className={`px-3 py-1 text-xs font-medium rounded-l-md transition-colors ${
+                  viewTab === "active"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                }`}
+                onClick={() => setViewTab("active")}
+              >
+                Active ({completedApps.filter((a) => {
+                  const assignment = assignments.find((as) => as.application_id === a.id);
+                  return !assignment?.graduated_at;
+                }).length})
+              </button>
+              <button
+                className={`px-3 py-1 text-xs font-medium rounded-r-md transition-colors ${
+                  viewTab === "graduated"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                }`}
+                onClick={() => setViewTab("graduated")}
+              >
+                Graduated ({graduatedAssignments.length})
+              </button>
             </div>
           </div>
         </CardHeader>
@@ -781,57 +783,59 @@ function ActiveMembersList({
         return (
           <div key={app.id} className="border rounded-md p-3 space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium text-sm">
                   {app.last_name}, {app.first_name}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   EAA #{app.eaa_number} · {app.email}
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {assignment && (
-                  <span className="text-xs text-muted-foreground">{durationText}</span>
-                )}
-                {emailStatus?.introSent && (
-                  <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                    <Mail className="h-3 w-3 mr-1" />
-                    Intro Sent
-                  </Badge>
-                )}
-                {emailStatus?.reminderSent && (
-                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                    <Mail className="h-3 w-3 mr-1" />
-                    Reminder Sent
-                  </Badge>
-                )}
-                {daysToReminder !== null && !emailStatus?.reminderSent && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs gap-1 ${
-                          reminderOverdue
-                            ? "bg-amber-50 text-amber-700 border-amber-200"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        <Clock className="h-3 w-3" />
-                        {reminderOverdue
-                          ? `Reminder due (${Math.abs(daysToReminder!)}d overdue)`
-                          : `${daysToReminder}d to reminder`}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Second email is due 2 months after the intro email
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
+              {assignment && (
+                <span className="text-xs text-muted-foreground shrink-0">{durationText}</span>
+              )}
+            </div>
+
+            {/* Status badges */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {emailStatus?.introSent && (
+                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                  <Mail className="h-3 w-3 mr-1" />
+                  Intro Sent
+                </Badge>
+              )}
+              {emailStatus?.reminderSent && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  <Mail className="h-3 w-3 mr-1" />
+                  Reminder Sent
+                </Badge>
+              )}
+              {daysToReminder !== null && !emailStatus?.reminderSent && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs gap-1 ${
+                        reminderOverdue
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      <Clock className="h-3 w-3" />
+                      {reminderOverdue
+                        ? `Due (${Math.abs(daysToReminder!)}d overdue)`
+                        : `${daysToReminder}d to reminder`}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Second email is due 2 months after the intro email
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
 
             {assignment ? (
-              <div className="flex items-center justify-between gap-2">
+              <div className="space-y-2">
                 <p className="text-xs flex items-center gap-1.5">
                   <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-muted-foreground">Buddy:</span>
@@ -841,7 +845,7 @@ function ActiveMembersList({
                       : `Volunteer #${assignment.volunteer_key_id}`}
                   </span>
                 </p>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1">
                   {emailStatus?.introSent && !emailStatus.reminderSent && (
                     <Button
                       size="sm"
@@ -851,7 +855,7 @@ function ActiveMembersList({
                       disabled={sendReminderPending}
                     >
                       <Send className="h-3 w-3" />
-                      Send Reminder
+                      Reminder
                     </Button>
                   )}
                   <Button
@@ -936,20 +940,20 @@ function GraduatedMembersList({
           const durationText = months > 0 ? `${months}mo ${days}d` : `${days}d`;
 
           return (
-            <div key={assignment.id} className="border rounded-md p-3 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">
-                  {app ? `${app.last_name}, ${app.first_name}` : "Unknown Member"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Buddy: {buddy ? `${buddy.last_name}, ${buddy.first_name}` : `#${assignment.volunteer_key_id}`}
-                  {" · "}Duration: {durationText}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
+            <div key={assignment.id} className="border rounded-md p-3 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-sm">
+                    {app ? `${app.last_name}, ${app.first_name}` : "Unknown Member"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Buddy: {buddy ? `${buddy.last_name}, ${buddy.first_name}` : `#${assignment.volunteer_key_id}`}
+                    {" · "}{durationText}
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-xs shrink-0">
                   <GraduationCap className="h-3 w-3 mr-1" />
-                  Graduated {graduatedDate.toLocaleDateString()}
+                  {graduatedDate.toLocaleDateString()}
                 </Badge>
               </div>
             </div>
