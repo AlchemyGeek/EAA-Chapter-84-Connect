@@ -321,24 +321,26 @@ export default function MemberHome() {
                 alt="EAA Chapter 84"
                 className="h-10 w-10 rounded-full ring-2 ring-primary-foreground/20"
               />
-              <span className="font-semibold text-sm opacity-90">Chapter 84 Connect</span>
+              <span className="font-semibold text-sm opacity-90 hidden sm:inline">Chapter 84 Connect</span>
             </div>
             <div className="flex items-center gap-1">
               <a
                 href="mailto:membership@eaa84.org"
                 className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 inline-flex items-center rounded-md px-3 text-sm font-medium h-9 min-h-[44px]"
+                title="Contact Us"
               >
-                <Mail className="h-4 w-4 mr-1.5" />
-                Contact Us
+                <Mail className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Contact Us</span>
               </a>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={signOut}
                 className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px]"
+                title="Sign Out"
               >
-                <LogOut className="h-4 w-4 mr-1.5" />
-                Sign Out
+                <LogOut className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           </div>
