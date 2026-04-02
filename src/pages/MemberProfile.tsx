@@ -106,10 +106,10 @@ export default function MemberProfile() {
   const address = [
     member.street_address_1,
     member.street_address_2,
-    [member.preferred_city, member.preferred_state].filter(Boolean).join(", "),
+    [member.preferred_city, member.preferred_state].filter((v) => v?.trim()).join(", "),
     member.zip_code,
   ]
-    .filter(Boolean)
+    .filter((v) => typeof v === "string" ? v.trim() : v)
     .join(", ");
 
   const volunteerBadges = [
