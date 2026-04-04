@@ -1,5 +1,11 @@
 project_id = "exhrqwxmezowohckuzvv"
 
+[auth]
+refresh_token_rotation_enabled = true
+refresh_token_reuse_interval = 10
+access_token_expiry = 3600
+refresh_token_expiry = 2592000
+
 [functions]
   [functions.auth-email-hook]
     verify_jwt = false
