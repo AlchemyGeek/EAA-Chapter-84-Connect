@@ -186,7 +186,7 @@ export default function UserRoles() {
   };
 
   const roleLabel = (role: string) => {
-    if (role === "admin") return "Membership Coordinator";
+    if (role === "admin") return "Admin";
     if (role === "officer") return "Officer";
     return "Member";
   };
@@ -196,7 +196,7 @@ export default function UserRoles() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">User Roles</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Assign Officer and Membership Coordinator roles to members.
+          Assign Officer and Admin roles to members.
           All authenticated users are Members by default.
         </p>
       </div>
@@ -281,7 +281,7 @@ export default function UserRoles() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="officer">Officer</SelectItem>
-                <SelectItem value="admin">Membership Coordinator</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
