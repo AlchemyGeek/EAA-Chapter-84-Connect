@@ -1,88 +1,84 @@
+## Member Engagement Dashboard — Plan
 
+### Overview
 
-# Hangar Talk — Implementation Plan
+Create a new "Member Engagement" page accessible from Admin Services that tracks member activity via a lightweight event logging table and displays KPIs with trend charts.
 
-## Overview
-A single-channel realtime chat for active members, accessible from the Member Home page. Supports text messages, image/PDF attachments, emoji reactions, @mentions, and admin message deletion.
+### What counts as "activity"
 
-## Database Changes
+Since the app doesn't currently track member interactions, we need to introduce a simple event logging mechanism. Events will be recorded when members perform meaningful actions:
 
-### 1. `hangar_talk_messages` table
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | default gen_random_uuid() |
-| key_id | integer | poster's roster member key_id |
-| author_name | text | denormalized "First Last" |
-| content | text | max ~2000 chars |
-| created_at | timestamptz | default now() |
+- **Login / page visit** to `/home` (Member Hub)
+- **Viewing Member Services** pages (directory, volunteering)
+- **Editing profile** fields
+- **Submitting volunteering applications**
+- **Viewing member profiles** in the directory
 
-RLS:
-- SELECT: authenticated + active member (join roster_members, standing = 'Active')
-- INSERT: authenticated + own key_id matches email + active standing
-- DELETE: admin role only
+Any future member services should include this instrumentation.
 
-Enable Supabase Realtime on this table.
+### Database Changes (1 migration)
 
-### 2. `hangar_talk_attachments` table
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| message_id | uuid FK | references hangar_talk_messages on delete cascade |
-| storage_path | text | path in storage bucket |
-| file_name | text | original filename |
-| file_type | text | 'image' or 'pdf' |
-| file_size | integer | bytes |
+**New table: `member_engagement_events**`
 
-RLS: same SELECT as messages; INSERT for active members.
+- `id` (uuid, PK)
+- `key_id` (integer, NOT NULL) — the roster member
+- `event_type` (text, NOT NULL) — e.g. `login`, `profile_edit`, `directory_view`, `volunteering_apply`, `service_page`
+- `created_at` (timestamptz, default now())
 
-### 3. `hangar_talk_reactions` table
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid PK | |
-| message_id | uuid FK | on delete cascade |
-| key_id | integer | reactor's key_id |
-| emoji | text | one of 👍👏✅❤️ |
-| created_at | timestamptz | |
-| UNIQUE(message_id, key_id, emoji) | | prevents duplicates |
+RLS policies:
 
-RLS: SELECT for active members; INSERT/DELETE for own reactions.
+- Members can INSERT their own events (key_id matches their roster record)
+- Officers/admins can SELECT all events
+- Service role has full access
 
-Enable Realtime on this table.
+Enable realtime: not needed (batch analytics only).
 
-### 4. Storage bucket
-Create a public `hangar-talk` bucket with RLS allowing active authenticated members to upload (images + PDFs, max 10MB enforced client-side).
+**New database function: `engagement_kpis()**` (SECURITY DEFINER)
+Returns a single row with pre-computed KPIs:
 
-## Frontend
+- `active_30d` — distinct members with ≥1 event in last 30 days
+- `active_7d` — distinct members with ≥1 event in last 7 days
+- `total_active_members` — count of roster members with standing = 'Active'
+- `highly_engaged_30d` — distinct members with ≥5 events in last 30 days
+- `dormant_60d` — active roster members with zero events in last 60 days
+- `service_page_views_30d` — count of `service_page` events in last 30 days
 
-### New page: `src/pages/HangarTalk.tsx`
-- Route: `/hangar-talk` (outside AppLayout, standalone full-height page)
-- Header bar with back-to-home arrow and title "Hangar Talk"
-- Access guard: redirect if not active member
-- **Message feed**: scrollable area, chronological, auto-scroll to bottom on new messages
-- **Message bubbles**: author name, timestamp, content, inline image previews (tap to expand), PDF links with icon, reaction bar
-- **Reactions**: clickable emoji buttons below each message; toggling adds/removes
-- **@mentions**: typing `@` opens a member name autocomplete dropdown; mentioned names highlighted in message text
-- **Sticky input bar** at bottom: text input (multi-line), paperclip attach button (file picker for JPG/PNG/PDF), send button
-- **Admin delete**: trash icon on messages visible only to admins
-- Mobile-first layout with large tap targets
+**New database function: `engagement_trend()**` (SECURITY DEFINER)
+Returns weekly buckets (last 12 weeks) with active member counts per week for trend charting.
 
-### Member Home update
-Add a "Hangar Talk" navigation card in the Member Services section (gated behind active membership like other services), using a `MessageSquare` icon.
+### Frontend Changes
 
-### Route registration
-Add `/hangar-talk` route in `App.tsx` (standalone, not inside AppLayout).
+1. **New page: `src/pages/MemberEngagement.tsx**`
+  - KPI cards row: Active (30d), Weekly Active, Engagement Rate %, Highly Engaged, Dormant, Service Page Views
+  - Trend chart: Line chart showing weekly active members over time (recharts, same pattern as MembershipStatistics)
+  - Uses existing `ChartContainer` components
+2. **Route registration in `App.tsx**`
+  - Add `/member-engagement` inside the `AppLayout` route group
+3. **Navigation link in `MemberHome.tsx**`
+  - Add "Member Engagement" link under Admin Services section with an `Activity` icon
+4. **Event tracking hook: `src/hooks/useTrackEngagement.ts**`
+  - Simple hook: `useTrackEngagement(eventType)` — fires once per mount (debounced, max 1 per event type per session via sessionStorage)
+  - Looks up caller's key_id from roster, inserts into `member_engagement_events`
+5. **Instrument existing pages** (add one-line hook calls):
+  - `MemberHome.tsx` → track `login`
+  - `Members.tsx` (directory) → track `directory_view`
+  - `MemberVolunteering.tsx` → track `service_page`
+  - `MemberProfile.tsx` → track `profile_view`
 
-## Technical Details
+### Technical Details
 
-- **Realtime**: Subscribe to `postgres_changes` on `hangar_talk_messages` and `hangar_talk_reactions` for live updates
-- **Pagination**: Load latest 50 messages initially; "Load older" button fetches previous batch
-- **File upload**: client-side validation (type + 10MB size + max 3 per message), upload to `hangar-talk` bucket, store paths in attachments table
-- **@mentions**: query `get_directory_members()` for autocomplete; store raw `@FirstName LastName` in text; render with highlight styling
-- **Character limit**: 2000 chars enforced client-side with counter
+- The engagement tracking hook uses `sessionStorage` to avoid duplicate events within the same browser session
+- KPI queries use the SECURITY DEFINER function to avoid RLS overhead on aggregation
+- The trend chart reuses the existing `ChartContainer` and `LineChart` pattern from MembershipStatistics
+- Zero-stale-time caching for the engagement dashboard (consistent with other admin dashboards)
 
-## Files to Create/Modify
-1. **Migration SQL** — create tables, RLS policies, storage bucket, enable realtime
-2. **`src/pages/HangarTalk.tsx`** — main chat page
-3. **`src/App.tsx`** — add route
-4. **`src/pages/MemberHome.tsx`** — add navigation card
+### Files to Create/Modify
 
+- **Create**: Migration SQL (table + functions)
+- **Create**: `src/hooks/useTrackEngagement.ts`
+- **Create**: `src/pages/MemberEngagement.tsx`
+- **Modify**: `src/App.tsx` (add route)
+- **Modify**: `src/pages/MemberHome.tsx` (add nav link + track login)
+- **Modify**: `src/pages/Members.tsx` (track directory_view)
+- **Modify**: `src/pages/MemberVolunteering.tsx` (track service_page)
+- **Modify**: `src/pages/MemberProfile.tsx` (track profile_view)
