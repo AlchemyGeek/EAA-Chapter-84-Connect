@@ -18,9 +18,10 @@ import {
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
-  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare,
+  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare, Activity,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import {
   Dialog,
   DialogContent,
@@ -176,6 +177,7 @@ export default function MemberHome() {
   });
 
   const { isOfficer, role: officerRole } = useIsOfficer(activeKeyId);
+  useTrackEngagement("login");
 
   // Look up the impersonated member's app role (from user_roles via their email)
   const impersonatedEmail = impersonatedMember?.email;
@@ -555,6 +557,7 @@ export default function MemberHome() {
               <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Manage Chapter Volunteering" />
               <AdminLink to="/new-member-applications" icon={UserPlus} label={`New Member Applications${pendingAppCount > 0 ? ` (${pendingAppCount})` : ""}`} />
               <AdminLink to="/buddy-program" icon={Heart} label="New Member Buddy Program" />
+              <AdminLink to="/member-engagement" icon={Activity} label="Member Engagement" />
             </CardContent>
           </Card>
         )}

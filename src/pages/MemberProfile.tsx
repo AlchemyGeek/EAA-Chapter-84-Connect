@@ -21,9 +21,11 @@ import {
   Globe,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 
 
 export default function MemberProfile() {
+  useTrackEngagement("profile_view");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const { keyId } = useParams();
 

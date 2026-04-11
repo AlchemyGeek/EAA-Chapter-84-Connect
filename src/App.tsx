@@ -28,6 +28,7 @@ import NewMemberApplication from "./pages/NewMemberApplication";
 import NewMemberApplications from "./pages/NewMemberApplications";
 import BuddyProgram from "./pages/BuddyProgram";
 import HangarTalk from "./pages/HangarTalk";
+import MemberEngagement from "./pages/MemberEngagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="/user-roles" element={<UserRoles />} />
                 <Route path="/new-member-applications" element={<NewMemberApplications />} />
                 <Route path="/buddy-program" element={<BuddyProgram />} />
+                <Route path="/member-engagement" element={<MemberEngagement />} />
             </Route>
             <Route path="/directory/:keyId" element={<MemberProfile />} />
             <Route path="/dues-payment" element={<DuesPayment />} />
