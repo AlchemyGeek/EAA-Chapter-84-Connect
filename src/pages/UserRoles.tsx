@@ -300,19 +300,19 @@ export default function UserRoles() {
         </CardContent>
       </Card>
 
-      {/* Current active assignments */}
+      {/* All role assignments (active + pending merged) */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Shield className="h-4 w-4" />
-            Active Role Assignments
+            Role Assignments
           </CardTitle>
         </CardHeader>
         <CardContent>
           {rolesLoading ? (
             <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
-          ) : roleAssignments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No active role assignments.</p>
+          ) : roleAssignments.length === 0 && pendingRoles.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No role assignments.</p>
           ) : (
             <div className="space-y-2">
               {roleAssignments.map((ra) => {
@@ -354,25 +354,6 @@ export default function UserRoles() {
                   </div>
                 );
               })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pending assignments */}
-      {pendingRoles.length > 0 && (
-        <Card className="border-dashed">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              Pending Assignments
-            </CardTitle>
-            <CardDescription className="text-xs">
-              These roles will be applied automatically when the member signs in.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
               {pendingRoles.map((pr) => {
                 const member = allMembers.find(
                   (m) => m.email?.toLowerCase() === pr.email.toLowerCase()
@@ -386,6 +367,10 @@ export default function UserRoles() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant={roleBadgeVariant(pr.role)} className="shrink-0">
                           {roleLabel(pr.role)}
+                        </Badge>
+                        <Badge variant="outline" className="shrink-0 text-xs gap-1">
+                          <Clock className="h-3 w-3" />
+                          Pending sign-in
                         </Badge>
                         {member && (
                           <span className="text-xs text-muted-foreground shrink-0">
@@ -412,9 +397,6 @@ export default function UserRoles() {
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
+          )}
+        </CardContent>
+      </Card>
