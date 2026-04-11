@@ -400,3 +400,6 @@ export default function UserRoles() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
