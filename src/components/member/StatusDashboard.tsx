@@ -118,9 +118,6 @@ export function StatusDashboard({
               )}
             </div>
             <p className="text-sm text-muted-foreground">{message}</p>
-            {eaaNumber && (
-              <p className="text-xs text-muted-foreground">EAA #{eaaNumber}</p>
-            )}
             <div className="flex flex-wrap gap-x-4 gap-y-0.5">
               {expirationDate && (
                 <p className="text-xs text-muted-foreground">
