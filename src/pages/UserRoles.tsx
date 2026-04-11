@@ -343,9 +343,18 @@ export default function UserRoles() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={roleBadgeVariant(ra.role)} className="shrink-0">
-                          {roleLabel(ra.role)}
-                        </Badge>
+                        <Select
+                          value={ra.role}
+                          onValueChange={(v) => updateRole.mutate({ roleId: ra.id, newRole: v as "admin" | "officer", type: "active" })}
+                        >
+                          <SelectTrigger className="h-7 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="officer">Officer</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
                         {member && (
                           <span className="text-xs text-muted-foreground shrink-0">
                             EAA #{member.eaa_number}
