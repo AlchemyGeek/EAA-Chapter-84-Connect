@@ -146,6 +146,22 @@ export default function UserRoles() {
     },
   });
 
+  const updateRole = useMutation({
+    mutationFn: async ({ roleId, newRole, type }: { roleId: string; newRole: "admin" | "officer"; type: "active" | "pending" }) => {
+      const table = type === "active" ? "user_roles" : "pending_user_roles";
+      const { error } = await supabase.from(table).update({ role: newRole }).eq("id", roleId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-role-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-role-assignments"] });
+      toast({ title: "Role updated" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error updating role", description: err.message, variant: "destructive" });
+    },
+  });
+
   const removeRole = useMutation({
     mutationFn: async (roleId: string) => {
       const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
