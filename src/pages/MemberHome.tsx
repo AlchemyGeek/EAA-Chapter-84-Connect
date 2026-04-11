@@ -128,6 +128,7 @@ export default function MemberHome() {
   const { data: pendingAppCount = 0 } = useQuery({
     queryKey: ["pending-app-count"],
     enabled: isOfficerOrAbove || isAdmin,
+    staleTime: 0,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("new_member_applications")
