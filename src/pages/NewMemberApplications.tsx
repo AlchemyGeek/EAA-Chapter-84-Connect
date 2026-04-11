@@ -133,7 +133,7 @@ export default function NewMemberApplications() {
     }) => {
       const { error } = await supabase
         .from("new_member_applications")
-        .update({ [field]: value })
+        .update({ [field]: value } as any)
         .eq("id", id);
       if (error) throw error;
     },
