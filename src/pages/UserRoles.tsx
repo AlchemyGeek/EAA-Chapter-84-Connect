@@ -146,6 +146,22 @@ export default function UserRoles() {
     },
   });
 
+  const updateRole = useMutation({
+    mutationFn: async ({ roleId, newRole, type }: { roleId: string; newRole: "admin" | "officer"; type: "active" | "pending" }) => {
+      const table = type === "active" ? "user_roles" : "pending_user_roles";
+      const { error } = await supabase.from(table).update({ role: newRole }).eq("id", roleId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-role-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-role-assignments"] });
+      toast({ title: "Role updated" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error updating role", description: err.message, variant: "destructive" });
+    },
+  });
+
   const removeRole = useMutation({
     mutationFn: async (roleId: string) => {
       const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
@@ -327,9 +343,18 @@ export default function UserRoles() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={roleBadgeVariant(ra.role)} className="shrink-0">
-                          {roleLabel(ra.role)}
-                        </Badge>
+                        <Select
+                          value={ra.role}
+                          onValueChange={(v) => updateRole.mutate({ roleId: ra.id, newRole: v as "admin" | "officer", type: "active" })}
+                        >
+                          <SelectTrigger className="h-7 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="officer">Officer</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
                         {member && (
                           <span className="text-xs text-muted-foreground shrink-0">
                             EAA #{member.eaa_number}
@@ -365,9 +390,18 @@ export default function UserRoles() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={roleBadgeVariant(pr.role)} className="shrink-0">
-                          {roleLabel(pr.role)}
-                        </Badge>
+                        <Select
+                          value={pr.role}
+                          onValueChange={(v) => updateRole.mutate({ roleId: pr.id, newRole: v as "admin" | "officer", type: "pending" })}
+                        >
+                          <SelectTrigger className="h-7 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="officer">Officer</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Badge variant="outline" className="shrink-0 text-xs gap-1">
                           <Clock className="h-3 w-3" />
                           Pending sign-in
