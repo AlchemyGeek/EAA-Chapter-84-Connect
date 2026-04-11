@@ -77,6 +77,7 @@ const statusConfig: Record<
 interface StatusDashboardProps {
   currentStanding: string | null;
   expirationDate: string | null;
+  eaaExpiration: string | null;
   memberType: string | null;
   eaaNumber: string | null;
   officerRole?: string | null;
@@ -85,6 +86,7 @@ interface StatusDashboardProps {
 export function StatusDashboard({
   currentStanding,
   expirationDate,
+  eaaExpiration,
   memberType,
   eaaNumber,
   officerRole,
@@ -119,11 +121,18 @@ export function StatusDashboard({
             {eaaNumber && (
               <p className="text-xs text-muted-foreground">EAA #{eaaNumber}</p>
             )}
-            {expirationDate && (
-              <p className="text-xs text-muted-foreground">
-                Expiration: {new Date(expirationDate).toLocaleDateString()}
-              </p>
-            )}
+            <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+              {expirationDate && (
+                <p className="text-xs text-muted-foreground">
+                  Chapter Exp: {new Date(expirationDate).toLocaleDateString()}
+                </p>
+              )}
+              {eaaExpiration && (
+                <p className="text-xs text-muted-foreground">
+                  EAA National Exp: {new Date(eaaExpiration).toLocaleDateString()}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

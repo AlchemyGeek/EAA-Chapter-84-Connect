@@ -79,6 +79,7 @@ export default function MemberDetail() {
       <StatusDashboard
         currentStanding={member.current_standing}
         expirationDate={member.expiration_date}
+        eaaExpiration={member.eaa_expiration}
         memberType={member.member_type}
         eaaNumber={member.eaa_number}
       />
