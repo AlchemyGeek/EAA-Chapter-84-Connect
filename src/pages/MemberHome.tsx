@@ -159,13 +159,13 @@ export default function MemberHome() {
       if (chapterData) {
         const { error } = await supabase
           .from("member_chapter_data")
-          .update({ [field]: visible })
+          .update({ [field]: visible } as any)
           .eq("key_id", activeKeyId!);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("member_chapter_data")
-          .insert({ key_id: activeKeyId!, [field]: visible });
+          .insert({ key_id: activeKeyId!, [field]: visible } as any);
         if (error) throw error;
       }
     },
@@ -285,7 +285,7 @@ export default function MemberHome() {
       // Admins use direct update (allowed by admin RLS policy)
       const { error } = await supabase
         .from("roster_members")
-        .update(updates)
+        .update(updates as any)
         .eq("key_id", member!.key_id);
       if (error) throw error;
     } else {

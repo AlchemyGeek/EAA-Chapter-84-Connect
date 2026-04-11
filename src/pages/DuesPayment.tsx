@@ -265,7 +265,7 @@ export default function DuesPayment() {
 
       const { error: memberErr } = await supabase
         .from("roster_members")
-        .update(updates)
+        .update(updates as any)
         .eq("key_id", selectedMember.key_id);
       if (memberErr) throw memberErr;
     },
