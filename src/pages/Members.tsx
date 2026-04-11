@@ -10,11 +10,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Search, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 
 export default function Members() {
   const [search, setSearch] = useState("");
   const [roleOnly, setRoleOnly] = useState(false);
   const isMobile = useIsMobile();
+  useTrackEngagement("directory_view");
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["members"],
