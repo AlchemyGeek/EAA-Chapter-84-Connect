@@ -390,9 +390,18 @@ export default function UserRoles() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={roleBadgeVariant(pr.role)} className="shrink-0">
-                          {roleLabel(pr.role)}
-                        </Badge>
+                        <Select
+                          value={pr.role}
+                          onValueChange={(v) => updateRole.mutate({ roleId: pr.id, newRole: v as "admin" | "officer", type: "pending" })}
+                        >
+                          <SelectTrigger className="h-7 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="officer">Officer</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Badge variant="outline" className="shrink-0 text-xs gap-1">
                           <Clock className="h-3 w-3" />
                           Pending sign-in
