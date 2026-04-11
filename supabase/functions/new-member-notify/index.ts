@@ -59,15 +59,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY is not configured");
-      return new Response(
-        JSON.stringify({ success: true, message: "Email not configured", emailSent: false }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const applicantName = `${first_name} ${last_name}`.trim();
     const location = [city, state].filter(Boolean).join(", ") || "Not provided";
 
@@ -91,42 +82,66 @@ Deno.serve(async (req) => {
   <p style="color: #999; font-size: 12px;">— Chapter 84 Connect</p>
 </div>`.trim();
 
-    try {
-      const resendRes = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "Chapter 84 Connect <notify@notify.eaa84.org>",
-          to: recipientEmails,
-          subject: `New Member Application - ${applicantName}`,
-          html: htmlBody,
-        }),
-      });
+    const subject = `New Member Application - ${applicantName}`;
+    const messageId = crypto.randomUUID();
+    let enqueued = 0;
 
-      const resendData = await resendRes.json();
-      if (!resendRes.ok) {
-        console.error(`Resend API error [${resendRes.status}]:`, JSON.stringify(resendData));
-        return new Response(
-          JSON.stringify({ success: true, message: "Application saved, email failed", emailSent: false }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    for (const recipient of recipientEmails) {
+      const recipientMessageId = `${messageId}-${recipient}`;
+
+      // Get or create unsubscribe token
+      const { data: existingToken } = await supabase
+        .from("email_unsubscribe_tokens")
+        .select("token")
+        .eq("email", recipient)
+        .is("used_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const unsubscribeToken = existingToken?.token ?? crypto.randomUUID();
+      if (!existingToken) {
+        await supabase
+          .from("email_unsubscribe_tokens")
+          .insert({ email: recipient, token: unsubscribeToken });
       }
 
-      console.log("New member notification sent to:", recipientEmails.join(", "), "id:", resendData.id);
-      return new Response(
-        JSON.stringify({ success: true, message: "Coordinators notified", emailSent: true }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    } catch (emailErr) {
-      console.error("Failed to send notification:", emailErr);
-      return new Response(
-        JSON.stringify({ success: true, message: "Email send failed", emailSent: false }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+        queue_name: "transactional_emails",
+        payload: {
+          to: recipient,
+          from: "EAA Chapter 84 <notify@notify.eaa84.org>",
+          sender_domain: "notify.eaa84.org",
+          subject,
+          html: htmlBody,
+          text: htmlBody.replace(/<[^>]+>/g, ""),
+          purpose: "transactional",
+          label: "new_member_application",
+          idempotency_key: `new-member-notify-${messageId}-${recipient}`,
+          unsubscribe_token: unsubscribeToken,
+          message_id: recipientMessageId,
+          queued_at: new Date().toISOString(),
+        },
+      });
+
+      if (enqueueError) {
+        console.error(`Failed to enqueue email to ${recipient}:`, enqueueError.message);
+      } else {
+        enqueued++;
+        console.log(`Enqueued new member notification to ${recipient}`);
+      }
     }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: enqueued > 0
+          ? `${enqueued} coordinator(s) will be notified`
+          : "Failed to enqueue notifications",
+        emailSent: enqueued > 0,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
     console.error("Error in new-member-notify:", error);
     return new Response(
