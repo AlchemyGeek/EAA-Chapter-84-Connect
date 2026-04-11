@@ -490,6 +490,27 @@ export type Database = {
           },
         ]
       }
+      member_engagement_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          key_id: number
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          key_id: number
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          key_id?: number
+        }
+        Relationships: []
+      }
       member_images: {
         Row: {
           caption: string | null
@@ -1099,6 +1120,24 @@ export type Database = {
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      engagement_kpis: {
+        Args: never
+        Returns: {
+          active_30d: number
+          active_7d: number
+          dormant_60d: number
+          highly_engaged_30d: number
+          service_page_views_30d: number
+          total_active_members: number
+        }[]
+      }
+      engagement_trend: {
+        Args: never
+        Returns: {
+          active_members: number
+          week_start: string
+        }[]
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
