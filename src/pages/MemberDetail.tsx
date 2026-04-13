@@ -79,12 +79,6 @@ export default function MemberDetail() {
       ]
     : [];
 
-  const volunteerFields = [
-    { label: "Young Eagle Pilot", value: member.young_eagle_pilot },
-    { label: "Young Eagle Volunteer", value: member.young_eagle_volunteer },
-    { label: "Eagle Pilot", value: member.eagle_pilot },
-    { label: "Eagle Flight Volunteer", value: member.eagle_flight_volunteer },
-  ];
 
   const complianceFields = [
     { label: "EAA Expiration", value: member.eaa_expiration },
