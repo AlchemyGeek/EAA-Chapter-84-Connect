@@ -203,7 +203,7 @@ export default function MemberProfile() {
         </Dialog>
 
         {/* Contact Information */}
-        {contactVisible && hasContactInfo && (
+        {hasContactCard && (
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-4">
