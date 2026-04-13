@@ -149,23 +149,21 @@ export default function Members() {
              <TableHeader>
               <TableRow>
                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
                   <TableHead>EAA #</TableHead>
                   <TableHead>Membership</TableHead>
                   <TableHead>Officer</TableHead>
                </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((m) => (
-                <TableRow key={m.key_id}>
-                  <TableCell>
-                    <Link to={`/directory/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
-                      {m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}
-                    </Link>
-                   </TableCell>
-                    <TableCell className="text-sm">{m.email || "—"}</TableCell>
-                    <TableCell>{m.eaa_number || "—"}</TableCell>
-                    <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
+             </TableHeader>
+             <TableBody>
+               {filtered.map((m) => (
+                 <TableRow key={m.key_id}>
+                   <TableCell>
+                     <Link to={`/directory/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
+                       {m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}
+                     </Link>
+                    </TableCell>
+                     <TableCell>{m.eaa_number || "—"}</TableCell>
+                     <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
                    <TableCell>
                      <div className="flex flex-wrap gap-1">
                        {(roleMap.get(m.key_id) || []).map((role) => (
