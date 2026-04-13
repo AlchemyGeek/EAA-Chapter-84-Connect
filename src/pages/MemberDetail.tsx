@@ -25,33 +25,60 @@ export default function MemberDetail() {
     },
   });
 
+  const { data: chapterData } = useQuery({
+    queryKey: ["member-chapter-data", keyId],
+    enabled: !!member,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("member_chapter_data")
+        .select("contact_visible_in_directory, aviation_visible_in_directory, volunteering_visible_in_directory")
+        .eq("key_id", Number(keyId))
+        .maybeSingle();
+      return data;
+    },
+  });
+
   if (isLoading) return <div className="p-6 text-muted-foreground">Loading...</div>;
   if (!member) return <div className="p-6">Member not found.</div>;
 
+  const contactVisible = chapterData?.contact_visible_in_directory ?? false;
+  const aviationVisible = chapterData?.aviation_visible_in_directory ?? true;
+  const volunteeringVisible = chapterData?.volunteering_visible_in_directory ?? true;
+
+  // Email is ALWAYS visible; other contact fields respect the visibility toggle
   const contactFields = [
     { label: "Email", value: member.email },
-    { label: "Cell Phone", value: member.cell_phone },
-    { label: "Home Phone", value: member.home_phone },
-    { label: "Address", value: [member.street_address_1, member.street_address_2].filter((v) => v?.trim()).join(", ") || null },
-    { label: "City", value: member.preferred_city },
-    { label: "State", value: member.preferred_state },
-    { label: "Zip", value: member.zip_code },
-    { label: "Country", value: member.country },
+    ...(contactVisible
+      ? [
+          { label: "Cell Phone", value: member.cell_phone },
+          { label: "Home Phone", value: member.home_phone },
+          { label: "Address", value: [member.street_address_1, member.street_address_2].filter((v) => v?.trim()).join(", ") || null },
+          { label: "City", value: member.preferred_city },
+          { label: "State", value: member.preferred_state },
+          { label: "Zip", value: member.zip_code },
+          { label: "Country", value: member.country },
+        ]
+      : []),
   ];
 
-  const aviationFields = [
-    { label: "Ratings", value: member.ratings },
-    { label: "Aircraft Owned", value: member.aircraft_owned },
-    { label: "Aircraft Project", value: member.aircraft_project },
-    { label: "Aircraft Built", value: member.aircraft_built },
-  ];
+  const aviationFields = aviationVisible
+    ? [
+        { label: "Ratings", value: member.ratings },
+        { label: "Aircraft Owned", value: member.aircraft_owned },
+        { label: "Aircraft Project", value: member.aircraft_project },
+        { label: "Aircraft Built", value: member.aircraft_built },
+      ]
+    : [];
 
-  const volunteerFields = [
-    { label: "Young Eagle Pilot", value: member.young_eagle_pilot },
-    { label: "Young Eagle Volunteer", value: member.young_eagle_volunteer },
-    { label: "Eagle Pilot", value: member.eagle_pilot },
-    { label: "Eagle Flight Volunteer", value: member.eagle_flight_volunteer },
-  ];
+  const volunteerFields = volunteeringVisible
+    ? [
+        { label: "Young Eagle Pilot", value: member.young_eagle_pilot },
+        { label: "Young Eagle Volunteer", value: member.young_eagle_volunteer },
+        { label: "Eagle Pilot", value: member.eagle_pilot },
+        { label: "Eagle Flight Volunteer", value: member.eagle_flight_volunteer },
+      ]
+    : [];
+
 
   const complianceFields = [
     { label: "EAA Expiration", value: member.eaa_expiration },
@@ -87,8 +114,8 @@ export default function MemberDetail() {
       {/* Read-only sections */}
       <div className="space-y-2">
         <ReadOnlySection title="Contact Information" fields={contactFields} />
-        <ReadOnlySection title="Aviation & Aircraft" fields={aviationFields} />
-        <ReadOnlySection title="EAA Volunteering" fields={volunteerFields} />
+        {aviationFields.length > 0 && <ReadOnlySection title="Aviation & Aircraft" fields={aviationFields} />}
+        {volunteerFields.length > 0 && <ReadOnlySection title="EAA Volunteering" fields={volunteerFields} />}
         <ReadOnlySection title="Compliance (EAA-managed)" fields={complianceFields} />
         <MemberImageGallery keyId={member.key_id} />
       </div>
