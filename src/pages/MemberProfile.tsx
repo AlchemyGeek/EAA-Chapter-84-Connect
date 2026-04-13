@@ -76,7 +76,7 @@ export default function MemberProfile() {
     },
   });
 
-  const contactVisible = chapterData?.contact_visible_in_directory ?? true;
+  const contactVisible = chapterData?.contact_visible_in_directory ?? false;
   const aviationVisible = chapterData?.aviation_visible_in_directory ?? true;
   const volunteeringVisible = (chapterData as any)?.volunteering_visible_in_directory ?? true;
 
@@ -121,7 +121,8 @@ export default function MemberProfile() {
     member.eagle_flight_volunteer && "Eagle Flight Volunteer",
   ].filter(Boolean) as string[];
 
-  const hasContactInfo = member.email || member.cell_phone || member.home_phone || address;
+  const hasSharedContactInfo = !!(member.cell_phone || member.home_phone || address);
+  const hasContactCard = !!(member.email || (contactVisible && hasSharedContactInfo));
   const hasAviationInfo = member.ratings || member.aircraft_owned || member.aircraft_project || member.aircraft_built;
 
   return (
