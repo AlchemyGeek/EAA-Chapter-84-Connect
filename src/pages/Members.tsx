@@ -121,14 +121,15 @@ export default function Members() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-medium text-base truncate">{m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
-                        <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
-                        {(roleMap.get(m.key_id) || []).map((role) => (
-                          <Badge key={role} className="text-xs bg-primary/15 text-primary border-primary/30">{role}</Badge>
-                        ))}
-                      </div>
+                       <p className="font-medium text-base truncate">{m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}</p>
+                       <p className="text-sm text-muted-foreground truncate">{m.email || "—"}</p>
+                       <div className="flex items-center gap-2 flex-wrap">
+                         <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
+                         <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
+                         {(roleMap.get(m.key_id) || []).map((role) => (
+                           <Badge key={role} className="text-xs bg-primary/15 text-primary border-primary/30">{role}</Badge>
+                         ))}
+                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
                   </div>
@@ -148,11 +149,12 @@ export default function Members() {
           <Table>
              <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                 <TableHead>EAA #</TableHead>
-                 <TableHead>Membership</TableHead>
-                 <TableHead>Officer</TableHead>
-              </TableRow>
+                 <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>EAA #</TableHead>
+                  <TableHead>Membership</TableHead>
+                  <TableHead>Officer</TableHead>
+               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((m) => (
@@ -161,9 +163,10 @@ export default function Members() {
                     <Link to={`/directory/${m.key_id}`} className="font-medium text-secondary hover:underline min-h-0 min-w-0">
                       {m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}
                     </Link>
-                  </TableCell>
-                   <TableCell>{m.eaa_number || "—"}</TableCell>
-                   <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
+                   </TableCell>
+                    <TableCell className="text-sm">{m.email || "—"}</TableCell>
+                    <TableCell>{m.eaa_number || "—"}</TableCell>
+                    <TableCell><Badge variant="secondary">{m.member_type || "—"}</Badge></TableCell>
                    <TableCell>
                      <div className="flex flex-wrap gap-1">
                        {(roleMap.get(m.key_id) || []).map((role) => (
@@ -175,7 +178,7 @@ export default function Members() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     {search ? "No members match your search." : "No members yet. Import a roster to get started."}
                   </TableCell>
                 </TableRow>
