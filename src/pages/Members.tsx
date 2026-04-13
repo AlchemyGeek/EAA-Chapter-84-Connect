@@ -75,8 +75,8 @@ export default function Members() {
   const filtered = members.filter((m) => {
     const q = search.toLowerCase();
     const vis = visibilityMap.get(m.key_id);
-    const contactVisible = vis?.contact ?? true;
-    const aviationVisible = vis?.aviation ?? true;
+    const contactVisible = vis?.contact ?? false;
+    const aviationVisible = vis?.aviation ?? false;
 
     const baseFields = [m.first_name, m.last_name, m.nickname, m.eaa_number];
     const contactFields = contactVisible
