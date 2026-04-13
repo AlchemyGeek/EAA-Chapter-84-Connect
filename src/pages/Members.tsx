@@ -122,7 +122,6 @@ export default function Members() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 min-w-0 flex-1">
                        <p className="font-medium text-base truncate">{m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}</p>
-                       <p className="text-sm text-muted-foreground truncate">{m.email || "—"}</p>
                        <div className="flex items-center gap-2 flex-wrap">
                          <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
                          <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
