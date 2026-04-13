@@ -480,7 +480,7 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={false}
-              directoryVisible={chapterData?.contact_visible_in_directory ?? true}
+              directoryVisible={chapterData?.contact_visible_in_directory ?? false}
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "contact_visible_in_directory", visible: checked })
               }
@@ -493,7 +493,7 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={false}
-              directoryVisible={chapterData?.aviation_visible_in_directory ?? true}
+              directoryVisible={chapterData?.aviation_visible_in_directory ?? false}
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "aviation_visible_in_directory", visible: checked })
               }
@@ -506,7 +506,7 @@ export default function MemberHome() {
               data={member}
               onSave={handleSave}
               disabled={false}
-              directoryVisible={chapterData?.volunteering_visible_in_directory ?? true}
+              directoryVisible={chapterData?.volunteering_visible_in_directory ?? false}
               onDirectoryVisibleChange={(checked) =>
                 toggleVisibility.mutate({ field: "volunteering_visible_in_directory", visible: checked })
               }
