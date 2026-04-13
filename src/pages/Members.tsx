@@ -148,11 +148,12 @@ export default function Members() {
           <Table>
              <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                 <TableHead>EAA #</TableHead>
-                 <TableHead>Membership</TableHead>
-                 <TableHead>Officer</TableHead>
-              </TableRow>
+                 <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>EAA #</TableHead>
+                  <TableHead>Membership</TableHead>
+                  <TableHead>Officer</TableHead>
+               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((m) => (
