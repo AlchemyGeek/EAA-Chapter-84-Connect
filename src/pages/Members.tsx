@@ -121,14 +121,15 @@ export default function Members() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-medium text-base truncate">{m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
-                        <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
-                        {(roleMap.get(m.key_id) || []).map((role) => (
-                          <Badge key={role} className="text-xs bg-primary/15 text-primary border-primary/30">{role}</Badge>
-                        ))}
-                      </div>
+                       <p className="font-medium text-base truncate">{m.first_name}{m.nickname?.trim() ? ` (${m.nickname})` : ""} {m.last_name}</p>
+                       <p className="text-sm text-muted-foreground truncate">{m.email || "—"}</p>
+                       <div className="flex items-center gap-2 flex-wrap">
+                         <span className="text-sm text-muted-foreground">EAA #{m.eaa_number || "—"}</span>
+                         <Badge variant="secondary" className="text-xs">{m.member_type || "—"}</Badge>
+                         {(roleMap.get(m.key_id) || []).map((role) => (
+                           <Badge key={role} className="text-xs bg-primary/15 text-primary border-primary/30">{role}</Badge>
+                         ))}
+                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
                   </div>
