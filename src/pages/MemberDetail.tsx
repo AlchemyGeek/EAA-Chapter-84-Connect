@@ -61,12 +61,23 @@ export default function MemberDetail() {
       : []),
   ];
 
-  const aviationFields = [
-    { label: "Ratings", value: member.ratings },
-    { label: "Aircraft Owned", value: member.aircraft_owned },
-    { label: "Aircraft Project", value: member.aircraft_project },
-    { label: "Aircraft Built", value: member.aircraft_built },
-  ];
+  const aviationFields = aviationVisible
+    ? [
+        { label: "Ratings", value: member.ratings },
+        { label: "Aircraft Owned", value: member.aircraft_owned },
+        { label: "Aircraft Project", value: member.aircraft_project },
+        { label: "Aircraft Built", value: member.aircraft_built },
+      ]
+    : [];
+
+  const volunteerFields = volunteeringVisible
+    ? [
+        { label: "Young Eagle Pilot", value: member.young_eagle_pilot },
+        { label: "Young Eagle Volunteer", value: member.young_eagle_volunteer },
+        { label: "Eagle Pilot", value: member.eagle_pilot },
+        { label: "Eagle Flight Volunteer", value: member.eagle_flight_volunteer },
+      ]
+    : [];
 
   const volunteerFields = [
     { label: "Young Eagle Pilot", value: member.young_eagle_pilot },
