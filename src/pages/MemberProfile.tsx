@@ -77,8 +77,8 @@ export default function MemberProfile() {
   });
 
   const contactVisible = chapterData?.contact_visible_in_directory ?? false;
-  const aviationVisible = chapterData?.aviation_visible_in_directory ?? false;
-  const volunteeringVisible = (chapterData as any)?.volunteering_visible_in_directory ?? false;
+  const aviationVisible = chapterData?.aviation_visible_in_directory ?? true;
+  const volunteeringVisible = (chapterData as any)?.volunteering_visible_in_directory ?? true;
 
   if (memberLoading) {
     return (

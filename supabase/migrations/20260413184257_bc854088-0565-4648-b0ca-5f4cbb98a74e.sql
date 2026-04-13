@@ -1,0 +1,2 @@
+ALTER TABLE public.member_chapter_data ALTER COLUMN aviation_visible_in_directory SET DEFAULT true;
+ALTER TABLE public.member_chapter_data ALTER COLUMN volunteering_visible_in_directory SET DEFAULT true;

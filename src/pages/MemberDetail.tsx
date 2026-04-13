@@ -42,8 +42,8 @@ export default function MemberDetail() {
   if (!member) return <div className="p-6">Member not found.</div>;
 
   const contactVisible = chapterData?.contact_visible_in_directory ?? false;
-  const aviationVisible = chapterData?.aviation_visible_in_directory ?? false;
-  const volunteeringVisible = chapterData?.volunteering_visible_in_directory ?? false;
+  const aviationVisible = chapterData?.aviation_visible_in_directory ?? true;
+  const volunteeringVisible = chapterData?.volunteering_visible_in_directory ?? true;
 
   // Email is ALWAYS visible; other contact fields respect the visibility toggle
   const contactFields = [
