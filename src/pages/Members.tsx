@@ -175,7 +175,7 @@ export default function Members() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                     {search ? "No members match your search." : "No members yet. Import a roster to get started."}
                   </TableCell>
                 </TableRow>
