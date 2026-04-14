@@ -30,6 +30,7 @@ import BuddyProgram from "./pages/BuddyProgram";
 import HangarTalk from "./pages/HangarTalk";
 import MemberEngagement from "./pages/MemberEngagement";
 import NotFound from "./pages/NotFound";
+import Unsubscribe from "./pages/Unsubscribe";
 
 const queryClient = new QueryClient({
   defaultOptions: {

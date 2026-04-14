@@ -12,3 +12,15 @@ refresh_token_expiry = 2592000
 
   [functions.process-email-queue]
     verify_jwt = true
+
+  [functions.send-transactional-email]
+    verify_jwt = true
+
+  [functions.preview-transactional-email]
+    verify_jwt = false
+
+  [functions.handle-email-unsubscribe]
+    verify_jwt = false
+
+  [functions.handle-email-suppression]
+    verify_jwt = false
