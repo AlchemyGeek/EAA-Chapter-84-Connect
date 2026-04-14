@@ -222,7 +222,7 @@ export default function MemberVolunteering() {
                     contactNameMap={contactNameMap}
                     hasApplied={appliedIds.has(opp.id)}
                     onApply={() => applyMutation.mutate(opp.id)}
-                    applying={applyMutation.isPending}
+                    applying={applyingOpportunityId === opp.id && applyMutation.isPending}
                     canApply={!!displayMember && !isPendingImpersonation}
                     isImpersonating={isImpersonating}
                   />
