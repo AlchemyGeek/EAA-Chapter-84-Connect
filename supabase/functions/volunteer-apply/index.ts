@@ -1,6 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 const FROM_ADDRESS = "Chapter 84 Connect <noreply@eaa84.org>";
 
 const corsHeaders = {
@@ -157,9 +156,8 @@ Deno.serve(async (req) => {
 
       if (contactEmails.length > 0) {
           const resendApiKey = Deno.env.get("RESEND_API_KEY");
-          const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-          if (!resendApiKey || !lovableApiKey) {
-            console.error("RESEND_API_KEY or LOVABLE_API_KEY is not configured");
+          if (!resendApiKey) {
+            console.error("RESEND_API_KEY is not configured");
           } else {
             const phone = member.cell_phone || member.home_phone || "Not provided";
 
@@ -183,11 +181,10 @@ Deno.serve(async (req) => {
 </div>`.trim();
 
             try {
-              const resendRes = await fetch(`${GATEWAY_URL}/emails`, {
+              const resendRes = await fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: {
-                  "Authorization": `Bearer ${lovableApiKey}`,
-                  "X-Connection-Api-Key": resendApiKey,
+                  "Authorization": `Bearer ${resendApiKey}`,
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
