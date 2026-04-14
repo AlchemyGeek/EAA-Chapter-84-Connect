@@ -88,17 +88,7 @@ export default function NewMemberApplication() {
       setSubmitted(true);
       toast({ title: "Application submitted successfully!" });
 
-      // Notify Membership Coordinator(s) — fire-and-forget
-      supabase.functions.invoke("new-member-notify", {
-        body: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          eaa_number: eaaNumber.trim(),
-          email: email.trim(),
-          city: city.trim(),
-          state: state.trim(),
-        },
-      }).catch((err) => console.error("Notification failed:", err));
+      // Coordinator notification is now handled by a database trigger on INSERT
     } catch (err: any) {
       toast({
         title: "Error submitting application",
