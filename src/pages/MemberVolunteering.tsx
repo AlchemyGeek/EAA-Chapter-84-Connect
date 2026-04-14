@@ -119,9 +119,6 @@ export default function MemberVolunteering() {
 
   const appliedIds = new Set((displayedApplications ?? []).map((a) => a.opportunity_id));
 
-  // Track which opportunity is currently being applied to
-  const [applyingOpportunityId, setApplyingOpportunityId] = useState<string | null>(null);
-
   // Apply mutation
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
