@@ -20,6 +20,7 @@ export default function MemberVolunteering() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewAsKeyId = searchParams.get("viewAs");
+  const [applyingOpportunityId, setApplyingOpportunityId] = useState<string | null>(null);
   useTrackEngagement("service_page");
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
