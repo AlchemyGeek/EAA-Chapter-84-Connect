@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
       .eq("opportunity_id", opportunity_id);
 
     const contactKeyIds = (contacts ?? []).map((c: any) => c.key_id);
-    let emailSent = false;
+    let queuedEmailCount = 0;
 
     if (contactKeyIds.length > 0) {
       const { data: contactMembers } = await supabase
@@ -153,40 +153,56 @@ Deno.serve(async (req) => {
         .map((c: any) => c.email!);
 
       if (contactEmails.length > 0) {
-          const phone = member.cell_phone || member.home_phone || "Not provided";
+        const phone = member.cell_phone || member.home_phone || "Not provided";
 
-          // Send one notification per contact via the transactional email system
-          for (const contactEmail of contactEmails) {
-            try {
-              await supabase.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "volunteer-application-notification",
-                  recipientEmail: contactEmail,
-                  idempotencyKey: `volunteer-apply-${opportunity_id}-${member.key_id}-${contactEmail}`,
-                  templateData: {
-                    opportunityTitle: opportunity.title,
-                    memberName: memberName,
-                    memberEmail: member.email ?? undefined,
-                    memberPhone: phone,
-                  },
+        // Send one notification per contact via the transactional email system
+        for (const contactEmail of contactEmails) {
+          try {
+            const { data: emailResponse, error: emailInvokeError } = await supabase.functions.invoke("send-transactional-email", {
+              body: {
+                templateName: "volunteer-application-notification",
+                recipientEmail: contactEmail,
+                idempotencyKey: `volunteer-apply-${opportunity_id}-${member.key_id}-${contactEmail}`,
+                templateData: {
+                  opportunityTitle: opportunity.title,
+                  memberName: memberName,
+                  memberEmail: member.email ?? undefined,
+                  memberPhone: phone,
                 },
-              });
-              emailSent = true;
-              console.log(`Volunteer notification queued for ${contactEmail}`);
-            } catch (emailErr) {
-              console.error(`Failed to queue volunteer notification for ${contactEmail}:`, emailErr);
+              },
+              headers: {
+                Authorization: `Bearer ${supabaseServiceKey}`,
+                apikey: supabaseServiceKey,
+              },
+            });
+
+            if (emailInvokeError) {
+              console.error(`Failed to queue volunteer notification for ${contactEmail}:`, emailInvokeError);
+              continue;
             }
+
+            if (emailResponse?.error || emailResponse?.success === false || !emailResponse?.queued) {
+              console.error(`Volunteer notification was not accepted for ${contactEmail}:`, emailResponse);
+              continue;
+            }
+
+            queuedEmailCount += 1;
+            console.log(`Volunteer notification queued for ${contactEmail}`);
+          } catch (emailErr) {
+            console.error(`Failed to queue volunteer notification for ${contactEmail}:`, emailErr);
           }
+        }
       }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: emailSent
+        message: queuedEmailCount > 0
           ? "Application submitted and contacts notified via email"
-          : "Application submitted successfully",
-        emailSent,
+          : "Application submitted, but contact notification email could not be queued",
+        emailSent: queuedEmailCount > 0,
+        queuedEmailCount,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
