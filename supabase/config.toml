@@ -14,7 +14,7 @@ refresh_token_expiry = 2592000
     verify_jwt = true
 
   [functions.send-transactional-email]
-    verify_jwt = true
+    verify_jwt = false
 
   [functions.preview-transactional-email]
     verify_jwt = false
