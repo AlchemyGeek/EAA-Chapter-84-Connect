@@ -117,9 +117,13 @@ export default function MemberVolunteering() {
 
   const appliedIds = new Set((displayedApplications ?? []).map((a) => a.opportunity_id));
 
+  // Track which opportunity is currently being applied to
+  const [applyingOpportunityId, setApplyingOpportunityId] = useState<string | null>(null);
+
   // Apply mutation
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
+      setApplyingOpportunityId(opportunityId);
       const session = (await supabase.auth.getSession()).data.session;
       const body: Record<string, string | number> = { opportunity_id: opportunityId };
       // If impersonating, pass the impersonated member's key_id so the edge function applies on their behalf
