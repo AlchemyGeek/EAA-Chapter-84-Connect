@@ -216,10 +216,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (enqueueError) {
-      throw new Error(`Failed to enqueue email: ${enqueueError.message}`)
-    }
-
     // Log the send
     await supabase
       .from('buddy_email_log')
