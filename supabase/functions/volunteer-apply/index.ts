@@ -1,6 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 const FROM_ADDRESS = "Chapter 84 Connect <noreply@eaa84.org>";
 
 const corsHeaders = {
