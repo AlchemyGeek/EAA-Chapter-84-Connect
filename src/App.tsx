@@ -30,6 +30,7 @@ import BuddyProgram from "./pages/BuddyProgram";
 import HangarTalk from "./pages/HangarTalk";
 import MemberEngagement from "./pages/MemberEngagement";
 import NotFound from "./pages/NotFound";
+import Unsubscribe from "./pages/Unsubscribe";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
             <Route path="/join" element={<NewMemberApplication />} />
             {/* <Route path="/hangar-talk" element={<HangarTalk />} /> */}
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

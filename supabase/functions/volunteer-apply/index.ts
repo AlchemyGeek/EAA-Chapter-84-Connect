@@ -1,7 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const FROM_ADDRESS = "Chapter 84 Connect <noreply@eaa84.org>";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -155,55 +153,28 @@ Deno.serve(async (req) => {
         .map((c: any) => c.email!);
 
       if (contactEmails.length > 0) {
-          const resendApiKey = Deno.env.get("RESEND_API_KEY");
-          if (!resendApiKey) {
-            console.error("RESEND_API_KEY is not configured");
-          } else {
-            const phone = member.cell_phone || member.home_phone || "Not provided";
+          const phone = member.cell_phone || member.home_phone || "Not provided";
 
-            const htmlBody = `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #1e3a5f;">New Volunteer Application</h2>
-  <p>A new volunteer has applied for <strong>"${opportunity.title}"</strong>.</p>
-  
-  <div style="background-color: #f4f6f8; border-radius: 8px; padding: 16px; margin: 16px 0;">
-    <h3 style="margin-top: 0; color: #1e3a5f;">Volunteer Details</h3>
-    <table style="width: 100%; border-collapse: collapse;">
-      <tr><td style="padding: 4px 8px; color: #666;">Name:</td><td style="padding: 4px 8px;"><strong>${memberName}</strong></td></tr>
-      <tr><td style="padding: 4px 8px; color: #666;">Email:</td><td style="padding: 4px 8px;"><a href="mailto:${member.email ?? ""}">${member.email ?? "Not provided"}</a></td></tr>
-      <tr><td style="padding: 4px 8px; color: #666;">Phone:</td><td style="padding: 4px 8px;">${phone}</td></tr>
-    </table>
-  </div>
-  
-  <p>Please reach out to coordinate this volunteering opportunity.</p>
-  <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
-  <p style="color: #999; font-size: 12px;">— Chapter 84 Connect</p>
-</div>`.trim();
-
+          // Send one notification per contact via the transactional email system
+          for (const contactEmail of contactEmails) {
             try {
-              const resendRes = await fetch("https://api.resend.com/emails", {
-                method: "POST",
-                headers: {
-                  "Authorization": `Bearer ${resendApiKey}`,
-                  "Content-Type": "application/json",
+              await supabase.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "volunteer-application-notification",
+                  recipientEmail: contactEmail,
+                  idempotencyKey: `volunteer-apply-${opportunity_id}-${member.key_id}-${contactEmail}`,
+                  templateData: {
+                    opportunityTitle: opportunity.title,
+                    memberName: memberName,
+                    memberEmail: member.email ?? undefined,
+                    memberPhone: phone,
+                  },
                 },
-                body: JSON.stringify({
-                  from: FROM_ADDRESS,
-                  to: contactEmails,
-                  subject: `New Volunteer Application - ${opportunity.title}`,
-                  html: htmlBody,
-                }),
               });
-
-              const resendData = await resendRes.json();
-              if (!resendRes.ok) {
-                console.error(`Resend API error [${resendRes.status}]:`, JSON.stringify(resendData));
-              } else {
-                emailSent = true;
-                console.log("Email sent successfully via Resend:", resendData.id);
-              }
+              emailSent = true;
+              console.log(`Volunteer notification queued for ${contactEmail}`);
             } catch (emailErr) {
-              console.error("Failed to send email via Resend:", emailErr);
+              console.error(`Failed to queue volunteer notification for ${contactEmail}:`, emailErr);
             }
           }
       }
