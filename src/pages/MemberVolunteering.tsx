@@ -149,6 +149,9 @@ export default function MemberVolunteering() {
     onError: (e: any) => {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     },
+    onSettled: () => {
+      setApplyingOpportunityId(null);
+    },
   });
 
   // Split opportunities: all active, then up to 3 closed/completed
