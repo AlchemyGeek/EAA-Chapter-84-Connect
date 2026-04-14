@@ -156,13 +156,14 @@ Deno.serve(async (req) => {
         .map((c: any) => c.email!);
 
       if (contactEmails.length > 0) {
-        const resendApiKey = Deno.env.get("RESEND_API_KEY");
-        if (!resendApiKey) {
-          console.error("RESEND_API_KEY is not configured");
-        } else {
-          const phone = member.cell_phone || member.home_phone || "Not provided";
+          const resendApiKey = Deno.env.get("RESEND_API_KEY");
+          const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+          if (!resendApiKey || !lovableApiKey) {
+            console.error("RESEND_API_KEY or LOVABLE_API_KEY is not configured");
+          } else {
+            const phone = member.cell_phone || member.home_phone || "Not provided";
 
-          const htmlBody = `
+            const htmlBody = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
   <h2 style="color: #1e3a5f;">New Volunteer Application</h2>
   <p>A new volunteer has applied for <strong>"${opportunity.title}"</strong>.</p>
@@ -181,32 +182,33 @@ Deno.serve(async (req) => {
   <p style="color: #999; font-size: 12px;">— Chapter 84 Connect</p>
 </div>`.trim();
 
-          try {
-            const resendRes = await fetch("https://api.resend.com/emails", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${resendApiKey}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                from: "Chapter 84 Connect <onboarding@resend.dev>",
-                to: contactEmails,
-                subject: `New Volunteer Application - ${opportunity.title}`,
-                html: htmlBody,
-              }),
-            });
+            try {
+              const resendRes = await fetch(`${GATEWAY_URL}/emails`, {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${lovableApiKey}`,
+                  "X-Connection-Api-Key": resendApiKey,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  from: FROM_ADDRESS,
+                  to: contactEmails,
+                  subject: `New Volunteer Application - ${opportunity.title}`,
+                  html: htmlBody,
+                }),
+              });
 
-            const resendData = await resendRes.json();
-            if (!resendRes.ok) {
-              console.error(`Resend API error [${resendRes.status}]:`, JSON.stringify(resendData));
-            } else {
-              emailSent = true;
-              console.log("Email sent successfully via Resend:", resendData.id);
+              const resendData = await resendRes.json();
+              if (!resendRes.ok) {
+                console.error(`Resend API error [${resendRes.status}]:`, JSON.stringify(resendData));
+              } else {
+                emailSent = true;
+                console.log("Email sent successfully via Resend:", resendData.id);
+              }
+            } catch (emailErr) {
+              console.error("Failed to send email via Resend:", emailErr);
             }
-          } catch (emailErr) {
-            console.error("Failed to send email via Resend:", emailErr);
           }
-        }
       }
     }
 
