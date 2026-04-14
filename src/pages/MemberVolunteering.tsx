@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
 import { Navigate, Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default function MemberVolunteering() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewAsKeyId = searchParams.get("viewAs");
+  const [applyingOpportunityId, setApplyingOpportunityId] = useState<string | null>(null);
   useTrackEngagement("service_page");
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
@@ -120,6 +122,7 @@ export default function MemberVolunteering() {
   // Apply mutation
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
+      setApplyingOpportunityId(opportunityId);
       const session = (await supabase.auth.getSession()).data.session;
       const body: Record<string, string | number> = { opportunity_id: opportunityId };
       // If impersonating, pass the impersonated member's key_id so the edge function applies on their behalf
@@ -145,6 +148,9 @@ export default function MemberVolunteering() {
     },
     onError: (e: any) => {
       toast({ title: "Error", description: e.message, variant: "destructive" });
+    },
+    onSettled: () => {
+      setApplyingOpportunityId(null);
     },
   });
 
@@ -216,7 +222,7 @@ export default function MemberVolunteering() {
                     contactNameMap={contactNameMap}
                     hasApplied={appliedIds.has(opp.id)}
                     onApply={() => applyMutation.mutate(opp.id)}
-                    applying={applyMutation.isPending}
+                    applying={applyingOpportunityId === opp.id && applyMutation.isPending}
                     canApply={!!displayMember && !isPendingImpersonation}
                     isImpersonating={isImpersonating}
                   />
