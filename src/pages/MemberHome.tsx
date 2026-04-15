@@ -299,6 +299,7 @@ export default function MemberHome() {
         'preferred_city', 'preferred_state', 'zip_code', 'country', 'nickname', 'spouse',
         'ratings', 'aircraft_owned', 'aircraft_project', 'aircraft_built', 'other_info',
         'cell_phone_private', 'home_phone_private', 'address_private', 'email_private',
+        'young_eagle_pilot', 'young_eagle_volunteer', 'eagle_pilot', 'eagle_flight_volunteer',
       ];
       for (const [key, value] of Object.entries(updates)) {
         if (allowedFields.includes(key)) {
