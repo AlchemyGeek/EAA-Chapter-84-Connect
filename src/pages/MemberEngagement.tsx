@@ -61,7 +61,17 @@ export default function MemberEngagement() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {kpiCards.map((kpi) => (
             <Card key={kpi.label}>
-              <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+              <CardContent className="p-4 flex flex-col items-center text-center gap-1 relative">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted" aria-label={`Info about ${kpi.label}`}>
+                      <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                    {kpi.description}
+                  </TooltipContent>
+                </Tooltip>
                 <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
                 <p className="text-2xl font-bold">{String(kpi.value)}</p>
                 <p className="text-xs text-muted-foreground">{kpi.label}</p>
