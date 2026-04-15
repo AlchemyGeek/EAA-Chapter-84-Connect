@@ -156,7 +156,7 @@ function mapRow(rawRow: Record<string, string>): Record<string, any> {
 }
 
 // Fields to skip when diffing
-const SKIP_DIFF = new Set(["created_at", "updated_at", "last_import_id", "date_updated"]);
+const SKIP_DIFF = new Set(["created_at", "updated_at", "last_import_id", "date_updated", "updated_by"]);
 
 function normalizeForDiff(val: any, field: string): string {
   if (val == null || val === "") return "";
