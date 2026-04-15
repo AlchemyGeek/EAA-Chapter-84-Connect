@@ -1198,32 +1198,63 @@ export type Database = {
         }[]
       }
       is_officer: { Args: { _user_email: string }; Returns: boolean }
-      member_update_own_record: {
-        Args: {
-          _address_private?: boolean
-          _aircraft_built?: string
-          _aircraft_owned?: string
-          _aircraft_project?: string
-          _cell_phone?: string
-          _cell_phone_private?: boolean
-          _country?: string
-          _email?: string
-          _email_private?: boolean
-          _home_phone?: string
-          _home_phone_private?: boolean
-          _key_id: number
-          _nickname?: string
-          _other_info?: string
-          _preferred_city?: string
-          _preferred_state?: string
-          _ratings?: string
-          _spouse?: string
-          _street_address_1?: string
-          _street_address_2?: string
-          _zip_code?: string
-        }
-        Returns: undefined
-      }
+      member_update_own_record:
+        | {
+            Args: {
+              _address_private?: boolean
+              _aircraft_built?: string
+              _aircraft_owned?: string
+              _aircraft_project?: string
+              _cell_phone?: string
+              _cell_phone_private?: boolean
+              _country?: string
+              _email?: string
+              _email_private?: boolean
+              _home_phone?: string
+              _home_phone_private?: boolean
+              _key_id: number
+              _nickname?: string
+              _other_info?: string
+              _preferred_city?: string
+              _preferred_state?: string
+              _ratings?: string
+              _spouse?: string
+              _street_address_1?: string
+              _street_address_2?: string
+              _zip_code?: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _address_private?: boolean
+              _aircraft_built?: string
+              _aircraft_owned?: string
+              _aircraft_project?: string
+              _cell_phone?: string
+              _cell_phone_private?: boolean
+              _country?: string
+              _eagle_flight_volunteer?: boolean
+              _eagle_pilot?: boolean
+              _email?: string
+              _email_private?: boolean
+              _home_phone?: string
+              _home_phone_private?: boolean
+              _key_id: number
+              _nickname?: string
+              _other_info?: string
+              _preferred_city?: string
+              _preferred_state?: string
+              _ratings?: string
+              _spouse?: string
+              _street_address_1?: string
+              _street_address_2?: string
+              _young_eagle_pilot?: boolean
+              _young_eagle_volunteer?: boolean
+              _zip_code?: string
+            }
+            Returns: undefined
+          }
       move_to_dlq: {
         Args: {
           dlq_name: string
