@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
-import { Activity, Users, TrendingUp, Star, Moon, MousePointerClick } from "lucide-react";
+import { Activity, Users, TrendingUp, Star, Moon, MousePointerClick, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const trendChartConfig = {
   active_members: {
@@ -42,12 +43,12 @@ export default function MemberEngagement() {
       : 0;
 
   const kpiCards = [
-    { label: "Active (30d)", value: kpis?.active_30d ?? "—", icon: Users, color: "text-primary" },
-    { label: "Weekly Active", value: kpis?.active_7d ?? "—", icon: TrendingUp, color: "text-chart-2" },
-    { label: "Engagement Rate", value: kpis ? `${engagementRate}%` : "—", icon: Activity, color: "text-chart-3" },
-    { label: "Highly Engaged", value: kpis?.highly_engaged_30d ?? "—", icon: Star, color: "text-chart-4" },
-    { label: "Dormant (60d)", value: kpis?.dormant_60d ?? "—", icon: Moon, color: "text-muted-foreground" },
-    { label: "Service Views (30d)", value: kpis?.service_page_views_30d ?? "—", icon: MousePointerClick, color: "text-chart-5" },
+    { label: "Active (30d)", value: kpis?.active_30d ?? "—", icon: Users, color: "text-primary", description: "Members who logged in or used the app at least once in the last 30 days." },
+    { label: "Weekly Active", value: kpis?.active_7d ?? "—", icon: TrendingUp, color: "text-chart-2", description: "Members who logged in or used the app at least once in the last 7 days." },
+    { label: "Engagement Rate", value: kpis ? `${engagementRate}%` : "—", icon: Activity, color: "text-chart-3", description: "Percentage of active roster members who used the app in the last 30 days." },
+    { label: "Highly Engaged", value: kpis?.highly_engaged_30d ?? "—", icon: Star, color: "text-chart-4", description: "Members with 5 or more interactions in the last 30 days." },
+    { label: "Dormant (60d)", value: kpis?.dormant_60d ?? "—", icon: Moon, color: "text-muted-foreground", description: "Active roster members with no app activity in the last 60 days." },
+    { label: "Service Views (30d)", value: kpis?.service_page_views_30d ?? "—", icon: MousePointerClick, color: "text-chart-5", description: "Total visits to service pages (dues, volunteering, etc.) in the last 30 days." },
   ];
 
   return (
