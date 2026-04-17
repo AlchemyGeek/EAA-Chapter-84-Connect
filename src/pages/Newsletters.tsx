@@ -22,30 +22,12 @@ type NewsletterRow = {
 };
 
 export default function Newsletters() {
-  const { user, loading: authLoading, isAdmin } = useAuth();
-  const queryClient = useQueryClient();
+  const { user, loading: authLoading } = useAuth();
   useTrackEngagement("service_page");
 
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
 
-  // Get my member to determine officer status
-  const { data: myMember } = useQuery({
-    queryKey: ["my-member-newsletters", user?.email],
-    enabled: !!user?.email,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("roster_members")
-        .select("key_id, first_name, last_name, email")
-        .ilike("email", user!.email!)
-        .maybeSingle();
-      return data;
-    },
-  });
-  const { isOfficer } = useIsOfficer(myMember?.key_id);
-  const canManage = isOfficer || isAdmin;
-
-  // Fetch newsletters via the search RPC (supports empty query => list all)
   const { data: newsletters, isLoading } = useQuery({
     queryKey: ["newsletters", submittedQuery],
     queryFn: async () => {
@@ -87,35 +69,6 @@ export default function Newsletters() {
     }
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
-
-  const deleteMutation = useMutation({
-    mutationFn: async (n: NewsletterRow) => {
-      await supabase.storage.from("newsletters").remove([n.storage_path]);
-      const { error } = await supabase.from("newsletters").delete().eq("id", n.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Newsletter deleted" });
-      queryClient.invalidateQueries({ queryKey: ["newsletters"] });
-    },
-    onError: (e: Error) =>
-      toast({ title: "Delete failed", description: e.message, variant: "destructive" }),
-  });
-
-  const reextractMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.functions.invoke("newsletter-extract-text", {
-        body: { newsletter_id: id },
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Text re-extracted" });
-      queryClient.invalidateQueries({ queryKey: ["newsletters"] });
-    },
-    onError: (e: Error) =>
-      toast({ title: "Extraction failed", description: e.message, variant: "destructive" }),
-  });
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 
@@ -160,19 +113,6 @@ export default function Newsletters() {
           )}
         </form>
 
-        {/* Officer upload panel */}
-        {canManage && (
-          <UploadPanel
-            uploaderKeyId={myMember?.key_id ?? 0}
-            uploaderName={
-              myMember
-                ? `${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim()
-                : (user?.email ?? "Admin")
-            }
-            onUploaded={() => queryClient.invalidateQueries({ queryKey: ["newsletters"] })}
-          />
-        )}
-
         {/* Results */}
         {isLoading ? (
           <p className="text-muted-foreground text-sm">Loading…</p>
@@ -196,14 +136,6 @@ export default function Newsletters() {
                     key={n.id}
                     n={n}
                     onOpen={() => openPdf(n.storage_path)}
-                    canManage={canManage}
-                    onDelete={() => {
-                      if (confirm(`Delete "${n.title}"? This cannot be undone.`)) {
-                        deleteMutation.mutate(n);
-                      }
-                    }}
-                    onReextract={() => reextractMutation.mutate(n.id)}
-                    reextracting={reextractMutation.isPending}
                   />
                 ))}
               </div>
@@ -215,21 +147,7 @@ export default function Newsletters() {
   );
 }
 
-function NewsletterCard({
-  n,
-  onOpen,
-  canManage,
-  onDelete,
-  onReextract,
-  reextracting,
-}: {
-  n: NewsletterRow;
-  onOpen: () => void;
-  canManage: boolean;
-  onDelete: () => void;
-  onReextract: () => void;
-  reextracting: boolean;
-}) {
+function NewsletterCard({ n, onOpen }: { n: NewsletterRow; onOpen: () => void }) {
   const dateLabel = new Date(n.issue_date + "T00:00:00").toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -259,168 +177,6 @@ function NewsletterCard({
             {n.extraction_status === "pending" ? "Indexing…" : "Indexing failed"}
           </Badge>
         )}
-        {canManage && (
-          <div className="flex gap-2 pt-1 border-t border-border/50">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onReextract}
-              disabled={reextracting}
-              className="text-xs"
-            >
-              {reextracting ? (
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3 w-3 mr-1" />
-              )}
-              Re-index
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onDelete}
-              className="text-xs text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Delete
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function UploadPanel({
-  uploaderKeyId,
-  uploaderName,
-  onUploaded,
-}: {
-  uploaderKeyId: number;
-  uploaderName: string;
-  onUploaded: () => void;
-}) {
-  const { user } = useAuth();
-  const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-
-  const guessTitleAndDate = (filename: string): { title: string; issueDate: string } => {
-    const base = filename.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").trim();
-    // Try to find YYYY-MM or "Month YYYY"
-    const months = [
-      "january", "february", "march", "april", "may", "june",
-      "july", "august", "september", "october", "november", "december",
-    ];
-    const lower = base.toLowerCase();
-    let issueDate = new Date().toISOString().slice(0, 10);
-    const ymMatch = lower.match(/(20\d{2})[\s\-/]?(0?[1-9]|1[0-2])/);
-    const monthMatch = months.findIndex((m) => lower.includes(m));
-    const yearMatch = lower.match(/(20\d{2})/);
-    if (ymMatch) {
-      issueDate = `${ymMatch[1]}-${ymMatch[2].padStart(2, "0")}-01`;
-    } else if (monthMatch >= 0 && yearMatch) {
-      issueDate = `${yearMatch[1]}-${String(monthMatch + 1).padStart(2, "0")}-01`;
-    }
-    return { title: base, issueDate };
-  };
-
-  const handleUpload = async () => {
-    if (files.length === 0) return;
-    setUploading(true);
-    setProgress({ done: 0, total: files.length });
-    let success = 0;
-    let failed = 0;
-    for (const file of files) {
-      try {
-        const { title, issueDate } = guessTitleAndDate(file.name);
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const storagePath = `${issueDate.slice(0, 4)}/${Date.now()}_${safeName}`;
-        const { error: upErr } = await supabase.storage
-          .from("newsletters")
-          .upload(storagePath, file, { contentType: "application/pdf" });
-        if (upErr) throw upErr;
-
-        const { data: row, error: insErr } = await supabase
-          .from("newsletters")
-          .insert({
-            title,
-            issue_date: issueDate,
-            storage_path: storagePath,
-            uploaded_by: user?.id ?? null,
-            uploaded_by_name: uploaderName,
-            extraction_status: "pending",
-          })
-          .select("id")
-          .single();
-        if (insErr || !row) throw insErr ?? new Error("insert failed");
-
-        // Trigger extraction (don't await — fire & continue)
-        supabase.functions
-          .invoke("newsletter-extract-text", { body: { newsletter_id: row.id } })
-          .then(({ error }) => {
-            if (error) console.error("extract failed", error);
-            onUploaded();
-          });
-
-        success++;
-      } catch (e) {
-        failed++;
-        console.error("Upload failed for", file.name, e);
-      }
-      setProgress((p) => (p ? { done: p.done + 1, total: p.total } : null));
-    }
-    setUploading(false);
-    setFiles([]);
-    onUploaded();
-    toast({
-      title: "Upload complete",
-      description: `${success} uploaded${failed ? `, ${failed} failed` : ""}. Indexing runs in background.`,
-    });
-  };
-
-  return (
-    <Card className="border-accent/30">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <Upload className="h-4 w-4 text-accent" />
-          Upload Newsletters
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div>
-          <Label htmlFor="newsletter-files" className="text-xs">
-            Select one or more PDF files
-          </Label>
-          <Input
-            id="newsletter-files"
-            type="file"
-            accept="application/pdf"
-            multiple
-            disabled={uploading}
-            onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-            className="mt-1"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Title and issue date are auto-detected from the filename (e.g. "april-2026.pdf"). You
-            can edit them later.
-          </p>
-        </div>
-        {files.length > 0 && !uploading && (
-          <div className="text-xs text-muted-foreground">
-            {files.length} file{files.length === 1 ? "" : "s"} selected
-          </div>
-        )}
-        {uploading && progress && (
-          <div className="text-xs text-muted-foreground flex items-center gap-2">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Uploading {progress.done} / {progress.total}…
-          </div>
-        )}
-        <Button onClick={handleUpload} disabled={files.length === 0 || uploading} size="sm">
-          <Upload className="h-4 w-4 mr-1.5" />
-          Upload {files.length > 0 ? `(${files.length})` : ""}
-        </Button>
       </CardContent>
     </Card>
   );
