@@ -33,7 +33,7 @@ type NewsletterRow = {
 };
 
 export default function Newsletters() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   useTrackEngagement("service_page");
 
@@ -54,7 +54,7 @@ export default function Newsletters() {
     },
   });
   const { isOfficer } = useIsOfficer(myMember?.key_id);
-  const canManage = isOfficer; // admins also pass via RLS
+  const canManage = isOfficer || isAdmin;
 
   // Fetch newsletters via the search RPC (supports empty query => list all)
   const { data: newsletters, isLoading } = useQuery({
@@ -172,10 +172,14 @@ export default function Newsletters() {
         </form>
 
         {/* Officer upload panel */}
-        {canManage && myMember && (
+        {canManage && (
           <UploadPanel
-            uploaderKeyId={myMember.key_id}
-            uploaderName={`${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim()}
+            uploaderKeyId={myMember?.key_id ?? 0}
+            uploaderName={
+              myMember
+                ? `${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim()
+                : (user?.email ?? "Admin")
+            }
             onUploaded={() => queryClient.invalidateQueries({ queryKey: ["newsletters"] })}
           />
         )}
