@@ -29,6 +29,7 @@ import NewMemberApplications from "./pages/NewMemberApplications";
 import BuddyProgram from "./pages/BuddyProgram";
 import HangarTalk from "./pages/HangarTalk";
 import MemberEngagement from "./pages/MemberEngagement";
+import Newsletters from "./pages/Newsletters";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/dues-payment" element={<DuesPayment />} />
             <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
+            <Route path="/newsletters" element={<Newsletters />} />
             <Route path="/join" element={<NewMemberApplication />} />
             {/* <Route path="/hangar-talk" element={<HangarTalk />} /> */}
             <Route path="/unsubscribe" element={<Unsubscribe />} />
