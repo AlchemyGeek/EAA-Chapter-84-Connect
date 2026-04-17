@@ -172,10 +172,14 @@ export default function Newsletters() {
         </form>
 
         {/* Officer upload panel */}
-        {canManage && myMember && (
+        {canManage && (
           <UploadPanel
-            uploaderKeyId={myMember.key_id}
-            uploaderName={`${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim()}
+            uploaderKeyId={myMember?.key_id ?? 0}
+            uploaderName={
+              myMember
+                ? `${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim()
+                : (user?.email ?? "Admin")
+            }
             onUploaded={() => queryClient.invalidateQueries({ queryKey: ["newsletters"] })}
           />
         )}
