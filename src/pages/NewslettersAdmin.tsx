@@ -1,14 +1,23 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Navigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useTrackEngagement } from "@/hooks/useTrackEngagement";
+import { useIsOfficer } from "@/hooks/useIsOfficer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Newspaper, Search, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  Newspaper,
+  Upload,
+  ExternalLink,
+  Trash2,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type NewsletterRow = {
@@ -17,21 +26,15 @@ type NewsletterRow = {
   issue_date: string;
   storage_path: string;
   extraction_status: string;
-  snippet: string | null;
-  rank?: number;
+  uploaded_by_name: string | null;
 };
 
-export default function Newsletters() {
+export default function NewslettersAdmin() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
-  useTrackEngagement("service_page");
 
-  const [query, setQuery] = useState("");
-  const [submittedQuery, setSubmittedQuery] = useState("");
-
-  // Get my member to determine officer status
-  const { data: myMember } = useQuery({
-    queryKey: ["my-member-newsletters", user?.email],
+  const { data: myMember, isLoading: memberLoading } = useQuery({
+    queryKey: ["my-member-newsletters-admin", user?.email],
     enabled: !!user?.email,
     queryFn: async () => {
       const { data } = await supabase
@@ -42,40 +45,21 @@ export default function Newsletters() {
       return data;
     },
   });
-  const { isOfficer } = useIsOfficer(myMember?.key_id);
+  const { isOfficer, isLoading: officerLoading } = useIsOfficer(myMember?.key_id);
   const canManage = isOfficer || isAdmin;
 
-  // Fetch newsletters via the search RPC (supports empty query => list all)
   const { data: newsletters, isLoading } = useQuery({
-    queryKey: ["newsletters", submittedQuery],
+    queryKey: ["newsletters-admin"],
+    enabled: canManage,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("search_newsletters", {
-        _query: submittedQuery,
-      });
+      const { data, error } = await supabase
+        .from("newsletters")
+        .select("id, title, issue_date, storage_path, extraction_status, uploaded_by_name")
+        .order("issue_date", { ascending: false });
       if (error) throw error;
       return (data ?? []) as NewsletterRow[];
     },
   });
-
-  const grouped = useMemo(() => {
-    const map = new Map<number, NewsletterRow[]>();
-    (newsletters ?? []).forEach((n) => {
-      const year = new Date(n.issue_date).getUTCFullYear();
-      if (!map.has(year)) map.set(year, []);
-      map.get(year)!.push(n);
-    });
-    return Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
-  }, [newsletters]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmittedQuery(query.trim());
-  };
-
-  const handleClear = () => {
-    setQuery("");
-    setSubmittedQuery("");
-  };
 
   const openPdf = async (path: string) => {
     const { data, error } = await supabase.storage
@@ -96,6 +80,7 @@ export default function Newsletters() {
     },
     onSuccess: () => {
       toast({ title: "Newsletter deleted" });
+      queryClient.invalidateQueries({ queryKey: ["newsletters-admin"] });
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
     },
     onError: (e: Error) =>
@@ -110,8 +95,8 @@ export default function Newsletters() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Text re-extracted" });
-      queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+      toast({ title: "Re-indexing started" });
+      queryClient.invalidateQueries({ queryKey: ["newsletters-admin"] });
     },
     onError: (e: Error) =>
       toast({ title: "Extraction failed", description: e.message, variant: "destructive" }),
@@ -119,12 +104,21 @@ export default function Newsletters() {
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 
+  if (authLoading || memberLoading || officerLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
+
+  if (!canManage) return <Navigate to="/home" replace />;
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-3">
-          <Link to="/home">
+          <Link to="/officer-services">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -132,171 +126,111 @@ export default function Newsletters() {
           <div className="flex-1">
             <h1 className="text-xl font-bold flex items-center gap-2">
               <Newspaper className="h-5 w-5 text-accent" />
-              Newsletter Archive
+              Manage Newsletters
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Search and read past chapter newsletters
+              Upload, re-index, or delete newsletters in the archive
             </p>
           </div>
         </div>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search newsletter contents…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Button type="submit">Search</Button>
-          {submittedQuery && (
-            <Button type="button" variant="ghost" onClick={handleClear}>
-              Clear
-            </Button>
-          )}
-        </form>
+        <UploadPanel
+          uploaderName={
+            myMember
+              ? `${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim()
+              : (user?.email ?? "Admin")
+          }
+          onUploaded={() => {
+            queryClient.invalidateQueries({ queryKey: ["newsletters-admin"] });
+            queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+          }}
+        />
 
-        {/* Officer upload panel */}
-        {canManage && (
-          <UploadPanel
-            uploaderKeyId={myMember?.key_id ?? 0}
-            uploaderName={
-              myMember
-                ? `${myMember.first_name ?? ""} ${myMember.last_name ?? ""}`.trim()
-                : (user?.email ?? "Admin")
-            }
-            onUploaded={() => queryClient.invalidateQueries({ queryKey: ["newsletters"] })}
-          />
-        )}
-
-        {/* Results */}
-        {isLoading ? (
-          <p className="text-muted-foreground text-sm">Loading…</p>
-        ) : !newsletters || newsletters.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground text-sm">
-              {submittedQuery
-                ? `No newsletters match "${submittedQuery}".`
-                : "No newsletters in the archive yet."}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {grouped.map(([year, items]) => (
-              <div key={year} className="space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  {year}
-                </h2>
-                {items.map((n) => (
-                  <NewsletterCard
-                    key={n.id}
-                    n={n}
-                    onOpen={() => openPdf(n.storage_path)}
-                    canManage={canManage}
-                    onDelete={() => {
-                      if (confirm(`Delete "${n.title}"? This cannot be undone.`)) {
-                        deleteMutation.mutate(n);
-                      }
-                    }}
-                    onReextract={() => reextractMutation.mutate(n.id)}
-                    reextracting={reextractMutation.isPending}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">
+              Archive ({newsletters?.length ?? 0})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : !newsletters || newsletters.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No newsletters uploaded yet.
+              </p>
+            ) : (
+              newsletters.map((n) => (
+                <div
+                  key={n.id}
+                  className="flex items-start justify-between gap-2 py-2 border-b border-border/50 last:border-0"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{n.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(n.issue_date + "T00:00:00").toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                      {n.uploaded_by_name ? ` · uploaded by ${n.uploaded_by_name}` : ""}
+                    </p>
+                    {n.extraction_status !== "done" && (
+                      <Badge variant="outline" className="text-xs mt-1">
+                        {n.extraction_status === "pending" ? "Indexing…" : "Indexing failed"}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => openPdf(n.storage_path)}
+                      title="Open PDF"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => reextractMutation.mutate(n.id)}
+                      disabled={reextractMutation.isPending}
+                      title="Re-index"
+                    >
+                      {reextractMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (confirm(`Delete "${n.title}"? This cannot be undone.`)) {
+                          deleteMutation.mutate(n);
+                        }
+                      }}
+                      className="text-destructive hover:text-destructive"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
 
-function NewsletterCard({
-  n,
-  onOpen,
-  canManage,
-  onDelete,
-  onReextract,
-  reextracting,
-}: {
-  n: NewsletterRow;
-  onOpen: () => void;
-  canManage: boolean;
-  onDelete: () => void;
-  onReextract: () => void;
-  reextracting: boolean;
-}) {
-  const dateLabel = new Date(n.issue_date + "T00:00:00").toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  return (
-    <Card>
-      <CardHeader className="pb-2 flex-row items-start justify-between gap-3 space-y-0">
-        <div className="flex-1 min-w-0">
-          <CardTitle className="text-base">{n.title}</CardTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
-        </div>
-        <Button size="sm" onClick={onOpen} className="shrink-0">
-          <ExternalLink className="h-4 w-4 mr-1.5" />
-          Open PDF
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {n.snippet && (
-          <p
-            className="text-sm text-muted-foreground leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: n.snippet }}
-          />
-        )}
-        {n.extraction_status !== "done" && (
-          <Badge variant="outline" className="text-xs">
-            {n.extraction_status === "pending" ? "Indexing…" : "Indexing failed"}
-          </Badge>
-        )}
-        {canManage && (
-          <div className="flex gap-2 pt-1 border-t border-border/50">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onReextract}
-              disabled={reextracting}
-              className="text-xs"
-            >
-              {reextracting ? (
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3 w-3 mr-1" />
-              )}
-              Re-index
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onDelete}
-              className="text-xs text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Delete
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 function UploadPanel({
-  uploaderKeyId,
   uploaderName,
   onUploaded,
 }: {
-  uploaderKeyId: number;
   uploaderName: string;
   onUploaded: () => void;
 }) {
@@ -307,7 +241,6 @@ function UploadPanel({
 
   const guessTitleAndDate = (filename: string): { title: string; issueDate: string } => {
     const base = filename.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").trim();
-    // Try to find YYYY-MM or "Month YYYY"
     const months = [
       "january", "february", "march", "april", "may", "june",
       "july", "august", "september", "october", "november", "december",
@@ -355,7 +288,6 @@ function UploadPanel({
           .single();
         if (insErr || !row) throw insErr ?? new Error("insert failed");
 
-        // Trigger extraction (don't await — fire & continue)
         supabase.functions
           .invoke("newsletter-extract-text", { body: { newsletter_id: row.id } })
           .then(({ error }) => {
@@ -402,8 +334,7 @@ function UploadPanel({
             className="mt-1"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Title and issue date are auto-detected from the filename (e.g. "april-2026.pdf"). You
-            can edit them later.
+            Title and issue date are auto-detected from the filename (e.g. "april-2026.pdf").
           </p>
         </div>
         {files.length > 0 && !uploading && (
