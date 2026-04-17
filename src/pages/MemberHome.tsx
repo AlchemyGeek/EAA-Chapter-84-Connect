@@ -560,6 +560,7 @@ export default function MemberHome() {
               <AdminLink to="/new-member-applications" icon={UserPlus} label={`New Member Applications${pendingAppCount > 0 ? ` (${pendingAppCount})` : ""}`} />
               <AdminLink to="/buddy-program" icon={Heart} label="New Member Buddy Program" />
               <AdminLink to="/member-engagement" icon={Activity} label="Member Engagement" />
+              <AdminLink to="/newsletters-admin" icon={Newspaper} label="Manage Newsletters" />
             </CardContent>
           </Card>
         )}
