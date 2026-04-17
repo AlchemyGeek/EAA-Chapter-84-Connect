@@ -18,7 +18,7 @@ import {
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
-  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare, Activity,
+  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare, Activity, Newspaper,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
@@ -536,6 +536,7 @@ export default function MemberHome() {
                   icon={HandHelping} 
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
+                <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 {/* <AdminLink to={impersonateKeyId ? `/hangar-talk?viewAs=${impersonateKeyId}` : "/hangar-talk"} icon={MessageSquare} label="Hangar Talk" /> */}
               </>
             )}
