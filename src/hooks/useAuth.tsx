@@ -23,37 +23,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let initialized = false;
 
+    // Set up listener FIRST — never await async work inside the callback (deadlock risk).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
+      // Trust whatever the SDK gives us. SIGNED_OUT will arrive naturally
+      // if a refresh fails; do not call signOut() from inside the callback.
       setUser(session?.user ?? null);
-      if (event === 'TOKEN_REFRESHED' && !session) {
-        // Refresh token failed — force sign out
-        supabase.auth.signOut();
-      }
-      if (initialized) {
-        setLoading(false);
-      }
+      setLoading(false);
     });
 
+    // Then hydrate from storage.
     supabase.auth
       .getSession()
-      .then(({ data: { session }, error }) => {
+      .then(({ data: { session } }) => {
         if (!mounted) return;
-        if (error?.message?.includes('Refresh Token') || error?.code === 'refresh_token_not_found') {
-          supabase.auth.signOut();
-          setUser(null);
-        } else {
-          setUser(session?.user ?? null);
-        }
-        initialized = true;
+        setUser(session?.user ?? null);
         setLoading(false);
       })
       .catch(() => {
         if (!mounted) return;
         setUser(null);
-        initialized = true;
         setLoading(false);
       });
 
