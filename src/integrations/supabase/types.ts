@@ -601,6 +601,51 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletters: {
+        Row: {
+          created_at: string
+          extracted_text: string | null
+          extraction_error: string | null
+          extraction_status: string
+          id: string
+          issue_date: string
+          search_vector: unknown
+          storage_path: string
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+          uploaded_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          extracted_text?: string | null
+          extraction_error?: string | null
+          extraction_status?: string
+          id?: string
+          issue_date: string
+          search_vector?: unknown
+          storage_path: string
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+          uploaded_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          extracted_text?: string | null
+          extraction_error?: string | null
+          extraction_status?: string
+          id?: string
+          issue_date?: string
+          search_vector?: unknown
+          storage_path?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          uploaded_by_name?: string | null
+        }
+        Relationships: []
+      }
       pending_user_roles: {
         Row: {
           created_at: string
@@ -1277,6 +1322,18 @@ export type Database = {
         }[]
       }
       reassign_buddy: { Args: { _application_id: string }; Returns: undefined }
+      search_newsletters: {
+        Args: { _query: string }
+        Returns: {
+          extraction_status: string
+          id: string
+          issue_date: string
+          rank: number
+          snippet: string
+          storage_path: string
+          title: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "member" | "officer"
