@@ -1,84 +1,81 @@
-## Member Engagement Dashboard — Plan
 
-### Overview
 
-Create a new "Member Engagement" page accessible from Admin Services that tracks member activity via a lightweight event logging table and displays KPIs with trend charts.
+## Newsletter Archive with PDF Search — Inline Snippets
 
-### What counts as "activity"
+Building on the previous plan, here's how match previews work so users see context before downloading.
 
-Since the app doesn't currently track member interactions, we need to introduce a simple event logging mechanism. Events will be recorded when members perform meaningful actions:
+### What the user sees
 
-- **Login / page visit** to `/home` (Member Hub)
-- **Viewing Member Services** pages (directory, volunteering)
-- **Editing profile** fields
-- **Submitting volunteering applications**
-- **Viewing member profiles** in the directory
+```text
+Search: "young eagles rally"
 
-Any future member services should include this instrumentation.
+┌─────────────────────────────────────────────────────────┐
+│ April 2026 Newsletter                      [Open PDF]   │
+│ Apr 1, 2026                                             │
+│                                                         │
+│ "...our annual <mark>Young Eagles Rally</mark> will be  │
+│  held on May 18th at KPAO. Pilots interested in flying  │
+│  should contact the <mark>Young Eagles</mark>           │
+│  coordinator..."                                        │
+└─────────────────────────────────────────────────────────┘
 
-### Database Changes (1 migration)
+┌─────────────────────────────────────────────────────────┐
+│ September 2025 Newsletter                  [Open PDF]   │
+│ Sep 1, 2025                                             │
+│                                                         │
+│ "...thanks to all volunteers at the September           │
+│  <mark>Young Eagles</mark> event — we flew 47 kids..."  │
+└─────────────────────────────────────────────────────────┘
+```
 
-**New table: `member_engagement_events**`
+Matched terms are bolded/highlighted. Each result shows ~200 characters of context around the best match.
 
-- `id` (uuid, PK)
-- `key_id` (integer, NOT NULL) — the roster member
-- `event_type` (text, NOT NULL) — e.g. `login`, `profile_edit`, `directory_view`, `volunteering_apply`, `service_page`
-- `created_at` (timestamptz, default now())
+### How it works
 
-RLS policies:
+Postgres has this built in — no extra work beyond the existing tsvector setup:
 
-- Members can INSERT their own events (key_id matches their roster record)
-- Officers/admins can SELECT all events
-- Service role has full access
+```sql
+SELECT
+  id,
+  title,
+  issue_date,
+  storage_path,
+  ts_headline(
+    'english',
+    extracted_text,
+    websearch_to_tsquery('english', $1),
+    'StartSel=<mark>, StopSel=</mark>, MaxWords=40, MinWords=15, MaxFragments=2'
+  ) AS snippet,
+  ts_rank(search_vector, websearch_to_tsquery('english', $1)) AS rank
+FROM newsletters
+WHERE search_vector @@ websearch_to_tsquery('english', $1)
+ORDER BY rank DESC;
+```
 
-Enable realtime: not needed (batch analytics only).
+`ts_headline` automatically picks the best 1-2 fragments of text containing the search terms and wraps them in `<mark>` tags. The frontend renders the snippet HTML directly (safe — only `<mark>` tags from a server-controlled allowlist).
 
-**New database function: `engagement_kpis()**` (SECURITY DEFINER)
-Returns a single row with pre-computed KPIs:
+### Frontend rendering
 
-- `active_30d` — distinct members with ≥1 event in last 30 days
-- `active_7d` — distinct members with ≥1 event in last 7 days
-- `total_active_members` — count of roster members with standing = 'Active'
-- `highly_engaged_30d` — distinct members with ≥5 events in last 30 days
-- `dormant_60d` — active roster members with zero events in last 60 days
-- `service_page_views_30d` — count of `service_page` events in last 30 days
+In the result card:
+```tsx
+<p
+  className="text-sm text-muted-foreground"
+  dangerouslySetInnerHTML={{ __html: snippet }}
+/>
+```
 
-**New database function: `engagement_trend()**` (SECURITY DEFINER)
-Returns weekly buckets (last 12 weeks) with active member counts per week for trend charting.
+Tailwind styles `<mark>` to use the chapter's accent color with a subtle background, matching the existing flat aesthetic.
 
-### Frontend Changes
+### Tradeoffs
 
-1. **New page: `src/pages/MemberEngagement.tsx**`
-  - KPI cards row: Active (30d), Weekly Active, Engagement Rate %, Highly Engaged, Dormant, Service Page Views
-  - Trend chart: Line chart showing weekly active members over time (recharts, same pattern as MembershipStatistics)
-  - Uses existing `ChartContainer` components
-2. **Route registration in `App.tsx**`
-  - Add `/member-engagement` inside the `AppLayout` route group
-3. **Navigation link in `MemberHome.tsx**`
-  - Add "Member Engagement" link under Admin Services section with an `Activity` icon
-4. **Event tracking hook: `src/hooks/useTrackEngagement.ts**`
-  - Simple hook: `useTrackEngagement(eventType)` — fires once per mount (debounced, max 1 per event type per session via sessionStorage)
-  - Looks up caller's key_id from roster, inserts into `member_engagement_events`
-5. **Instrument existing pages** (add one-line hook calls):
-  - `MemberHome.tsx` → track `login`
-  - `Members.tsx` (directory) → track `directory_view`
-  - `MemberVolunteering.tsx` → track `service_page`
-  - `MemberProfile.tsx` → track `profile_view`
+- **Cost**: free — `ts_headline` runs in the same query, no extra round trip
+- **Quality**: very good for typical text; works on the extracted PDF text so accuracy depends on extraction quality (clean, modern PDFs work great; scanned-image PDFs would need OCR — flagged as out of scope)
+- **No PDF page number**: the snippet shows matching text but doesn't link to the exact PDF page. If you want "jump to page 4 of the PDF" later, that's a follow-up using PDF.js viewer (noted as future enhancement)
 
-### Technical Details
+### Updated plan summary
 
-- The engagement tracking hook uses `sessionStorage` to avoid duplicate events within the same browser session
-- KPI queries use the SECURITY DEFINER function to avoid RLS overhead on aggregation
-- The trend chart reuses the existing `ChartContainer` and `LineChart` pattern from MembershipStatistics
-- Zero-stale-time caching for the engagement dashboard (consistent with other admin dashboards)
+Everything from the previous plan stands, with this addition:
+- Search results include `ts_headline` snippets with highlighted terms
+- Result cards display the snippet inline, above the "Open PDF" button
+- Users can scan multiple results and only download the PDF that actually has what they need
 
-### Files to Create/Modify
-
-- **Create**: Migration SQL (table + functions)
-- **Create**: `src/hooks/useTrackEngagement.ts`
-- **Create**: `src/pages/MemberEngagement.tsx`
-- **Modify**: `src/App.tsx` (add route)
-- **Modify**: `src/pages/MemberHome.tsx` (add nav link + track login)
-- **Modify**: `src/pages/Members.tsx` (track directory_view)
-- **Modify**: `src/pages/MemberVolunteering.tsx` (track service_page)
-- **Modify**: `src/pages/MemberProfile.tsx` (track profile_view)
