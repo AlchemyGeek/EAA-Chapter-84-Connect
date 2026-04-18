@@ -104,19 +104,35 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: file, error: dlErr } = await admin.storage
-      .from("newsletters")
-      .download(row.storage_path);
-    if (dlErr || !file) {
+    // Try download up to 3 times — storage can return transient errors
+    let file: Blob | null = null;
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data, error } = await admin.storage
+        .from("newsletters")
+        .download(row.storage_path);
+      if (data && !error) {
+        file = data;
+        lastErr = null;
+        break;
+      }
+      lastErr = error;
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+    if (!file) {
+      const errMsg =
+        lastErr instanceof Error
+          ? lastErr.message
+          : (lastErr as { message?: string })?.message ??
+            (lastErr ? JSON.stringify(lastErr, Object.getOwnPropertyNames(lastErr as object)) : "unknown") ??
+            "download failed";
+      const details = `path=${row.storage_path}; ${errMsg}`;
       await admin
         .from("newsletters")
-        .update({
-          extraction_status: "failed",
-          extraction_error: dlErr?.message ?? "download failed",
-        })
+        .update({ extraction_status: "failed", extraction_error: details })
         .eq("id", newsletterId);
       return new Response(
-        JSON.stringify({ error: "download failed", details: dlErr?.message }),
+        JSON.stringify({ error: "download failed", details }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
