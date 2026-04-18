@@ -17,6 +17,10 @@ import {
   Trash2,
   Loader2,
   RefreshCw,
+  Pencil,
+  Check,
+  X,
+  Search,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,6 +36,7 @@ type NewsletterRow = {
 export default function NewslettersAdmin() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const [filter, setFilter] = useState("");
 
   const { data: myMember, isLoading: memberLoading } = useQuery({
     queryKey: ["my-member-newsletters-admin", user?.email],
@@ -102,6 +107,29 @@ export default function NewslettersAdmin() {
       toast({ title: "Extraction failed", description: e.message, variant: "destructive" }),
   });
 
+  const updateDateMutation = useMutation({
+    mutationFn: async ({ id, issue_date }: { id: string; issue_date: string }) => {
+      const { error } = await supabase
+        .from("newsletters")
+        .update({ issue_date })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Issue date updated" });
+      queryClient.invalidateQueries({ queryKey: ["newsletters-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Update failed", description: e.message, variant: "destructive" }),
+  });
+
+  const filtered = (newsletters ?? []).filter((n) =>
+    filter.trim() === ""
+      ? true
+      : n.title.toLowerCase().includes(filter.trim().toLowerCase()),
+  );
+
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 
   if (authLoading || memberLoading || officerLoading) {
@@ -149,79 +177,183 @@ export default function NewslettersAdmin() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">
-              Archive ({newsletters?.length ?? 0})
+              Archive ({filtered.length}
+              {filter && newsletters ? ` of ${newsletters.length}` : ""})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Filter by title…"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             {isLoading ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
             ) : !newsletters || newsletters.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
                 No newsletters uploaded yet.
               </p>
+            ) : filtered.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No newsletters match "{filter}".
+              </p>
             ) : (
-              newsletters.map((n) => (
-                <div
+              filtered.map((n) => (
+                <NewsletterAdminRow
                   key={n.id}
-                  className="flex items-start justify-between gap-2 py-2 border-b border-border/50 last:border-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{n.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(n.issue_date + "T00:00:00").toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                      {n.uploaded_by_name ? ` · uploaded by ${n.uploaded_by_name}` : ""}
-                    </p>
-                    {n.extraction_status !== "done" && (
-                      <Badge variant="outline" className="text-xs mt-1">
-                        {n.extraction_status === "pending" ? "Indexing…" : "Indexing failed"}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => openPdf(n.storage_path)}
-                      title="Open PDF"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => reextractMutation.mutate(n.id)}
-                      disabled={reextractMutation.isPending}
-                      title="Re-index"
-                    >
-                      {reextractMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        if (confirm(`Delete "${n.title}"? This cannot be undone.`)) {
-                          deleteMutation.mutate(n);
-                        }
-                      }}
-                      className="text-destructive hover:text-destructive"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                  n={n}
+                  onOpen={() => openPdf(n.storage_path)}
+                  onReindex={() => reextractMutation.mutate(n.id)}
+                  reindexing={reextractMutation.isPending}
+                  onDelete={() => {
+                    if (confirm(`Delete "${n.title}"? This cannot be undone.`)) {
+                      deleteMutation.mutate(n);
+                    }
+                  }}
+                  onSaveDate={(issue_date) =>
+                    updateDateMutation.mutate({ id: n.id, issue_date })
+                  }
+                  saving={updateDateMutation.isPending}
+                />
               ))
             )}
           </CardContent>
         </Card>
+      </div>
+    </div>
+  );
+}
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function NewsletterAdminRow({
+  n,
+  onOpen,
+  onReindex,
+  reindexing,
+  onDelete,
+  onSaveDate,
+  saving,
+}: {
+  n: NewsletterRow;
+  onOpen: () => void;
+  onReindex: () => void;
+  reindexing: boolean;
+  onDelete: () => void;
+  onSaveDate: (issueDate: string) => void;
+  saving: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const initial = new Date(n.issue_date + "T00:00:00");
+  const [month, setMonth] = useState(initial.getMonth() + 1);
+  const [year, setYear] = useState(initial.getFullYear());
+
+  const currentYear = new Date().getFullYear();
+  const years: number[] = [];
+  for (let y = currentYear + 1; y >= 1990; y--) years.push(y);
+
+  const save = () => {
+    const issueDate = `${year}-${String(month).padStart(2, "0")}-01`;
+    onSaveDate(issueDate);
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setMonth(initial.getMonth() + 1);
+    setYear(initial.getFullYear());
+    setEditing(false);
+  };
+
+  return (
+    <div className="flex items-start justify-between gap-2 py-2 border-b border-border/50 last:border-0">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{n.title}</p>
+        {editing ? (
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <select
+              value={month}
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+              aria-label="Month"
+            >
+              {MONTHS.map((m, i) => (
+                <option key={m} value={i + 1}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+              aria-label="Year"
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <Button size="sm" variant="ghost" onClick={save} disabled={saving} title="Save">
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={cancel} title="Cancel">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span>
+              {initial.toLocaleDateString(undefined, { year: "numeric", month: "short" })}
+              {n.uploaded_by_name ? ` · uploaded by ${n.uploaded_by_name}` : ""}
+            </span>
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="text-muted-foreground hover:text-foreground p-0.5"
+              title="Edit issue date"
+              aria-label="Edit issue date"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+          </p>
+        )}
+        {n.extraction_status !== "done" && (
+          <Badge variant="outline" className="text-xs mt-1">
+            {n.extraction_status === "pending" ? "Indexing…" : "Indexing failed"}
+          </Badge>
+        )}
+      </div>
+      <div className="flex gap-1 shrink-0">
+        <Button size="sm" variant="ghost" onClick={onOpen} title="Open PDF">
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onReindex}
+          disabled={reindexing}
+          title="Re-index"
+        >
+          {reindexing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onDelete}
+          className="text-destructive hover:text-destructive"
+          title="Delete"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
