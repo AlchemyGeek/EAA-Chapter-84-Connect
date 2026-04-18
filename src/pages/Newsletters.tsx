@@ -124,21 +124,59 @@ export default function Newsletters() {
             />
           </div>
           <Button type="submit">Search</Button>
-          {submittedQuery && (
+          {(submittedQuery || fromMonth || toMonth) && (
             <Button type="button" variant="ghost" onClick={handleClear}>
               Clear
             </Button>
           )}
         </form>
 
+        {/* Date range filter */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Date range:</span>
+          <Input
+            type="month"
+            value={fromMonth}
+            onChange={(e) => setFromMonth(e.target.value)}
+            className="w-auto h-9"
+            aria-label="From month"
+          />
+          <span className="text-muted-foreground">to</span>
+          <Input
+            type="month"
+            value={toMonth}
+            onChange={(e) => setToMonth(e.target.value)}
+            className="w-auto h-9"
+            aria-label="To month"
+          />
+        </div>
+
+        {/* Oldest notification */}
+        {oldest && (
+          <div className="flex items-start gap-2 text-xs text-muted-foreground border rounded-md px-3 py-2 bg-muted/30">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>
+              Oldest newsletter in the archive:{" "}
+              <span className="font-medium text-foreground">
+                {new Date(oldest + "T00:00:00").toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "long",
+                })}
+              </span>
+            </span>
+          </div>
+        )}
+
         {/* Results */}
         {isLoading ? (
           <p className="text-muted-foreground text-sm">Loading…</p>
-        ) : !newsletters || newsletters.length === 0 ? (
+        ) : !filtered || filtered.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground text-sm">
               {submittedQuery
-                ? `No newsletters match "${submittedQuery}".`
+                ? `No newsletters match "${submittedQuery}"${fromMonth || toMonth ? " in this date range" : ""}.`
+                : fromMonth || toMonth
+                ? "No newsletters in this date range."
                 : "No newsletters in the archive yet."}
             </CardContent>
           </Card>
