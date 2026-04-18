@@ -36,6 +36,7 @@ type NewsletterRow = {
 export default function NewslettersAdmin() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const [filter, setFilter] = useState("");
 
   const { data: myMember, isLoading: memberLoading } = useQuery({
     queryKey: ["my-member-newsletters-admin", user?.email],
