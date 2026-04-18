@@ -108,23 +108,51 @@ export default function NewslettersAdmin() {
   });
 
   const reextractAllMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
+    mutationFn: async (items: { id: string; title: string }[]) => {
       let ok = 0;
-      let failed = 0;
-      for (const id of ids) {
-        const { error } = await supabase.functions.invoke("newsletter-extract-text", {
-          body: { newsletter_id: id },
-        });
-        if (error) failed++;
-        else ok++;
+      const failures: { id: string; title: string; error: string }[] = [];
+
+      const tryOnce = async (id: string) => {
+        try {
+          const { error } = await supabase.functions.invoke("newsletter-extract-text", {
+            body: { newsletter_id: id },
+          });
+          if (error) return error.message || "Unknown error";
+          return null;
+        } catch (e) {
+          return e instanceof Error ? e.message : String(e);
+        }
+      };
+
+      for (const item of items) {
+        let err = await tryOnce(item.id);
+        if (err) {
+          // Retry once after short delay for transient network errors
+          await new Promise((r) => setTimeout(r, 1500));
+          err = await tryOnce(item.id);
+        }
+        if (err) {
+          failures.push({ ...item, error: err });
+          console.error(`Re-index failed for "${item.title}" (${item.id}):`, err);
+        } else {
+          ok++;
+        }
       }
-      return { ok, failed };
+      return { ok, failures };
     },
-    onSuccess: ({ ok, failed }) => {
-      toast({
-        title: "Bulk re-index complete",
-        description: `${ok} succeeded${failed ? `, ${failed} failed` : ""}.`,
-      });
+    onSuccess: ({ ok, failures }) => {
+      if (failures.length === 0) {
+        toast({
+          title: "Bulk re-index complete",
+          description: `${ok} succeeded.`,
+        });
+      } else {
+        toast({
+          title: `Re-index finished with ${failures.length} failure${failures.length > 1 ? "s" : ""}`,
+          description: `${ok} succeeded. Failed: ${failures.map((f) => f.title).join(", ")}`,
+          variant: "destructive",
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["newsletters-admin"] });
       queryClient.invalidateQueries({ queryKey: ["newsletters"] });
     },
@@ -216,7 +244,9 @@ export default function NewslettersAdmin() {
                       `Re-index all ${newsletters.length} newsletter(s)? This may take a few minutes.`,
                     )
                   ) {
-                    reextractAllMutation.mutate(newsletters.map((n) => n.id));
+                    reextractAllMutation.mutate(
+                      newsletters.map((n) => ({ id: n.id, title: n.title })),
+                    );
                   }
                 }}
               >
