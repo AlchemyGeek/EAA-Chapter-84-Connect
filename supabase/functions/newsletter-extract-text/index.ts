@@ -161,8 +161,14 @@ Deno.serve(async (req) => {
     let extracted = "";
     try {
       const pdf = await getDocumentProxy(buf);
-      const { text } = await extractText(pdf, { mergePages: true });
-      extracted = Array.isArray(text) ? text.join("\n\n") : (text ?? "");
+      // Extract per-page so we keep page boundaries as paragraph breaks.
+      const { text } = await extractText(pdf, { mergePages: false });
+      const pages = Array.isArray(text) ? text : [text ?? ""];
+      // Join pages with double newlines, then add a newline after sentence
+      // terminators so Postgres ts_headline has fragment boundaries to work with.
+      extracted = pages
+        .map((p) => (p ?? "").replace(/([.!?])\s+(?=[A-Z0-9"'(\[])/g, "$1\n"))
+        .join("\n\n");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       await admin
