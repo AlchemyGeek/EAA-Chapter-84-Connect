@@ -125,19 +125,21 @@ export default function Newsletters() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {grouped.map(([year, items]) => (
-              <div key={year} className="space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              <div key={year} className="space-y-1.5">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {year}
                 </h2>
-                {items.map((n) => (
-                  <NewsletterCard
-                    key={n.id}
-                    n={n}
-                    onOpen={() => openPdf(n.storage_path)}
-                  />
-                ))}
+                <div className="border rounded-md divide-y">
+                  {items.map((n) => (
+                    <NewsletterRow
+                      key={n.id}
+                      n={n}
+                      onOpen={() => openPdf(n.storage_path)}
+                    />
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -147,37 +149,35 @@ export default function Newsletters() {
   );
 }
 
-function NewsletterCard({ n, onOpen }: { n: NewsletterRow; onOpen: () => void }) {
+function NewsletterRow({ n, onOpen }: { n: NewsletterRow; onOpen: () => void }) {
   const dateLabel = new Date(n.issue_date + "T00:00:00").toLocaleDateString(undefined, {
     year: "numeric",
-    month: "long",
-    day: "numeric",
+    month: "short",
   });
   return (
-    <Card>
-      <CardHeader className="pb-2 flex-row items-start justify-between gap-3 space-y-0">
-        <div className="flex-1 min-w-0">
-          <CardTitle className="text-base">{n.title}</CardTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
+    <div className="flex items-center gap-3 px-3 py-2 min-h-11">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="text-xs font-medium text-muted-foreground tabular-nums w-20 shrink-0">
+            {dateLabel}
+          </span>
+          <span className="text-sm font-medium truncate">{n.title}</span>
+          {n.extraction_status !== "done" && (
+            <Badge variant="outline" className="text-[10px] py-0 px-1.5">
+              {n.extraction_status === "pending" ? "Indexing…" : "Failed"}
+            </Badge>
+          )}
         </div>
-        <Button size="sm" onClick={onOpen} className="shrink-0">
-          <ExternalLink className="h-4 w-4 mr-1.5" />
-          Open PDF
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-3">
         {n.snippet && (
           <p
-            className="text-sm text-muted-foreground leading-relaxed"
+            className="text-xs text-muted-foreground leading-snug mt-1 line-clamp-2"
             dangerouslySetInnerHTML={{ __html: n.snippet }}
           />
         )}
-        {n.extraction_status !== "done" && (
-          <Badge variant="outline" className="text-xs">
-            {n.extraction_status === "pending" ? "Indexing…" : "Indexing failed"}
-          </Badge>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+      <Button size="sm" variant="ghost" onClick={onOpen} className="shrink-0 h-9 px-2" aria-label="Open PDF">
+        <ExternalLink className="h-4 w-4" />
+      </Button>
+    </div>
   );
 }
