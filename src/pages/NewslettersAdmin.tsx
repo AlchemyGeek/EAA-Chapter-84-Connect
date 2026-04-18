@@ -200,11 +200,34 @@ export default function NewslettersAdmin() {
         />
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-semibold">
               Archive ({filtered.length}
               {filter && newsletters ? ` of ${newsletters.length}` : ""})
             </CardTitle>
+            {newsletters && newsletters.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={reextractAllMutation.isPending}
+                onClick={() => {
+                  if (
+                    confirm(
+                      `Re-index all ${newsletters.length} newsletter(s)? This may take a few minutes.`,
+                    )
+                  ) {
+                    reextractAllMutation.mutate(newsletters.map((n) => n.id));
+                  }
+                }}
+              >
+                {reextractAllMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Re-index all
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="relative">
