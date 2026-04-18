@@ -107,6 +107,31 @@ export default function NewslettersAdmin() {
       toast({ title: "Extraction failed", description: e.message, variant: "destructive" }),
   });
 
+  const reextractAllMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      let ok = 0;
+      let failed = 0;
+      for (const id of ids) {
+        const { error } = await supabase.functions.invoke("newsletter-extract-text", {
+          body: { newsletter_id: id },
+        });
+        if (error) failed++;
+        else ok++;
+      }
+      return { ok, failed };
+    },
+    onSuccess: ({ ok, failed }) => {
+      toast({
+        title: "Bulk re-index complete",
+        description: `${ok} succeeded${failed ? `, ${failed} failed` : ""}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["newsletters-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Bulk re-index failed", description: e.message, variant: "destructive" }),
+  });
+
   const updateDateMutation = useMutation({
     mutationFn: async ({ id, issue_date }: { id: string; issue_date: string }) => {
       const { error } = await supabase
