@@ -1335,6 +1335,12 @@ export type Database = {
           title: string
         }[]
       }
+      ts_lexize_words: {
+        Args: { _query: string }
+        Returns: {
+          lexeme: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "member" | "officer"
