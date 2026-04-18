@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { startForceUpdateCheck } from "./lib/forceUpdateCheck";
 
 // Prevent service worker registration in iframes / preview hosts
 const isInIframe = (() => {
@@ -22,3 +23,5 @@ if (isPreviewHost || isInIframe) {
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+startForceUpdateCheck();
