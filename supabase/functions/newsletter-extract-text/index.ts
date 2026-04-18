@@ -9,22 +9,39 @@ const corsHeaders = {
 
 function detectIssueDate(text: string): string | null {
   if (!text) return null;
-  const head = text.slice(0, 3000);
+  const head = text.slice(0, 5000);
   const months = [
     "january", "february", "march", "april", "may", "june",
     "july", "august", "september", "october", "november", "december",
   ];
   const monthRe = "(jan(?:uary|\\.)?|feb(?:ruary|\\.)?|mar(?:ch|\\.)?|apr(?:il|\\.)?|may|jun(?:e|\\.)?|jul(?:y|\\.)?|aug(?:ust|\\.)?|sep(?:tember|t|\\.)?|oct(?:ober|\\.)?|nov(?:ember|\\.)?|dec(?:ember|\\.)?)";
-  const re = new RegExp(`\\b${monthRe}\\s*,?\\s+(?:(\\d{1,2})\\s*,\\s*)?(20\\d{2})\\b`, "i");
-  const m = head.match(re);
-  if (m) {
+  const re = new RegExp(`\\b${monthRe}\\s*,?\\s+(?:(\\d{1,2})\\s*,\\s*)?(20\\d{2})\\b`, "gi");
+
+  type Cand = { date: string; index: number; score: number };
+  const candidates: Cand[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(head)) !== null) {
     const key = m[1].toLowerCase().replace(".", "").slice(0, 3);
     const monthIdx = months.findIndex((mo) => mo.startsWith(key));
-    if (monthIdx >= 0) {
-      const day = m[2] ? Math.min(Math.max(parseInt(m[2], 10), 1), 28) : 1;
-      return `${m[3]}-${String(monthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    }
+    if (monthIdx < 0) continue;
+    const day = m[2] ? Math.min(Math.max(parseInt(m[2], 10), 1), 28) : 1;
+    const date = `${m[3]}-${String(monthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+    // Earlier in doc = better (likely masthead). Penalize references to prior meetings.
+    let score = -m.index;
+    const after = head.slice(m.index + m[0].length, m.index + m[0].length + 40).toLowerCase();
+    if (/^\s*(meeting\s+minutes|minutes|meeting)\b/.test(after)) score -= 100000;
+    const before = head.slice(Math.max(0, m.index - 20), m.index).toLowerCase();
+    if (/(since|©|\(c\)|copyright|established|est\.|founded)\s*$/.test(before)) score -= 100000;
+
+    candidates.push({ date, index: m.index, score });
   }
+
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0].date;
+  }
+
   const ym = head.match(/\b(20\d{2})[\-/](0?[1-9]|1[0-2])\b/) ||
              head.match(/\b(0?[1-9]|1[0-2])[\-/](20\d{2})\b/);
   if (ym) {
