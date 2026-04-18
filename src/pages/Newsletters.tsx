@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Newspaper, Search, ExternalLink } from "lucide-react";
+import { ArrowLeft, Newspaper, Search, ExternalLink, Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type NewsletterRow = {
