@@ -107,6 +107,29 @@ export default function NewslettersAdmin() {
       toast({ title: "Extraction failed", description: e.message, variant: "destructive" }),
   });
 
+  const updateDateMutation = useMutation({
+    mutationFn: async ({ id, issue_date }: { id: string; issue_date: string }) => {
+      const { error } = await supabase
+        .from("newsletters")
+        .update({ issue_date })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Issue date updated" });
+      queryClient.invalidateQueries({ queryKey: ["newsletters-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["newsletters"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Update failed", description: e.message, variant: "destructive" }),
+  });
+
+  const filtered = (newsletters ?? []).filter((n) =>
+    filter.trim() === ""
+      ? true
+      : n.title.toLowerCase().includes(filter.trim().toLowerCase()),
+  );
+
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 
   if (authLoading || memberLoading || officerLoading) {
