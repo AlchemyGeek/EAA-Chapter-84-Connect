@@ -15,6 +15,10 @@ export function PWAUpdatePrompt() {
         }, 60 * 60 * 1000);
       }
     },
+    onNeedRefresh() {
+      // Auto-apply updates so users always see the latest version
+      updateServiceWorker(true);
+    },
   });
 
   if (!needRefresh) return null;
