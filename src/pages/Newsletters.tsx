@@ -232,8 +232,10 @@ function NewsletterRow({ n, onOpen }: { n: NewsletterRow; onOpen: () => void }) 
         </div>
         {n.snippet && (
           <p
-            className="text-xs text-muted-foreground leading-snug mt-1 line-clamp-2"
-            dangerouslySetInnerHTML={{ __html: n.snippet }}
+            className="text-xs text-muted-foreground leading-snug mt-1"
+            dangerouslySetInnerHTML={{
+              __html: n.snippet.replace(/\s*\.\.\.\s*/g, ' <span class="text-muted-foreground/60 mx-1">…</span> '),
+            }}
           />
         )}
       </div>
