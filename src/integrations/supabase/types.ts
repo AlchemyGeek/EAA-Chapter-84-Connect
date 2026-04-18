@@ -1328,6 +1328,7 @@ export type Database = {
           extraction_status: string
           id: string
           issue_date: string
+          match_count: number
           rank: number
           snippet: string
           storage_path: string
