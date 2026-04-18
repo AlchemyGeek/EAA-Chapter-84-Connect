@@ -104,10 +104,6 @@ Deno.serve(async (req) => {
       const { text } = await extractText(pdf, { mergePages: true });
       extracted = Array.isArray(text) ? text.join("\n\n") : (text ?? "");
     } catch (e) {
-      // fall-through to error handling below
-    }
-    if (false) {
-      try {} catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       await admin
         .from("newsletters")
@@ -119,13 +115,17 @@ Deno.serve(async (req) => {
       });
     }
 
+    const detected = detectIssueDate(extracted);
+    const updates: Record<string, unknown> = {
+      extracted_text: extracted,
+      extraction_status: "done",
+      extraction_error: null,
+    };
+    if (detected) updates.issue_date = detected;
+
     await admin
       .from("newsletters")
-      .update({
-        extracted_text: extracted,
-        extraction_status: "done",
-        extraction_error: null,
-      })
+      .update(updates)
       .eq("id", newsletterId);
 
     return new Response(
