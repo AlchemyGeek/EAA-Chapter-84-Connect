@@ -244,7 +244,9 @@ export default function NewslettersAdmin() {
                       `Re-index all ${newsletters.length} newsletter(s)? This may take a few minutes.`,
                     )
                   ) {
-                    reextractAllMutation.mutate(newsletters.map((n) => n.id));
+                    reextractAllMutation.mutate(
+                      newsletters.map((n) => ({ id: n.id, title: n.title })),
+                    );
                   }
                 }}
               >
