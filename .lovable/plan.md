@@ -1,81 +1,79 @@
 
 
-## Newsletter Archive with PDF Search — Inline Snippets
+The user wants the publication date shown in the archive to come from the **PDF content itself** (parsed during text extraction), not from the filename. Currently `issue_date` is auto-guessed from the filename at upload time. We should refine it from the actual PDF text during extraction.
 
-Building on the previous plan, here's how match previews work so users see context before downloading.
+### Approach
+
+Update the `newsletter-extract-text` edge function to detect the publication month/year from the extracted text, and write it back to `newsletters.issue_date`. The archive list already displays `issue_date` — no UI changes needed beyond confirming the displayed value updates after extraction completes.
+
+### Detection logic (in edge function, after text extraction)
+
+Search the first ~3000 characters of extracted text (covers cover page / masthead) for the first match of:
+
+1. `Month Year` — e.g. "April 2026", "Apr. 2026", "APRIL 2026"
+2. `Month, Year` — e.g. "April, 2026"
+3. `Month Day, Year` — e.g. "April 1, 2026" (use day if present, else day = 1)
+4. Numeric `MM/YYYY` or `YYYY-MM` as fallback
+
+Only accept years 2000–2099 to avoid false positives (phone numbers, page refs, etc.).
+
+If a date is found and differs from the current `issue_date`, update it. If nothing is found, leave the filename-guessed date alone.
+
+### Code change (single file)
+
+In `supabase/functions/newsletter-extract-text/index.ts`, after extraction succeeds:
+
+```ts
+function detectIssueDate(text: string): string | null {
+  const head = text.slice(0, 3000);
+  const months = ["january","february","march","april","may","june",
+                  "july","august","september","october","november","december"];
+  const monthRe = "(jan(?:uary|\\.)?|feb(?:ruary|\\.)?|mar(?:ch|\\.)?|apr(?:il|\\.)?|may|jun(?:e|\\.)?|jul(?:y|\\.)?|aug(?:ust|\\.)?|sep(?:tember|t|\\.)?|oct(?:ober|\\.)?|nov(?:ember|\\.)?|dec(?:ember|\\.)?)";
+  // "Month [Day,] Year"
+  const re = new RegExp(`\\b${monthRe}\\s+(?:(\\d{1,2})\\s*,\\s*)?(20\\d{2})\\b`, "i");
+  const m = head.match(re);
+  if (m) {
+    const monthIdx = months.findIndex(mo => mo.startsWith(m[1].toLowerCase().replace(".","").slice(0,3)));
+    if (monthIdx >= 0) {
+      const day = m[2] ? Math.min(parseInt(m[2],10), 28) : 1;
+      return `${m[3]}-${String(monthIdx+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    }
+  }
+  // Fallback YYYY-MM or MM/YYYY
+  const ym = head.match(/\b(20\d{2})[\-/](0?[1-9]|1[0-2])\b/) ||
+             head.match(/\b(0?[1-9]|1[0-2])[\-/](20\d{2})\b/);
+  if (ym) {
+    const [year, month] = ym[1].length === 4 ? [ym[1], ym[2]] : [ym[2], ym[1]];
+    return `${year}-${month.padStart(2,"0")}-01`;
+  }
+  return null;
+}
+```
+
+Include the detected date in the update:
+
+```ts
+const detected = detectIssueDate(extracted);
+const updates: Record<string, unknown> = {
+  extracted_text: extracted,
+  extraction_status: "done",
+  extraction_error: null,
+};
+if (detected) updates.issue_date = detected;
+await admin.from("newsletters").update(updates).eq("id", newsletterId);
+```
 
 ### What the user sees
 
-```text
-Search: "young eagles rally"
+After uploading a PDF named e.g. `newsletter-final.pdf` (which would otherwise default to today's date), once indexing finishes the archive row will refresh to show the actual publication month, e.g. "Apr 1, 2026", read from the cover/masthead.
 
-┌─────────────────────────────────────────────────────────┐
-│ April 2026 Newsletter                      [Open PDF]   │
-│ Apr 1, 2026                                             │
-│                                                         │
-│ "...our annual <mark>Young Eagles Rally</mark> will be  │
-│  held on May 18th at KPAO. Pilots interested in flying  │
-│  should contact the <mark>Young Eagles</mark>           │
-│  coordinator..."                                        │
-└─────────────────────────────────────────────────────────┘
+### Files
 
-┌─────────────────────────────────────────────────────────┐
-│ September 2025 Newsletter                  [Open PDF]   │
-│ Sep 1, 2025                                             │
-│                                                         │
-│ "...thanks to all volunteers at the September           │
-│  <mark>Young Eagles</mark> event — we flew 47 kids..."  │
-└─────────────────────────────────────────────────────────┘
-```
+- `supabase/functions/newsletter-extract-text/index.ts` — add `detectIssueDate`, include `issue_date` in the post-extraction update
+- No frontend changes — `NewslettersAdmin.tsx` already renders `issue_date` and invalidates the query when extraction completes
 
-Matched terms are bolded/highlighted. Each result shows ~200 characters of context around the best match.
+### Out of scope
 
-### How it works
-
-Postgres has this built in — no extra work beyond the existing tsvector setup:
-
-```sql
-SELECT
-  id,
-  title,
-  issue_date,
-  storage_path,
-  ts_headline(
-    'english',
-    extracted_text,
-    websearch_to_tsquery('english', $1),
-    'StartSel=<mark>, StopSel=</mark>, MaxWords=40, MinWords=15, MaxFragments=2'
-  ) AS snippet,
-  ts_rank(search_vector, websearch_to_tsquery('english', $1)) AS rank
-FROM newsletters
-WHERE search_vector @@ websearch_to_tsquery('english', $1)
-ORDER BY rank DESC;
-```
-
-`ts_headline` automatically picks the best 1-2 fragments of text containing the search terms and wraps them in `<mark>` tags. The frontend renders the snippet HTML directly (safe — only `<mark>` tags from a server-controlled allowlist).
-
-### Frontend rendering
-
-In the result card:
-```tsx
-<p
-  className="text-sm text-muted-foreground"
-  dangerouslySetInnerHTML={{ __html: snippet }}
-/>
-```
-
-Tailwind styles `<mark>` to use the chapter's accent color with a subtle background, matching the existing flat aesthetic.
-
-### Tradeoffs
-
-- **Cost**: free — `ts_headline` runs in the same query, no extra round trip
-- **Quality**: very good for typical text; works on the extracted PDF text so accuracy depends on extraction quality (clean, modern PDFs work great; scanned-image PDFs would need OCR — flagged as out of scope)
-- **No PDF page number**: the snippet shows matching text but doesn't link to the exact PDF page. If you want "jump to page 4 of the PDF" later, that's a follow-up using PDF.js viewer (noted as future enhancement)
-
-### Updated plan summary
-
-Everything from the previous plan stands, with this addition:
-- Search results include `ts_headline` snippets with highlighted terms
-- Result cards display the snippet inline, above the "Open PDF" button
-- Users can scan multiple results and only download the PDF that actually has what they need
+- Re-running detection on already-uploaded newsletters (the existing "Re-index" button will pick up the new logic automatically — no migration needed)
+- Detecting dates from scanned image-only PDFs (would require OCR, previously flagged out of scope)
 
