@@ -7,6 +7,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function detectIssueDate(text: string): string | null {
+  if (!text) return null;
+  const head = text.slice(0, 3000);
+  const months = [
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+  ];
+  const monthRe = "(jan(?:uary|\\.)?|feb(?:ruary|\\.)?|mar(?:ch|\\.)?|apr(?:il|\\.)?|may|jun(?:e|\\.)?|jul(?:y|\\.)?|aug(?:ust|\\.)?|sep(?:tember|t|\\.)?|oct(?:ober|\\.)?|nov(?:ember|\\.)?|dec(?:ember|\\.)?)";
+  const re = new RegExp(`\\b${monthRe}\\s*,?\\s+(?:(\\d{1,2})\\s*,\\s*)?(20\\d{2})\\b`, "i");
+  const m = head.match(re);
+  if (m) {
+    const key = m[1].toLowerCase().replace(".", "").slice(0, 3);
+    const monthIdx = months.findIndex((mo) => mo.startsWith(key));
+    if (monthIdx >= 0) {
+      const day = m[2] ? Math.min(Math.max(parseInt(m[2], 10), 1), 28) : 1;
+      return `${m[3]}-${String(monthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+  }
+  const ym = head.match(/\b(20\d{2})[\-/](0?[1-9]|1[0-2])\b/) ||
+             head.match(/\b(0?[1-9]|1[0-2])[\-/](20\d{2})\b/);
+  if (ym) {
+    const [year, month] = ym[1].length === 4 ? [ym[1], ym[2]] : [ym[2], ym[1]];
+    return `${year}-${month.padStart(2, "0")}-01`;
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
