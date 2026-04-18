@@ -4,7 +4,7 @@ import { RefreshCw, X } from "lucide-react";
 
 export function PWAUpdatePrompt() {
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, registration) {
@@ -14,6 +14,10 @@ export function PWAUpdatePrompt() {
           registration.update();
         }, 60 * 60 * 1000);
       }
+    },
+    onNeedRefresh() {
+      // Auto-apply updates so users always see the latest version
+      updateServiceWorker(true);
     },
   });
 
