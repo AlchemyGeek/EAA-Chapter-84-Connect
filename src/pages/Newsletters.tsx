@@ -27,6 +27,8 @@ export default function Newsletters() {
 
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
+  const [fromMonth, setFromMonth] = useState(""); // YYYY-MM
+  const [toMonth, setToMonth] = useState(""); // YYYY-MM
 
   const { data: newsletters, isLoading } = useQuery({
     queryKey: ["newsletters", submittedQuery],
@@ -39,15 +41,29 @@ export default function Newsletters() {
     },
   });
 
+  const filtered = useMemo(() => {
+    return (newsletters ?? []).filter((n) => {
+      const ym = n.issue_date.slice(0, 7); // YYYY-MM
+      if (fromMonth && ym < fromMonth) return false;
+      if (toMonth && ym > toMonth) return false;
+      return true;
+    });
+  }, [newsletters, fromMonth, toMonth]);
+
+  const oldest = useMemo(() => {
+    if (!newsletters || newsletters.length === 0) return null;
+    return newsletters.reduce((min, n) => (n.issue_date < min ? n.issue_date : min), newsletters[0].issue_date);
+  }, [newsletters]);
+
   const grouped = useMemo(() => {
     const map = new Map<number, NewsletterRow[]>();
-    (newsletters ?? []).forEach((n) => {
+    filtered.forEach((n) => {
       const year = new Date(n.issue_date).getUTCFullYear();
       if (!map.has(year)) map.set(year, []);
       map.get(year)!.push(n);
     });
     return Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
-  }, [newsletters]);
+  }, [filtered]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +73,8 @@ export default function Newsletters() {
   const handleClear = () => {
     setQuery("");
     setSubmittedQuery("");
+    setFromMonth("");
+    setToMonth("");
   };
 
   const openPdf = async (path: string) => {
