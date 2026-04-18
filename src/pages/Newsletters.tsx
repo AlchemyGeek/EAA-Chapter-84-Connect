@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Newspaper, Search, ExternalLink } from "lucide-react";
+import { ArrowLeft, Newspaper, Search, ExternalLink, Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type NewsletterRow = {
@@ -27,6 +27,8 @@ export default function Newsletters() {
 
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
+  const [fromMonth, setFromMonth] = useState(""); // YYYY-MM
+  const [toMonth, setToMonth] = useState(""); // YYYY-MM
 
   const { data: newsletters, isLoading } = useQuery({
     queryKey: ["newsletters", submittedQuery],
@@ -39,15 +41,29 @@ export default function Newsletters() {
     },
   });
 
+  const filtered = useMemo(() => {
+    return (newsletters ?? []).filter((n) => {
+      const ym = n.issue_date.slice(0, 7); // YYYY-MM
+      if (fromMonth && ym < fromMonth) return false;
+      if (toMonth && ym > toMonth) return false;
+      return true;
+    });
+  }, [newsletters, fromMonth, toMonth]);
+
+  const oldest = useMemo(() => {
+    if (!newsletters || newsletters.length === 0) return null;
+    return newsletters.reduce((min, n) => (n.issue_date < min ? n.issue_date : min), newsletters[0].issue_date);
+  }, [newsletters]);
+
   const grouped = useMemo(() => {
     const map = new Map<number, NewsletterRow[]>();
-    (newsletters ?? []).forEach((n) => {
+    filtered.forEach((n) => {
       const year = new Date(n.issue_date).getUTCFullYear();
       if (!map.has(year)) map.set(year, []);
       map.get(year)!.push(n);
     });
     return Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
-  }, [newsletters]);
+  }, [filtered]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +73,8 @@ export default function Newsletters() {
   const handleClear = () => {
     setQuery("");
     setSubmittedQuery("");
+    setFromMonth("");
+    setToMonth("");
   };
 
   const openPdf = async (path: string) => {
@@ -106,21 +124,59 @@ export default function Newsletters() {
             />
           </div>
           <Button type="submit">Search</Button>
-          {submittedQuery && (
+          {(submittedQuery || fromMonth || toMonth) && (
             <Button type="button" variant="ghost" onClick={handleClear}>
               Clear
             </Button>
           )}
         </form>
 
+        {/* Date range filter */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Date range:</span>
+          <Input
+            type="month"
+            value={fromMonth}
+            onChange={(e) => setFromMonth(e.target.value)}
+            className="w-auto h-9"
+            aria-label="From month"
+          />
+          <span className="text-muted-foreground">to</span>
+          <Input
+            type="month"
+            value={toMonth}
+            onChange={(e) => setToMonth(e.target.value)}
+            className="w-auto h-9"
+            aria-label="To month"
+          />
+        </div>
+
+        {/* Oldest notification */}
+        {oldest && (
+          <div className="flex items-start gap-2 text-xs text-muted-foreground border rounded-md px-3 py-2 bg-muted/30">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>
+              Oldest newsletter in the archive:{" "}
+              <span className="font-medium text-foreground">
+                {new Date(oldest + "T00:00:00").toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "long",
+                })}
+              </span>
+            </span>
+          </div>
+        )}
+
         {/* Results */}
         {isLoading ? (
           <p className="text-muted-foreground text-sm">Loading…</p>
-        ) : !newsletters || newsletters.length === 0 ? (
+        ) : !filtered || filtered.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground text-sm">
               {submittedQuery
-                ? `No newsletters match "${submittedQuery}".`
+                ? `No newsletters match "${submittedQuery}"${fromMonth || toMonth ? " in this date range" : ""}.`
+                : fromMonth || toMonth
+                ? "No newsletters in this date range."
                 : "No newsletters in the archive yet."}
             </CardContent>
           </Card>
