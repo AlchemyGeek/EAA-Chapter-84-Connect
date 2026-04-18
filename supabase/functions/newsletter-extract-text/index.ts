@@ -104,6 +104,10 @@ Deno.serve(async (req) => {
       const { text } = await extractText(pdf, { mergePages: true });
       extracted = Array.isArray(text) ? text.join("\n\n") : (text ?? "");
     } catch (e) {
+      // fall-through to error handling below
+    }
+    if (false) {
+      try {} catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       await admin
         .from("newsletters")
