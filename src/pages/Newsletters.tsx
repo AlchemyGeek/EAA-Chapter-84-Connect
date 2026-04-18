@@ -19,6 +19,7 @@ type NewsletterRow = {
   extraction_status: string;
   snippet: string | null;
   rank?: number;
+  match_count?: number;
 };
 
 export default function Newsletters() {
@@ -218,6 +219,11 @@ function NewsletterRow({ n, onOpen }: { n: NewsletterRow; onOpen: () => void }) 
             {dateLabel}
           </span>
           <span className="text-sm font-medium truncate">{n.title}</span>
+          {typeof n.match_count === "number" && n.match_count > 0 && (
+            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+              {n.match_count} {n.match_count === 1 ? "match" : "matches"}
+            </Badge>
+          )}
           {n.extraction_status !== "done" && (
             <Badge variant="outline" className="text-[10px] py-0 px-1.5">
               {n.extraction_status === "pending" ? "Indexing…" : "Failed"}
