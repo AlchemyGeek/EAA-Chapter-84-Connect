@@ -48,7 +48,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <PWAUpdatePrompt />
+      {/* PWAUpdatePrompt removed during SW kill-switch transition */}
       <BrowserRouter>
         <AuthProvider>
           <Routes>
