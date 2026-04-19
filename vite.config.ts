@@ -16,8 +16,14 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
+    // PWA temporarily disabled during the SW kill-switch transition.
+    // `selfDestroying: true` ships a service worker whose only job is to
+    // unregister itself and clear caches. Combined with the unregister
+    // logic in src/main.tsx, this guarantees stuck users get freed.
+    // Re-enable once telemetry shows no stuck users.
     VitePWA({
       registerType: "autoUpdate",
+      selfDestroying: true,
       devOptions: {
         enabled: false,
       },
