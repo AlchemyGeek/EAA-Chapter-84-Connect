@@ -23,27 +23,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let hydrated = false;
 
     // Set up listener FIRST — never await async work inside the callback (deadlock risk).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
-      // Trust whatever the SDK gives us. SIGNED_OUT will arrive naturally
-      // if a refresh fails; do not call signOut() from inside the callback.
       setUser(session?.user ?? null);
-      setLoading(false);
+      // Only flip loading=false from the listener AFTER initial hydration completes.
+      // This prevents a transient INITIAL_SESSION event from racing with getSession()
+      // and briefly exposing user=null to route guards (which then redirect to /auth).
+      if (hydrated) {
+        setLoading(false);
+      }
     });
 
-    // Then hydrate from storage.
+    // Then hydrate from storage. This is the authoritative source for initial state.
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
         if (!mounted) return;
         setUser(session?.user ?? null);
+        hydrated = true;
         setLoading(false);
       })
       .catch(() => {
         if (!mounted) return;
         setUser(null);
+        hydrated = true;
         setLoading(false);
       });
 
