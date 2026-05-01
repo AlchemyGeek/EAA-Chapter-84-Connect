@@ -97,6 +97,44 @@ export default function NewMemberApplications() {
     },
   });
 
+  // Load chapter fees so we can default the payment amount to the
+  // pro-rated fee that matches the applicant's quarter.
+  const { data: chapterFees = [] } = useQuery({
+    queryKey: ["chapter-fees-for-applications"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chapter_fees")
+        .select("name, amount")
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Resolve the pro-rated / new-member fee amount for an application's quarter.
+  // Mirrors the matching logic in the new-member-reminder edge function:
+  // extract Q1/Q2/Q3/Q4 from quarter_applied (e.g. "Q2 2026") and pick the
+  // matching pro-rated or new-membership fee — never the Annual fee.
+  const getProRatedAmountForApp = (app: any): number => {
+    const recorded = Number(app?.fee_amount ?? 0);
+    if (recorded > 0) return recorded;
+
+    const match = String(app?.quarter_applied || "")
+      .toUpperCase()
+      .match(/Q[1-4]/);
+    if (!match) return 0;
+    const quarter = match[0];
+
+    const fee = chapterFees.find((f: any) => {
+      const upper = String(f.name || "").toUpperCase();
+      return (
+        upper.startsWith(quarter + " ") &&
+        /(PRO-?RATED|NEW MEMBERSHIP)/.test(upper)
+      );
+    });
+    return fee ? Number(fee.amount) : 0;
+  };
+
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ["new-member-applications", filter],
     queryFn: async () => {
@@ -312,7 +350,8 @@ export default function NewMemberApplications() {
     // Special flow for marking fees paid: open payment dialog instead of toggling directly
     if (field === "fees_verified" && checked && !app.fees_verified) {
       setPayDate(new Date());
-      setPayAmount(app.fee_amount ? String(Number(app.fee_amount)) : "");
+      const defaultAmount = getProRatedAmountForApp(app);
+      setPayAmount(defaultAmount > 0 ? String(defaultAmount) : "");
       setPayMethod("Square");
       setFeeDialogApp(app);
       return;
