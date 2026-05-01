@@ -106,10 +106,14 @@ export function StatusDashboard({
   eaaNumber,
   officerRole,
 }: StatusDashboardProps) {
-  const { status, message, overdue } = computeStatus(currentStanding, expirationDate);
+  const { status, message, overdue, isProspect } = computeStatus(currentStanding, expirationDate, memberType);
   const config = statusConfig[status];
   const Icon = config.icon;
-  const displayLabel = status === "expiring" && overdue ? "Active — Membership Overdue" : config.label;
+  const displayLabel = isProspect
+    ? "Application Pending"
+    : status === "expiring" && overdue
+    ? "Active — Membership Overdue"
+    : config.label;
 
   return (
     <Card className={config.cardClass}>
