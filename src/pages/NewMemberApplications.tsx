@@ -225,6 +225,29 @@ export default function NewMemberApplications() {
     },
   });
 
+  const sendReminder = useMutation({
+    mutationFn: async (app: any) => {
+      const { data, error } = await supabase.functions.invoke("new-member-reminder", {
+        body: { application_id: app.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+      toast({ title: "Reminder email queued" });
+      setDetailApp(null);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Could not send reminder",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCheckboxChange = (
     app: any,
     field: "eaa_verified" | "fees_verified",
