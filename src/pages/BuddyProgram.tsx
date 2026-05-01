@@ -333,10 +333,13 @@ export default function BuddyProgram() {
 
   const getEmailStatus = (assignmentId: string) => {
     const logs = emailLogs.filter((l) => l.assignment_id === assignmentId);
+    const intro = logs.find((l) => l.email_type === "intro");
+    const checkIn = logs.find((l) => l.email_type === "check_in");
     return {
-      introSent: logs.some((l) => l.email_type === "intro"),
-      introSentAt: logs.find((l) => l.email_type === "intro")?.sent_at,
-      reminderSent: logs.some((l) => l.email_type === "reminder"),
+      introSent: !!intro,
+      introSentAt: intro?.sent_at,
+      checkInSent: !!checkIn,
+      checkInSentAt: checkIn?.sent_at,
     };
   };
 
