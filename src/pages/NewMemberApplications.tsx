@@ -44,17 +44,17 @@ import { UserPlus, AlertTriangle, Mail } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
-function getSecondTuesdayOfJanuaryNextYear(): string {
+function getSecondTuesdayOfMarchNextYear(): string {
   const nextYear = new Date().getFullYear() + 1;
-  const jan1 = new Date(nextYear, 0, 1);
+  const mar1 = new Date(nextYear, 2, 1);
   // Day of week: 0=Sun, 1=Mon, 2=Tue...
-  const dayOfWeek = jan1.getDay();
+  const dayOfWeek = mar1.getDay();
   // Days until first Tuesday
   const daysUntilTue = (2 - dayOfWeek + 7) % 7;
   const firstTuesday = 1 + daysUntilTue;
   const secondTuesday = firstTuesday + 7;
   // Format as YYYY-MM-DD
-  return `${nextYear}-01-${String(secondTuesday).padStart(2, "0")}`;
+  return `${nextYear}-03-${String(secondTuesday).padStart(2, "0")}`;
 }
 
 export default function NewMemberApplications() {
