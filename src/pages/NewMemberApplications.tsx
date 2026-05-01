@@ -314,7 +314,7 @@ export default function NewMemberApplications() {
                           Existing Member
                         </Badge>
                       )}
-                      {isSynced(app.created_at) ? (
+                      {isSynced(app) ? (
                         <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                           Synced
                         </Badge>
@@ -330,28 +330,30 @@ export default function NewMemberApplications() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <label className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
-                      <Checkbox
-                        checked={app.eaa_verified}
-                        disabled={app.processed || updateVerification.isPending}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange(app, "eaa_verified", !!checked)
-                        }
-                      />
-                      <span className="text-[10px] text-muted-foreground leading-none">EAA</span>
-                    </label>
-                    <label className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
-                      <Checkbox
-                        checked={app.fees_verified}
-                        disabled={app.processed || updateVerification.isPending}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange(app, "fees_verified", !!checked)
-                        }
-                      />
-                      <span className="text-[10px] text-muted-foreground leading-none">Fees</span>
-                    </label>
-                  </div>
+                  {!app.processed && (
+                    <div className="flex items-center gap-4 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <label className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
+                        <Checkbox
+                          checked={app.eaa_verified}
+                          disabled={updateVerification.isPending}
+                          onCheckedChange={(checked) =>
+                            handleCheckboxChange(app, "eaa_verified", !!checked)
+                          }
+                        />
+                        <span className="text-[10px] text-muted-foreground leading-none">EAA</span>
+                      </label>
+                      <label className="flex flex-col items-center gap-1 min-h-[44px] justify-center">
+                        <Checkbox
+                          checked={app.fees_verified}
+                          disabled={updateVerification.isPending}
+                          onCheckedChange={(checked) =>
+                            handleCheckboxChange(app, "fees_verified", !!checked)
+                          }
+                        />
+                        <span className="text-[10px] text-muted-foreground leading-none">Fees</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
