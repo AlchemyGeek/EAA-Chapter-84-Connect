@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Activity, Users, TrendingUp, Star, Moon, MousePointerClick, Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const trendChartConfig = {
   active_members: {
@@ -62,16 +62,20 @@ export default function MemberEngagement() {
           {kpiCards.map((kpi) => (
             <Card key={kpi.label}>
               <CardContent className="p-4 flex flex-col items-center text-center gap-1 relative">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted" aria-label={`Info about ${kpi.label}`}>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="absolute top-2 right-2 p-2 -m-1 rounded-full hover:bg-muted"
+                      aria-label={`Info about ${kpi.label}`}
+                    >
                       <Info className="h-3.5 w-3.5 text-muted-foreground" />
                     </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                  </PopoverTrigger>
+                  <PopoverContent side="top" className="max-w-[260px] w-auto p-3 text-xs">
                     {kpi.description}
-                  </TooltipContent>
-                </Tooltip>
+                  </PopoverContent>
+                </Popover>
                 <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
                 <p className="text-2xl font-bold">{String(kpi.value)}</p>
                 <p className="text-xs text-muted-foreground">{kpi.label}</p>
