@@ -329,6 +329,10 @@ export default function NewMemberApplications() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
+                      {!app.processed && (() => {
+                        const days = differenceInCalendarDays(new Date(), new Date(app.created_at));
+                        return ` · ${days} day${days === 1 ? "" : "s"} ago`;
+                      })()}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       {existingEaaSet.has(app.eaa_number?.trim()) && (
