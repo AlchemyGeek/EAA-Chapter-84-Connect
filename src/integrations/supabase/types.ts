@@ -557,6 +557,7 @@ export type Database = {
           processed: boolean
           processed_at: string | null
           quarter_applied: string
+          reminder_sent_at: string | null
           roster_key_id: number | null
           state: string
           zip_code: string
@@ -576,6 +577,7 @@ export type Database = {
           processed?: boolean
           processed_at?: string | null
           quarter_applied: string
+          reminder_sent_at?: string | null
           roster_key_id?: number | null
           state: string
           zip_code: string
@@ -595,6 +597,7 @@ export type Database = {
           processed?: boolean
           processed_at?: string | null
           quarter_applied?: string
+          reminder_sent_at?: string | null
           roster_key_id?: number | null
           state?: string
           zip_code?: string

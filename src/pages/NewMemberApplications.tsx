@@ -40,8 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, AlertTriangle } from "lucide-react";
-import { format } from "date-fns";
+import { UserPlus, AlertTriangle, Mail } from "lucide-react";
+import { format, differenceInCalendarDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
 function getSecondTuesdayOfJanuaryNextYear(): string {
@@ -225,6 +225,29 @@ export default function NewMemberApplications() {
     },
   });
 
+  const sendReminder = useMutation({
+    mutationFn: async (app: any) => {
+      const { data, error } = await supabase.functions.invoke("new-member-reminder", {
+        body: { application_id: app.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+      toast({ title: "Reminder email queued" });
+      setDetailApp(null);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Could not send reminder",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCheckboxChange = (
     app: any,
     field: "eaa_verified" | "fees_verified",
@@ -306,6 +329,10 @@ export default function NewMemberApplications() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
+                      {!app.processed && (() => {
+                        const days = differenceInCalendarDays(new Date(), new Date(app.created_at));
+                        return ` · ${days} day${days === 1 ? "" : "s"} ago`;
+                      })()}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       {existingEaaSet.has(app.eaa_number?.trim()) && (
@@ -426,7 +453,36 @@ export default function NewMemberApplications() {
                   </p>
                 </div>
               )}
+              {detailApp.reminder_sent_at && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Dues Reminder Sent</span>
+                  <p className="font-medium">
+                    {format(new Date(detailApp.reminder_sent_at), "MMMM d, yyyy h:mm a")}
+                  </p>
+                </div>
+              )}
               </div>
+
+              {!detailApp.processed && !detailApp.fees_verified && (
+                <div className="pt-2 border-t border-border">
+                  {detailApp.reminder_sent_at ? (
+                    <p className="text-xs text-muted-foreground">
+                      A dues reminder has already been sent. Only one reminder per applicant is allowed.
+                    </p>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={sendReminder.isPending}
+                      onClick={() => sendReminder.mutate(detailApp)}
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      {sendReminder.isPending ? "Sending..." : "Send Dues Reminder Email"}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
