@@ -121,6 +121,49 @@ export default function NewMemberApplications() {
 
   const existingEaaSet = new Set(existingMembers.map((m) => m.eaa_number?.trim()));
 
+  // For each application's linked roster member, determine when it was last touched by a roster import.
+  // An application counts as "synced" only if its linked roster row has been touched by an import
+  // that ran at or after the application was processed (or created, if not yet processed).
+  const rosterKeyIds = applications
+    .map((a) => a.roster_key_id)
+    .filter((k): k is number => typeof k === "number");
+
+  const { data: linkedRosterRows = [] } = useQuery({
+    queryKey: ["nma-linked-roster-import", rosterKeyIds],
+    enabled: rosterKeyIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, last_import_id")
+        .in("key_id", rosterKeyIds);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const importIds = Array.from(
+    new Set(linkedRosterRows.map((r) => r.last_import_id).filter(Boolean) as string[])
+  );
+
+  const { data: importTimes = [] } = useQuery({
+    queryKey: ["nma-import-times", importIds],
+    enabled: importIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_imports")
+        .select("id, imported_at")
+        .in("id", importIds);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const importTimeById = new Map(importTimes.map((i) => [i.id, new Date(i.imported_at)]));
+  const lastImportByKeyId = new Map(
+    linkedRosterRows.map((r) => [r.key_id, r.last_import_id ? importTimeById.get(r.last_import_id) : null])
+  );
+
+
   const updateVerification = useMutation({
     mutationFn: async ({
       id,
@@ -207,9 +250,12 @@ export default function NewMemberApplications() {
   if (!user) return <Navigate to="/auth" replace />;
   if (!isOfficerOrAbove) return <Navigate to="/home" replace />;
 
-  const isSynced = (createdAt: string) => {
-    if (!lastSync) return false;
-    return new Date(createdAt) < lastSync;
+  const isSynced = (app: any) => {
+    if (!app.roster_key_id) return false;
+    const rosterImportTime = lastImportByKeyId.get(app.roster_key_id);
+    if (!rosterImportTime) return false;
+    const reference = app.processed_at ? new Date(app.processed_at) : new Date(app.created_at);
+    return rosterImportTime >= reference;
   };
 
   return (
