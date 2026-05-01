@@ -595,7 +595,7 @@ export default function BuddyProgram() {
                 });
               }}
             >
-              {manualAssign.isPending ? "Assigning..." : "Assign & Send Intro"}
+              {manualAssign.isPending ? "Assigning..." : "Assign Buddy"}
             </Button>
           </DialogFooter>
         </DialogContent>
