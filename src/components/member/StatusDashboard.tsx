@@ -25,16 +25,6 @@ function computeStatus(
   }
 
   if (currentStanding !== "Active") {
-    if (isProspect) {
-      return {
-        status: "lapsed",
-        message:
-          "Your membership application is being processed. Please log back in in a few days to access full member features.",
-        coverageYear: null,
-        overdue: false,
-        isProspect: true,
-      };
-    }
     return {
       status: "lapsed",
       message: expDate
