@@ -453,7 +453,36 @@ export default function NewMemberApplications() {
                   </p>
                 </div>
               )}
+              {detailApp.reminder_sent_at && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Dues Reminder Sent</span>
+                  <p className="font-medium">
+                    {format(new Date(detailApp.reminder_sent_at), "MMMM d, yyyy h:mm a")}
+                  </p>
+                </div>
+              )}
               </div>
+
+              {!detailApp.processed && !detailApp.fees_verified && (
+                <div className="pt-2 border-t border-border">
+                  {detailApp.reminder_sent_at ? (
+                    <p className="text-xs text-muted-foreground">
+                      A dues reminder has already been sent. Only one reminder per applicant is allowed.
+                    </p>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={sendReminder.isPending}
+                      onClick={() => sendReminder.mutate(detailApp)}
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      {sendReminder.isPending ? "Sending..." : "Send Dues Reminder Email"}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
