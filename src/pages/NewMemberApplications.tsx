@@ -350,7 +350,8 @@ export default function NewMemberApplications() {
     // Special flow for marking fees paid: open payment dialog instead of toggling directly
     if (field === "fees_verified" && checked && !app.fees_verified) {
       setPayDate(new Date());
-      setPayAmount(app.fee_amount ? String(Number(app.fee_amount)) : "");
+      const defaultAmount = getProRatedAmountForApp(app);
+      setPayAmount(defaultAmount > 0 ? String(defaultAmount) : "");
       setPayMethod("Square");
       setFeeDialogApp(app);
       return;
