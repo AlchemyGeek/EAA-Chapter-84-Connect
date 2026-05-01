@@ -40,9 +40,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, AlertTriangle, Mail } from "lucide-react";
+import { UserPlus, AlertTriangle, Mail, CalendarIcon, CircleDollarSign } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+
+const PAYMENT_METHODS = [
+  { label: "Cash", code: "cash" },
+  { label: "Check", code: "check" },
+  { label: "PayPal", code: "pp" },
+  { label: "Square", code: "sq" },
+] as const;
 
 function getSecondTuesdayOfMarchNextYear(): string {
   const nextYear = new Date().getFullYear() + 1;
@@ -64,6 +76,10 @@ export default function NewMemberApplications() {
   const [filter, setFilter] = useState<"pending" | "completed" | "all">("pending");
   const [detailApp, setDetailApp] = useState<any | null>(null);
   const [promoteApp, setPromoteApp] = useState<any | null>(null);
+  const [feeDialogApp, setFeeDialogApp] = useState<any | null>(null);
+  const [payDate, setPayDate] = useState<Date>(new Date());
+  const [payAmount, setPayAmount] = useState<string>("");
+  const [payMethod, setPayMethod] = useState<string>("Square");
 
   // Get last sync date from roster_imports
   const { data: lastSync } = useQuery({
@@ -248,11 +264,60 @@ export default function NewMemberApplications() {
     },
   });
 
+  const recordFeePayment = useMutation({
+    mutationFn: async () => {
+      const app = feeDialogApp;
+      if (!app) throw new Error("No application selected");
+      if (!app.roster_key_id) throw new Error("No linked roster record found");
+      const methodObj = PAYMENT_METHODS.find((m) => m.label === payMethod);
+      if (!methodObj) throw new Error("Invalid method");
+      const amountNum = parseFloat(payAmount);
+      if (isNaN(amountNum) || amountNum <= 0) throw new Error("Invalid amount");
+
+      const udf1Value = `${format(payDate, "MM/dd/yyyy")} $${amountNum}/${methodObj.code}`;
+
+      const { error: rosterErr } = await supabase
+        .from("roster_members")
+        .update({ udf1_text: udf1Value } as any)
+        .eq("key_id", app.roster_key_id);
+      if (rosterErr) throw rosterErr;
+
+      const { error: appErr } = await supabase
+        .from("new_member_applications")
+        .update({ fees_verified: true } as any)
+        .eq("id", app.id);
+      if (appErr) throw appErr;
+
+      return app;
+    },
+    onSuccess: (app) => {
+      queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+      toast({ title: "Payment recorded" });
+      const completedApp = app;
+      setFeeDialogApp(null);
+      if (completedApp?.eaa_verified) {
+        setPromoteApp({ ...completedApp, fees_verified: true });
+      }
+    },
+    onError: (err: any) => {
+      toast({ title: "Could not record payment", description: err.message, variant: "destructive" });
+    },
+  });
+
   const handleCheckboxChange = (
     app: any,
     field: "eaa_verified" | "fees_verified",
     checked: boolean
   ) => {
+    // Special flow for marking fees paid: open payment dialog instead of toggling directly
+    if (field === "fees_verified" && checked && !app.fees_verified) {
+      setPayDate(new Date());
+      setPayAmount(app.fee_amount ? String(Number(app.fee_amount)) : "");
+      setPayMethod("Square");
+      setFeeDialogApp(app);
+      return;
+    }
+
     updateVerification.mutate({ id: app.id, field, value: checked });
 
     // If this check makes both true, prompt promotion
@@ -485,6 +550,81 @@ export default function NewMemberApplications() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Record Membership Payment Dialog */}
+      <Dialog open={!!feeDialogApp} onOpenChange={(open) => !open && setFeeDialogApp(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CircleDollarSign className="h-5 w-5" />
+              Record Membership Payment
+            </DialogTitle>
+            <DialogDescription>
+              {feeDialogApp && (
+                <>Recording payment for <strong>{feeDialogApp.first_name} {feeDialogApp.last_name}</strong></>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Payment Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("w-full justify-start text-left font-normal", !payDate && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {payDate ? format(payDate, "MMM d, yyyy") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={payDate}
+                    onSelect={(d) => d && setPayDate(d)}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label>Amount ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="40.00"
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Method</Label>
+              <Select value={payMethod} onValueChange={setPayMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => (
+                    <SelectItem key={m.code} value={m.label}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFeeDialogApp(null)}>Cancel</Button>
+            <Button
+              onClick={() => recordFeePayment.mutate()}
+              disabled={!payAmount || !payMethod || recordFeePayment.isPending}
+            >
+              {recordFeePayment.isPending ? "Recording..." : "Confirm Payment"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
