@@ -530,9 +530,10 @@ export default function BuddyProgram() {
                 setAssignDialog({ appId, currentVolKeyId });
                 setSelectedVolunteer("");
               }}
-              onSendReminder={(id) => sendReminderEmail.mutate(id)}
+              onSendIntro={(id) => sendBuddyEmail.mutate({ assignmentId: id, type: "intro" })}
+              onSendCheckIn={(id) => sendBuddyEmail.mutate({ assignmentId: id, type: "check_in" })}
               onGraduate={(id) => setGraduateConfirm(id)}
-              sendReminderPending={sendReminderEmail.isPending}
+              sendEmailPending={sendBuddyEmail.isPending}
               getEmailStatus={getEmailStatus}
             />
           ) : (
@@ -553,7 +554,7 @@ export default function BuddyProgram() {
               {assignDialog?.currentVolKeyId ? "Reassign Buddy" : "Assign Buddy"}
             </DialogTitle>
             <DialogDescription>
-              Select a volunteer to pair with this new member. An introduction email will be sent automatically.
+              Select a volunteer to pair with this new member. No email will be sent automatically — use "Send Intro" afterward.
             </DialogDescription>
           </DialogHeader>
           <Select value={selectedVolunteer} onValueChange={setSelectedVolunteer}>
