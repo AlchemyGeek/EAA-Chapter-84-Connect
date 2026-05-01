@@ -420,6 +420,12 @@ export default function NewMemberApplications() {
                       ) : (
                         <Badge variant="secondary" className="text-xs">Pending</Badge>
                       )}
+                      {!app.processed && app.reminder_sent_at && (
+                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 gap-1">
+                          <Mail className="h-3 w-3" />
+                          Reminder Sent
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   {!app.processed && (
