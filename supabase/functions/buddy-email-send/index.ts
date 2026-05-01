@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    if (!['intro', 'reminder'].includes(email_type)) {
-      return new Response(JSON.stringify({ error: 'email_type must be intro or reminder' }), {
+    if (!['intro', 'check_in'].includes(email_type)) {
+      return new Response(JSON.stringify({ error: 'email_type must be intro or check_in' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })

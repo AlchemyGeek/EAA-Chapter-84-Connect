@@ -15,11 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -39,11 +34,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   Users, UserPlus, Search, Trash2, UserCheck, RefreshCw,
-  Mail, Send, GraduationCap, Clock, Plus,
+  Mail, Send, GraduationCap, Plus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const TWO_MONTHS_MS = 60 * 24 * 60 * 60 * 1000;
 
 export default function BuddyProgram() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
@@ -215,7 +208,7 @@ export default function BuddyProgram() {
     },
   });
 
-  // Manual assign / reassign: insert or update assignment, then send intro email
+  // Manual assign / reassign: insert or update assignment only. Email is sent separately.
   const manualAssign = useMutation({
     mutationFn: async ({
       applicationId,
@@ -226,10 +219,7 @@ export default function BuddyProgram() {
       volunteerKeyId: number;
       existingAssignmentId?: string;
     }) => {
-      let assignmentId: string;
-
       if (existingAssignmentId) {
-        // Reassign
         const { error } = await supabase
           .from("buddy_assignments")
           .update({
@@ -238,9 +228,8 @@ export default function BuddyProgram() {
           })
           .eq("id", existingAssignmentId);
         if (error) throw error;
-        assignmentId = existingAssignmentId;
+        return existingAssignmentId;
       } else {
-        // New assignment
         const { data, error } = await supabase
           .from("buddy_assignments")
           .insert({
@@ -250,42 +239,31 @@ export default function BuddyProgram() {
           .select("id")
           .single();
         if (error) throw error;
-        assignmentId = data.id;
+        return data.id;
       }
-
-      // Send intro email
-      const { error: emailError } = await supabase.functions.invoke("buddy-email-send", {
-        body: { assignment_id: assignmentId, email_type: "intro" },
-      });
-      if (emailError) {
-        console.error("Intro email failed:", emailError);
-        // Don't throw - assignment was successful even if email fails
-      }
-
-      return assignmentId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["buddy-email-logs"] });
       setAssignDialog(null);
       setSelectedVolunteer("");
-      toast({ title: "Buddy assigned and intro email queued" });
+      toast({ title: "Buddy assigned" });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
 
-  const sendReminderEmail = useMutation({
-    mutationFn: async (assignmentId: string) => {
+  const sendBuddyEmail = useMutation({
+    mutationFn: async ({ assignmentId, type }: { assignmentId: string; type: "intro" | "check_in" }) => {
       const { error } = await supabase.functions.invoke("buddy-email-send", {
-        body: { assignment_id: assignmentId, email_type: "reminder" },
+        body: { assignment_id: assignmentId, email_type: type },
       });
       if (error) throw error;
+      return type;
     },
-    onSuccess: () => {
+    onSuccess: (type) => {
       queryClient.invalidateQueries({ queryKey: ["buddy-email-logs"] });
-      toast({ title: "Reminder email sent" });
+      toast({ title: type === "intro" ? "Intro email sent" : "Check-In email sent" });
     },
     onError: (err: any) => {
       toast({ title: "Error sending email", description: err.message, variant: "destructive" });
@@ -350,10 +328,13 @@ export default function BuddyProgram() {
 
   const getEmailStatus = (assignmentId: string) => {
     const logs = emailLogs.filter((l) => l.assignment_id === assignmentId);
+    const intro = logs.find((l) => l.email_type === "intro");
+    const checkIn = logs.find((l) => l.email_type === "check_in");
     return {
-      introSent: logs.some((l) => l.email_type === "intro"),
-      introSentAt: logs.find((l) => l.email_type === "intro")?.sent_at,
-      reminderSent: logs.some((l) => l.email_type === "reminder"),
+      introSent: !!intro,
+      introSentAt: intro?.sent_at,
+      checkInSent: !!checkIn,
+      checkInSentAt: checkIn?.sent_at,
     };
   };
 
@@ -544,9 +525,10 @@ export default function BuddyProgram() {
                 setAssignDialog({ appId, currentVolKeyId });
                 setSelectedVolunteer("");
               }}
-              onSendReminder={(id) => sendReminderEmail.mutate(id)}
+              onSendIntro={(id) => sendBuddyEmail.mutate({ assignmentId: id, type: "intro" })}
+              onSendCheckIn={(id) => sendBuddyEmail.mutate({ assignmentId: id, type: "check_in" })}
               onGraduate={(id) => setGraduateConfirm(id)}
-              sendReminderPending={sendReminderEmail.isPending}
+              sendEmailPending={sendBuddyEmail.isPending}
               getEmailStatus={getEmailStatus}
             />
           ) : (
@@ -567,7 +549,7 @@ export default function BuddyProgram() {
               {assignDialog?.currentVolKeyId ? "Reassign Buddy" : "Assign Buddy"}
             </DialogTitle>
             <DialogDescription>
-              Select a volunteer to pair with this new member. An introduction email will be sent automatically.
+              Select a volunteer to pair with this new member. No email will be sent automatically — use "Send Intro" afterward.
             </DialogDescription>
           </DialogHeader>
           <Select value={selectedVolunteer} onValueChange={setSelectedVolunteer}>
@@ -608,7 +590,7 @@ export default function BuddyProgram() {
                 });
               }}
             >
-              {manualAssign.isPending ? "Assigning..." : "Assign & Send Intro"}
+              {manualAssign.isPending ? "Assigning..." : "Assign Buddy"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -722,9 +704,10 @@ function ActiveMembersList({
   emailLogs,
   now,
   onAssign,
-  onSendReminder,
+  onSendIntro,
+  onSendCheckIn,
   onGraduate,
-  sendReminderPending,
+  sendEmailPending,
   getEmailStatus,
 }: {
   completedApps: any[];
@@ -734,12 +717,12 @@ function ActiveMembersList({
   emailLogs: any[];
   now: number;
   onAssign: (appId: string, currentVolKeyId?: number) => void;
-  onSendReminder: (assignmentId: string) => void;
+  onSendIntro: (assignmentId: string) => void;
+  onSendCheckIn: (assignmentId: string) => void;
   onGraduate: (assignmentId: string) => void;
-  sendReminderPending: boolean;
-  getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; reminderSent: boolean };
+  sendEmailPending: boolean;
+  getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; checkInSent: boolean; checkInSentAt?: string };
 }) {
-  // Show apps that are not graduated
   const activeApps = completedApps.filter((app) => {
     const assignment = assignments.find((a) => a.application_id === app.id);
     return !assignment?.graduated_at;
@@ -753,6 +736,9 @@ function ActiveMembersList({
     );
   }
 
+  const fmtDate = (iso?: string) =>
+    iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
+
   return (
     <div className="space-y-2">
       {activeApps.map((app) => {
@@ -761,17 +747,6 @@ function ActiveMembersList({
           ? volunteerMembers.find((m) => m.key_id === assignment.volunteer_key_id)
           : null;
         const emailStatus = assignment ? getEmailStatus(assignment.id) : null;
-
-        // Calculate days to second email (2 months from intro sent)
-        let daysToReminder: number | null = null;
-        let reminderOverdue = false;
-        if (emailStatus?.introSent && emailStatus.introSentAt && !emailStatus.reminderSent) {
-          const introDate = new Date(emailStatus.introSentAt).getTime();
-          const reminderDue = introDate + TWO_MONTHS_MS;
-          const daysLeft = Math.ceil((reminderDue - now) / (24 * 60 * 60 * 1000));
-          daysToReminder = daysLeft;
-          reminderOverdue = daysLeft <= 0;
-        }
 
         const daysElapsed = assignment
           ? Math.floor((now - new Date(assignment.assigned_at).getTime()) / (24 * 60 * 60 * 1000))
@@ -792,45 +767,9 @@ function ActiveMembersList({
                 </p>
               </div>
               {assignment && (
-                <span className="text-xs text-muted-foreground shrink-0">{durationText}</span>
-              )}
-            </div>
-
-            {/* Status badges */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {emailStatus?.introSent && (
-                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                  <Mail className="h-3 w-3 mr-1" />
-                  Intro Sent
-                </Badge>
-              )}
-              {emailStatus?.reminderSent && (
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                  <Mail className="h-3 w-3 mr-1" />
-                  Reminder Sent
-                </Badge>
-              )}
-              {daysToReminder !== null && !emailStatus?.reminderSent && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge
-                      variant="outline"
-                      className={`text-xs gap-1 ${
-                        reminderOverdue
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      <Clock className="h-3 w-3" />
-                      {reminderOverdue
-                        ? `Due (${Math.abs(daysToReminder!)}d overdue)`
-                        : `${daysToReminder}d to reminder`}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Second email is due 2 months after the intro email
-                  </TooltipContent>
-                </Tooltip>
+                <span className="text-xs text-muted-foreground shrink-0" title={`Assigned ${fmtDate(assignment.assigned_at)}`}>
+                  {durationText}
+                </span>
               )}
             </div>
 
@@ -845,17 +784,54 @@ function ActiveMembersList({
                       : `Volunteer #${assignment.volunteer_key_id}`}
                   </span>
                 </p>
+
+                {/* Status chips: intro / check-in with timestamps */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {emailStatus?.introSent ? (
+                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                      <Mail className="h-3 w-3 mr-1" />
+                      Intro Sent · {fmtDate(emailStatus.introSentAt)}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                      Intro not sent
+                    </Badge>
+                  )}
+                  {emailStatus?.checkInSent ? (
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                      <Mail className="h-3 w-3 mr-1" />
+                      Check-In Sent · {fmtDate(emailStatus.checkInSentAt)}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                      Check-In not sent
+                    </Badge>
+                  )}
+                </div>
+
                 <div className="flex flex-wrap items-center gap-1">
-                  {emailStatus?.introSent && !emailStatus.reminderSent && (
+                  {!emailStatus?.introSent && (
                     <Button
                       size="sm"
                       variant="outline"
                       className="h-7 text-xs gap-1"
-                      onClick={() => onSendReminder(assignment.id)}
-                      disabled={sendReminderPending}
+                      onClick={() => onSendIntro(assignment.id)}
+                      disabled={sendEmailPending}
                     >
                       <Send className="h-3 w-3" />
-                      Reminder
+                      Send Intro
+                    </Button>
+                  )}
+                  {emailStatus?.introSent && !emailStatus.checkInSent && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => onSendCheckIn(assignment.id)}
+                      disabled={sendEmailPending}
+                    >
+                      <Send className="h-3 w-3" />
+                      Send Check-In
                     </Button>
                   )}
                   <Button
