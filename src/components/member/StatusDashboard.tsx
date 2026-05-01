@@ -6,12 +6,24 @@ type MembershipStatus = "good" | "expiring" | "lapsed";
 
 function computeStatus(
   currentStanding: string | null,
-  expirationDate: string | null
-): { status: MembershipStatus; message: string; coverageYear: number | null; overdue: boolean } {
+  expirationDate: string | null,
+  memberType: string | null
+): { status: MembershipStatus; message: string; coverageYear: number | null; overdue: boolean; isProspect: boolean } {
   const now = new Date();
   const expDate = expirationDate ? new Date(expirationDate) : null;
+  const isProspect = (memberType || "").toLowerCase() === "prospect";
 
   if (currentStanding !== "Active") {
+    if (isProspect) {
+      return {
+        status: "lapsed",
+        message:
+          "Your membership application is being processed. Please log back in in a few days to access full member features.",
+        coverageYear: null,
+        overdue: false,
+        isProspect: true,
+      };
+    }
     return {
       status: "lapsed",
       message: expDate
@@ -19,11 +31,12 @@ function computeStatus(
         : "Your membership is inactive.",
       coverageYear: null,
       overdue: false,
+      isProspect: false,
     };
   }
 
   if (!expDate) {
-    return { status: "good", message: "You're in good standing.", coverageYear: null, overdue: false };
+    return { status: "good", message: "You're in good standing.", coverageYear: null, overdue: false, isProspect: false };
   }
 
   const coverageYear = expDate.getFullYear() - 1;
@@ -34,6 +47,7 @@ function computeStatus(
       message: `Your dues expired on ${expDate.toLocaleDateString()}. Please renew to stay current.`,
       coverageYear,
       overdue: true,
+      isProspect: false,
     };
   }
 
@@ -44,10 +58,11 @@ function computeStatus(
       message: `Your dues expire in ${daysUntil} days. Please renew to stay current.`,
       coverageYear,
       overdue: false,
+      isProspect: false,
     };
   }
 
-  return { status: "good", message: `You're in good standing through ${coverageYear}.`, coverageYear, overdue: false };
+  return { status: "good", message: `You're in good standing through ${coverageYear}.`, coverageYear, overdue: false, isProspect: false };
 }
 
 const statusConfig: Record<
@@ -91,10 +106,14 @@ export function StatusDashboard({
   eaaNumber,
   officerRole,
 }: StatusDashboardProps) {
-  const { status, message, overdue } = computeStatus(currentStanding, expirationDate);
+  const { status, message, overdue, isProspect } = computeStatus(currentStanding, expirationDate, memberType);
   const config = statusConfig[status];
   const Icon = config.icon;
-  const displayLabel = status === "expiring" && overdue ? "Active — Membership Overdue" : config.label;
+  const displayLabel = isProspect
+    ? "Application Pending"
+    : status === "expiring" && overdue
+    ? "Active — Membership Overdue"
+    : config.label;
 
   return (
     <Card className={config.cardClass}>
