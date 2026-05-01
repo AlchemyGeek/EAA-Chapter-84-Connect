@@ -76,6 +76,10 @@ export default function NewMemberApplications() {
   const [filter, setFilter] = useState<"pending" | "completed" | "all">("pending");
   const [detailApp, setDetailApp] = useState<any | null>(null);
   const [promoteApp, setPromoteApp] = useState<any | null>(null);
+  const [feeDialogApp, setFeeDialogApp] = useState<any | null>(null);
+  const [payDate, setPayDate] = useState<Date>(new Date());
+  const [payAmount, setPayAmount] = useState<string>("");
+  const [payMethod, setPayMethod] = useState<string>("Square");
 
   // Get last sync date from roster_imports
   const { data: lastSync } = useQuery({
