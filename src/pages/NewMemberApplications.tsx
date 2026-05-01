@@ -264,11 +264,60 @@ export default function NewMemberApplications() {
     },
   });
 
+  const recordFeePayment = useMutation({
+    mutationFn: async () => {
+      const app = feeDialogApp;
+      if (!app) throw new Error("No application selected");
+      if (!app.roster_key_id) throw new Error("No linked roster record found");
+      const methodObj = PAYMENT_METHODS.find((m) => m.label === payMethod);
+      if (!methodObj) throw new Error("Invalid method");
+      const amountNum = parseFloat(payAmount);
+      if (isNaN(amountNum) || amountNum <= 0) throw new Error("Invalid amount");
+
+      const udf1Value = `${format(payDate, "MM/dd/yyyy")} $${amountNum}/${methodObj.code}`;
+
+      const { error: rosterErr } = await supabase
+        .from("roster_members")
+        .update({ udf1_text: udf1Value } as any)
+        .eq("key_id", app.roster_key_id);
+      if (rosterErr) throw rosterErr;
+
+      const { error: appErr } = await supabase
+        .from("new_member_applications")
+        .update({ fees_verified: true } as any)
+        .eq("id", app.id);
+      if (appErr) throw appErr;
+
+      return app;
+    },
+    onSuccess: (app) => {
+      queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+      toast({ title: "Payment recorded" });
+      const completedApp = app;
+      setFeeDialogApp(null);
+      if (completedApp?.eaa_verified) {
+        setPromoteApp({ ...completedApp, fees_verified: true });
+      }
+    },
+    onError: (err: any) => {
+      toast({ title: "Could not record payment", description: err.message, variant: "destructive" });
+    },
+  });
+
   const handleCheckboxChange = (
     app: any,
     field: "eaa_verified" | "fees_verified",
     checked: boolean
   ) => {
+    // Special flow for marking fees paid: open payment dialog instead of toggling directly
+    if (field === "fees_verified" && checked && !app.fees_verified) {
+      setPayDate(new Date());
+      setPayAmount(app.fee_amount ? String(Number(app.fee_amount)) : "");
+      setPayMethod("Square");
+      setFeeDialogApp(app);
+      return;
+    }
+
     updateVerification.mutate({ id: app.id, field, value: checked });
 
     // If this check makes both true, prompt promotion
