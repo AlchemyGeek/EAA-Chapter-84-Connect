@@ -112,7 +112,25 @@ export default function MemberHome() {
     },
   });
 
-  // Fetch active volunteering opportunities count
+  // Fetch the prospect's original new-member application (for quarter-based fee selection)
+  const { data: prospectApplication } = useQuery({
+    queryKey: ["my-application", user?.email],
+    enabled: !!user?.email,
+    queryFn: async () => {
+      const authEmail = user?.email?.trim();
+      if (!authEmail) return null;
+      const { data, error } = await (supabase as any)
+        .from("new_member_applications")
+        .select("quarter_applied, fee_amount, created_at")
+        .ilike("email", authEmail)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { quarter_applied: string | null; fee_amount: number | null; created_at: string } | null;
+    },
+  });
+
   const { data: activeVolCount = 0 } = useQuery({
     queryKey: ["active-vol-count"],
     queryFn: async () => {
