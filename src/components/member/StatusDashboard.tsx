@@ -13,6 +13,17 @@ function computeStatus(
   const expDate = expirationDate ? new Date(expirationDate) : null;
   const isProspect = (memberType || "").toLowerCase() === "prospect";
 
+  if (isProspect) {
+    return {
+      status: "lapsed",
+      message:
+        "Your membership application is being processed. Please log back in in a few days to access full member features.",
+      coverageYear: null,
+      overdue: false,
+      isProspect: true,
+    };
+  }
+
   if (currentStanding !== "Active") {
     if (isProspect) {
       return {
