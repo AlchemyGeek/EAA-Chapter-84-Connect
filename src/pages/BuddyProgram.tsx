@@ -709,9 +709,10 @@ function ActiveMembersList({
   emailLogs,
   now,
   onAssign,
-  onSendReminder,
+  onSendIntro,
+  onSendCheckIn,
   onGraduate,
-  sendReminderPending,
+  sendEmailPending,
   getEmailStatus,
 }: {
   completedApps: any[];
@@ -721,12 +722,12 @@ function ActiveMembersList({
   emailLogs: any[];
   now: number;
   onAssign: (appId: string, currentVolKeyId?: number) => void;
-  onSendReminder: (assignmentId: string) => void;
+  onSendIntro: (assignmentId: string) => void;
+  onSendCheckIn: (assignmentId: string) => void;
   onGraduate: (assignmentId: string) => void;
-  sendReminderPending: boolean;
-  getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; reminderSent: boolean };
+  sendEmailPending: boolean;
+  getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; checkInSent: boolean; checkInSentAt?: string };
 }) {
-  // Show apps that are not graduated
   const activeApps = completedApps.filter((app) => {
     const assignment = assignments.find((a) => a.application_id === app.id);
     return !assignment?.graduated_at;
@@ -740,6 +741,9 @@ function ActiveMembersList({
     );
   }
 
+  const fmtDate = (iso?: string) =>
+    iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
+
   return (
     <div className="space-y-2">
       {activeApps.map((app) => {
@@ -748,17 +752,6 @@ function ActiveMembersList({
           ? volunteerMembers.find((m) => m.key_id === assignment.volunteer_key_id)
           : null;
         const emailStatus = assignment ? getEmailStatus(assignment.id) : null;
-
-        // Calculate days to second email (2 months from intro sent)
-        let daysToReminder: number | null = null;
-        let reminderOverdue = false;
-        if (emailStatus?.introSent && emailStatus.introSentAt && !emailStatus.reminderSent) {
-          const introDate = new Date(emailStatus.introSentAt).getTime();
-          const reminderDue = introDate + TWO_MONTHS_MS;
-          const daysLeft = Math.ceil((reminderDue - now) / (24 * 60 * 60 * 1000));
-          daysToReminder = daysLeft;
-          reminderOverdue = daysLeft <= 0;
-        }
 
         const daysElapsed = assignment
           ? Math.floor((now - new Date(assignment.assigned_at).getTime()) / (24 * 60 * 60 * 1000))
@@ -779,45 +772,9 @@ function ActiveMembersList({
                 </p>
               </div>
               {assignment && (
-                <span className="text-xs text-muted-foreground shrink-0">{durationText}</span>
-              )}
-            </div>
-
-            {/* Status badges */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {emailStatus?.introSent && (
-                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                  <Mail className="h-3 w-3 mr-1" />
-                  Intro Sent
-                </Badge>
-              )}
-              {emailStatus?.reminderSent && (
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                  <Mail className="h-3 w-3 mr-1" />
-                  Reminder Sent
-                </Badge>
-              )}
-              {daysToReminder !== null && !emailStatus?.reminderSent && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge
-                      variant="outline"
-                      className={`text-xs gap-1 ${
-                        reminderOverdue
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      <Clock className="h-3 w-3" />
-                      {reminderOverdue
-                        ? `Due (${Math.abs(daysToReminder!)}d overdue)`
-                        : `${daysToReminder}d to reminder`}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Second email is due 2 months after the intro email
-                  </TooltipContent>
-                </Tooltip>
+                <span className="text-xs text-muted-foreground shrink-0" title={`Assigned ${fmtDate(assignment.assigned_at)}`}>
+                  {durationText}
+                </span>
               )}
             </div>
 
@@ -832,17 +789,54 @@ function ActiveMembersList({
                       : `Volunteer #${assignment.volunteer_key_id}`}
                   </span>
                 </p>
+
+                {/* Status chips: intro / check-in with timestamps */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {emailStatus?.introSent ? (
+                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                      <Mail className="h-3 w-3 mr-1" />
+                      Intro Sent · {fmtDate(emailStatus.introSentAt)}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                      Intro not sent
+                    </Badge>
+                  )}
+                  {emailStatus?.checkInSent ? (
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                      <Mail className="h-3 w-3 mr-1" />
+                      Check-In Sent · {fmtDate(emailStatus.checkInSentAt)}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                      Check-In not sent
+                    </Badge>
+                  )}
+                </div>
+
                 <div className="flex flex-wrap items-center gap-1">
-                  {emailStatus?.introSent && !emailStatus.reminderSent && (
+                  {!emailStatus?.introSent && (
                     <Button
                       size="sm"
                       variant="outline"
                       className="h-7 text-xs gap-1"
-                      onClick={() => onSendReminder(assignment.id)}
-                      disabled={sendReminderPending}
+                      onClick={() => onSendIntro(assignment.id)}
+                      disabled={sendEmailPending}
                     >
                       <Send className="h-3 w-3" />
-                      Reminder
+                      Send Intro
+                    </Button>
+                  )}
+                  {emailStatus?.introSent && !emailStatus.checkInSent && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => onSendCheckIn(assignment.id)}
+                      disabled={sendEmailPending}
+                    >
+                      <Send className="h-3 w-3" />
+                      Send Check-In
                     </Button>
                   )}
                   <Button
