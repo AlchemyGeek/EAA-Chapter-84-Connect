@@ -101,26 +101,35 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Resolve payment URL by quarter
+    // Resolve payment URL by quarter — prefer pro-rated / new-member fees,
+    // never fall back to the full Annual fee for a new applicant.
     const { data: fees } = await supabase
       .from("chapter_fees")
       .select("name, payment_url")
       .order("sort_order");
 
-    const quarter = String(app.quarter_applied || "").toUpperCase();
+    // Extract just the Q1/Q2/Q3/Q4 token from values like "Q2 2026"
+    const quarterMatch = String(app.quarter_applied || "")
+      .toUpperCase()
+      .match(/Q[1-4]/);
+    const quarter = quarterMatch ? quarterMatch[0] : "";
+
     let paymentUrl: string | null = null;
     if (quarter && fees) {
-      const match = fees.find((f: any) =>
-        String(f.name || "").toUpperCase().includes(quarter)
-      );
+      // Match the fee whose name starts with the quarter token (e.g. "Q2 Pro-Rated...")
+      const match = fees.find((f: any) => {
+        const upper = String(f.name || "").toUpperCase();
+        return (
+          upper.startsWith(quarter + " ") &&
+          /(PRO-?RATED|NEW MEMBERSHIP)/.test(upper)
+        );
+      });
       paymentUrl = match?.payment_url ?? null;
     }
-    if (!paymentUrl && fees) {
-      const fallback = fees.find((f: any) =>
-        /annual|renewal/i.test(String(f.name || ""))
-      );
-      paymentUrl = fallback?.payment_url ?? null;
-    }
+    // Do NOT fall back to the Annual Membership Fee — new applicants must
+    // receive a pro-rated link. If no pro-rated fee is configured for the
+    // quarter, leave paymentUrl null so the email shows the contact fallback.
+
 
     const recipient = String(app.email || "").trim();
     if (!recipient) {
