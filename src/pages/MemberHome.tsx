@@ -235,7 +235,7 @@ export default function MemberHome() {
 
   // Dues reminder for active members whose expiration has passed or is within 60 days
   const needsDuesReminder = (() => {
-    if (!member || isInactive) return false;
+    if (!member || isInactive || isProspect) return false;
     if (!member.expiration_date) return false;
     const exp = new Date(member.expiration_date);
     const now = new Date();
@@ -244,9 +244,9 @@ export default function MemberHome() {
     return daysUntil <= 60;
   })();
   const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
-  // Active but overdue = active standing with expired dues
-  const isOverdue = !!member && !isInactive && duesExpired;
-  const isRestricted = isInactive || isOverdue;
+  // Active but overdue = active standing with expired dues (prospects excluded)
+  const isOverdue = !!member && !isInactive && !isProspect && duesExpired;
+  const isRestricted = isInactive || isOverdue || isProspect;
 
   // Find renewal link from chapter fees (look for "annual" or "renewal" in the fee name)
   const renewalFee = chapterFees.find(
