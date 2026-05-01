@@ -40,9 +40,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, AlertTriangle, Mail } from "lucide-react";
+import { UserPlus, AlertTriangle, Mail, CalendarIcon, CircleDollarSign } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+
+const PAYMENT_METHODS = [
+  { label: "Cash", code: "cash" },
+  { label: "Check", code: "check" },
+  { label: "PayPal", code: "pp" },
+  { label: "Square", code: "sq" },
+] as const;
 
 function getSecondTuesdayOfMarchNextYear(): string {
   const nextYear = new Date().getFullYear() + 1;
