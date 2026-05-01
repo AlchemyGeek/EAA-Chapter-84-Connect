@@ -39,11 +39,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   Users, UserPlus, Search, Trash2, UserCheck, RefreshCw,
-  Mail, Send, GraduationCap, Clock, Plus,
+  Mail, Send, GraduationCap, Plus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const TWO_MONTHS_MS = 60 * 24 * 60 * 60 * 1000;
 
 export default function BuddyProgram() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
