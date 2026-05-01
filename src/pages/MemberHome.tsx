@@ -248,10 +248,19 @@ export default function MemberHome() {
   const isOverdue = !!member && !isInactive && !isProspect && duesExpired;
   const isRestricted = isInactive || isOverdue || isProspect;
 
-  // Find renewal link from chapter fees (look for "annual" or "renewal" in the fee name)
-  const renewalFee = chapterFees.find(
-    (f) => f.name.toLowerCase().includes("annual") || f.name.toLowerCase().includes("renewal") || f.name.toLowerCase().includes("renew")
-  );
+  // Find renewal/payment link from chapter fees.
+  // For Prospects, prefer the fee matching their original application quarter (e.g., "Q2").
+  // Otherwise fall back to the annual/renewal fee or a configured site link.
+  const renewalFee = (() => {
+    if (isProspect && prospectApplication?.quarter_applied) {
+      const q = prospectApplication.quarter_applied.toUpperCase();
+      const match = chapterFees.find((f) => f.name.toUpperCase().includes(q));
+      if (match) return match;
+    }
+    return chapterFees.find(
+      (f) => f.name.toLowerCase().includes("annual") || f.name.toLowerCase().includes("renewal") || f.name.toLowerCase().includes("renew")
+    );
+  })();
   const renewalUrl = renewalFee?.payment_url || siteLinks.find(
     (l) => l.name.toLowerCase().includes("renewal") || l.name.toLowerCase().includes("renew")
   )?.url;
