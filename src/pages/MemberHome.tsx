@@ -410,8 +410,38 @@ export default function MemberHome() {
           </Card>
         )}
 
-        {/* Renewal CTA for inactive members */}
-        {member && isInactive && (
+        {/* Prospect (application pending) CTA */}
+        {member && isInactive && isProspect && (
+          <Card className="border-2 border-amber-300/60 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/40 shadow-md">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-amber-100 dark:bg-amber-900/30 p-2 shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground leading-relaxed">
+                    Welcome! Your Chapter 84 membership application is being processed.
+                    Please log back in in a few days to access full member features.
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    If you haven't yet paid your dues, please use the link below to complete your payment.
+                    If you have already paid, thank you — we may not have processed it yet.
+                  </p>
+                  {renewalUrl && (
+                    <a href={renewalUrl} target="_blank" rel="noopener noreferrer">
+                      <Button className="mt-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+                        Pay Membership Dues
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Renewal CTA for inactive (lapsed, non-prospect) members */}
+        {member && isInactive && !isProspect && (
           <Card className="border-2 border-destructive/40 bg-destructive/5 shadow-md">
             <CardContent className="p-5">
               <div className="flex items-start gap-3">
