@@ -231,6 +231,7 @@ export default function MemberHome() {
 
   // Inactive = standing is not Active (expiration date no longer factors in)
   const isInactive = !!member && member.current_standing !== "Active";
+  const isProspect = !!member && (member.member_type || "").toLowerCase() === "prospect";
 
   // Dues reminder for active members whose expiration has passed or is within 60 days
   const needsDuesReminder = (() => {
