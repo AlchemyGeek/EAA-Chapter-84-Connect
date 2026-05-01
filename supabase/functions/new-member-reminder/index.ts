@@ -176,7 +176,6 @@ Deno.serve(async (req) => {
       queue_name: "transactional_emails",
       payload: {
         to: recipient,
-        cc: ["membership@eaa84.org"],
         from: "Membership <notify@notify.eaa84.org>",
         reply_to: "membership@eaa84.org",
         sender_domain: "notify.eaa84.org",
@@ -199,6 +198,54 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Send a copy notification to membership@eaa84.org so the team has
+    // a record of the reminder. (The email queue dispatcher does not
+    // forward cc/bcc fields, so we enqueue a separate email.)
+    const copyMessageId = crypto.randomUUID();
+    const copySubject = `[Copy] Reminder sent to ${recipient}: ${subject}`;
+    const copyHtml = `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color:#222; line-height:1.5;">
+  <p style="background:#f4f6f8;padding:10px 14px;border-radius:6px;font-size:13px;color:#555;">
+    This is a copy of the dues reminder sent to <strong>${escapeHtml(recipient)}</strong>.
+  </p>
+  ${htmlBody}
+</div>`.trim();
+
+    const { data: existingCopyToken } = await supabase
+      .from("email_unsubscribe_tokens")
+      .select("token")
+      .eq("email", "membership@eaa84.org")
+      .is("used_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const copyUnsubscribeToken = existingCopyToken?.token ?? crypto.randomUUID();
+    if (!existingCopyToken) {
+      await supabase
+        .from("email_unsubscribe_tokens")
+        .insert({ email: "membership@eaa84.org", token: copyUnsubscribeToken });
+    }
+
+    await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
+        to: "membership@eaa84.org",
+        from: "Membership <notify@notify.eaa84.org>",
+        reply_to: recipient,
+        sender_domain: "notify.eaa84.org",
+        subject: copySubject,
+        html: copyHtml,
+        text: copyHtml.replace(/<[^>]+>/g, "").replace(/\n\s*\n/g, "\n\n"),
+        purpose: "transactional",
+        label: "new_member_dues_reminder_copy",
+        idempotency_key: `new-member-reminder-copy-${application_id}-${Date.now()}`,
+        unsubscribe_token: copyUnsubscribeToken,
+        message_id: copyMessageId,
+        queued_at: new Date().toISOString(),
+      },
+    });
 
     // Mark reminder as sent
     await supabase
