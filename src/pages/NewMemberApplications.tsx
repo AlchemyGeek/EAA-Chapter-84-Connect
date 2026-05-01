@@ -553,6 +553,81 @@ export default function NewMemberApplications() {
         </DialogContent>
       </Dialog>
 
+      {/* Record Membership Payment Dialog */}
+      <Dialog open={!!feeDialogApp} onOpenChange={(open) => !open && setFeeDialogApp(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CircleDollarSign className="h-5 w-5" />
+              Record Membership Payment
+            </DialogTitle>
+            <DialogDescription>
+              {feeDialogApp && (
+                <>Recording payment for <strong>{feeDialogApp.first_name} {feeDialogApp.last_name}</strong></>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Payment Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("w-full justify-start text-left font-normal", !payDate && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {payDate ? format(payDate, "MMM d, yyyy") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={payDate}
+                    onSelect={(d) => d && setPayDate(d)}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label>Amount ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="40.00"
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Method</Label>
+              <Select value={payMethod} onValueChange={setPayMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => (
+                    <SelectItem key={m.code} value={m.label}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFeeDialogApp(null)}>Cancel</Button>
+            <Button
+              onClick={() => recordFeePayment.mutate()}
+              disabled={!payAmount || !payMethod || recordFeePayment.isPending}
+            >
+              {recordFeePayment.isPending ? "Recording..." : "Confirm Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Promote Confirmation */}
       <AlertDialog open={!!promoteApp} onOpenChange={() => setPromoteApp(null)}>
         <AlertDialogContent>
