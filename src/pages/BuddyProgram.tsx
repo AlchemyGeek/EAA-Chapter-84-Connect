@@ -213,7 +213,7 @@ export default function BuddyProgram() {
     },
   });
 
-  // Manual assign / reassign: insert or update assignment, then send intro email
+  // Manual assign / reassign: insert or update assignment only. Email is sent separately.
   const manualAssign = useMutation({
     mutationFn: async ({
       applicationId,
@@ -224,10 +224,7 @@ export default function BuddyProgram() {
       volunteerKeyId: number;
       existingAssignmentId?: string;
     }) => {
-      let assignmentId: string;
-
       if (existingAssignmentId) {
-        // Reassign
         const { error } = await supabase
           .from("buddy_assignments")
           .update({
@@ -236,9 +233,8 @@ export default function BuddyProgram() {
           })
           .eq("id", existingAssignmentId);
         if (error) throw error;
-        assignmentId = existingAssignmentId;
+        return existingAssignmentId;
       } else {
-        // New assignment
         const { data, error } = await supabase
           .from("buddy_assignments")
           .insert({
@@ -248,42 +244,31 @@ export default function BuddyProgram() {
           .select("id")
           .single();
         if (error) throw error;
-        assignmentId = data.id;
+        return data.id;
       }
-
-      // Send intro email
-      const { error: emailError } = await supabase.functions.invoke("buddy-email-send", {
-        body: { assignment_id: assignmentId, email_type: "intro" },
-      });
-      if (emailError) {
-        console.error("Intro email failed:", emailError);
-        // Don't throw - assignment was successful even if email fails
-      }
-
-      return assignmentId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["buddy-email-logs"] });
       setAssignDialog(null);
       setSelectedVolunteer("");
-      toast({ title: "Buddy assigned and intro email queued" });
+      toast({ title: "Buddy assigned" });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
 
-  const sendReminderEmail = useMutation({
-    mutationFn: async (assignmentId: string) => {
+  const sendBuddyEmail = useMutation({
+    mutationFn: async ({ assignmentId, type }: { assignmentId: string; type: "intro" | "check_in" }) => {
       const { error } = await supabase.functions.invoke("buddy-email-send", {
-        body: { assignment_id: assignmentId, email_type: "reminder" },
+        body: { assignment_id: assignmentId, email_type: type },
       });
       if (error) throw error;
+      return type;
     },
-    onSuccess: () => {
+    onSuccess: (type) => {
       queryClient.invalidateQueries({ queryKey: ["buddy-email-logs"] });
-      toast({ title: "Reminder email sent" });
+      toast({ title: type === "intro" ? "Intro email sent" : "Check-In email sent" });
     },
     onError: (err: any) => {
       toast({ title: "Error sending email", description: err.message, variant: "destructive" });
