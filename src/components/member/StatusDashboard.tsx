@@ -6,12 +6,24 @@ type MembershipStatus = "good" | "expiring" | "lapsed";
 
 function computeStatus(
   currentStanding: string | null,
-  expirationDate: string | null
-): { status: MembershipStatus; message: string; coverageYear: number | null; overdue: boolean } {
+  expirationDate: string | null,
+  memberType: string | null
+): { status: MembershipStatus; message: string; coverageYear: number | null; overdue: boolean; isProspect: boolean } {
   const now = new Date();
   const expDate = expirationDate ? new Date(expirationDate) : null;
+  const isProspect = (memberType || "").toLowerCase() === "prospect";
 
   if (currentStanding !== "Active") {
+    if (isProspect) {
+      return {
+        status: "lapsed",
+        message:
+          "Your membership application is being processed. Please log back in in a few days to access full member features.",
+        coverageYear: null,
+        overdue: false,
+        isProspect: true,
+      };
+    }
     return {
       status: "lapsed",
       message: expDate
@@ -19,6 +31,7 @@ function computeStatus(
         : "Your membership is inactive.",
       coverageYear: null,
       overdue: false,
+      isProspect: false,
     };
   }
 
