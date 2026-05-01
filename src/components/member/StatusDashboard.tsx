@@ -36,7 +36,7 @@ function computeStatus(
   }
 
   if (!expDate) {
-    return { status: "good", message: "You're in good standing.", coverageYear: null, overdue: false };
+    return { status: "good", message: "You're in good standing.", coverageYear: null, overdue: false, isProspect: false };
   }
 
   const coverageYear = expDate.getFullYear() - 1;
@@ -47,6 +47,7 @@ function computeStatus(
       message: `Your dues expired on ${expDate.toLocaleDateString()}. Please renew to stay current.`,
       coverageYear,
       overdue: true,
+      isProspect: false,
     };
   }
 
@@ -57,10 +58,11 @@ function computeStatus(
       message: `Your dues expire in ${daysUntil} days. Please renew to stay current.`,
       coverageYear,
       overdue: false,
+      isProspect: false,
     };
   }
 
-  return { status: "good", message: `You're in good standing through ${coverageYear}.`, coverageYear, overdue: false };
+  return { status: "good", message: `You're in good standing through ${coverageYear}.`, coverageYear, overdue: false, isProspect: false };
 }
 
 const statusConfig: Record<
