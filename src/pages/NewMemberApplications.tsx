@@ -189,7 +189,7 @@ export default function NewMemberApplications() {
     mutationFn: async (app: any) => {
       if (!app.roster_key_id) throw new Error("No linked roster record found");
 
-      const newExpiration = getSecondTuesdayOfJanuaryNextYear();
+      const newExpiration = getSecondTuesdayOfMarchNextYear();
 
       // Update roster member
       const { error: rosterError } = await supabase
@@ -499,7 +499,7 @@ export default function NewMemberApplications() {
                 {promoteApp?.first_name} {promoteApp?.last_name}
               </strong>
               . This will change their membership type from Prospect to Regular and set their
-              expiration date to {getSecondTuesdayOfJanuaryNextYear()}. This action cannot be undone.
+              expiration date to {getSecondTuesdayOfMarchNextYear()}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
