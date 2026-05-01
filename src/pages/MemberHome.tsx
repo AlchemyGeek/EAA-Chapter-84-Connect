@@ -112,7 +112,25 @@ export default function MemberHome() {
     },
   });
 
-  // Fetch active volunteering opportunities count
+  // Fetch the prospect's original new-member application (for quarter-based fee selection)
+  const { data: prospectApplication } = useQuery({
+    queryKey: ["my-application", user?.email],
+    enabled: !!user?.email,
+    queryFn: async () => {
+      const authEmail = user?.email?.trim();
+      if (!authEmail) return null;
+      const { data, error } = await (supabase as any)
+        .from("new_member_applications")
+        .select("quarter_applied, fee_amount, created_at")
+        .ilike("email", authEmail)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { quarter_applied: string | null; fee_amount: number | null; created_at: string } | null;
+    },
+  });
+
   const { data: activeVolCount = 0 } = useQuery({
     queryKey: ["active-vol-count"],
     queryFn: async () => {
@@ -248,10 +266,19 @@ export default function MemberHome() {
   const isOverdue = !!member && !isInactive && !isProspect && duesExpired;
   const isRestricted = isInactive || isOverdue || isProspect;
 
-  // Find renewal link from chapter fees (look for "annual" or "renewal" in the fee name)
-  const renewalFee = chapterFees.find(
-    (f) => f.name.toLowerCase().includes("annual") || f.name.toLowerCase().includes("renewal") || f.name.toLowerCase().includes("renew")
-  );
+  // Find renewal/payment link from chapter fees.
+  // For Prospects, prefer the fee matching their original application quarter (e.g., "Q2").
+  // Otherwise fall back to the annual/renewal fee or a configured site link.
+  const renewalFee = (() => {
+    if (isProspect && prospectApplication?.quarter_applied) {
+      const q = prospectApplication.quarter_applied.toUpperCase();
+      const match = chapterFees.find((f) => f.name.toUpperCase().includes(q));
+      if (match) return match;
+    }
+    return chapterFees.find(
+      (f) => f.name.toLowerCase().includes("annual") || f.name.toLowerCase().includes("renewal") || f.name.toLowerCase().includes("renew")
+    );
+  })();
   const renewalUrl = renewalFee?.payment_url || siteLinks.find(
     (l) => l.name.toLowerCase().includes("renewal") || l.name.toLowerCase().includes("renew")
   )?.url;
