@@ -16,8 +16,7 @@ export function PWAUpdatePrompt() {
       }
     },
     onNeedRefresh() {
-      // Auto-apply updates so users always see the latest version
-      updateServiceWorker(true);
+      // Show the visible banner so users (especially on iOS) can tap to update.
     },
   });
 
