@@ -442,6 +442,7 @@ export type Database = {
           chapter_payment_notes: string | null
           contact_visible_in_directory: boolean
           created_at: string
+          hidden_from_directory: boolean
           id: string
           internal_notes: string | null
           key_id: number
@@ -457,6 +458,7 @@ export type Database = {
           chapter_payment_notes?: string | null
           contact_visible_in_directory?: boolean
           created_at?: string
+          hidden_from_directory?: boolean
           id?: string
           internal_notes?: string | null
           key_id: number
@@ -472,6 +474,7 @@ export type Database = {
           chapter_payment_notes?: string | null
           contact_visible_in_directory?: boolean
           created_at?: string
+          hidden_from_directory?: boolean
           id?: string
           internal_notes?: string | null
           key_id?: number
