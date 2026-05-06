@@ -225,6 +225,26 @@ export default function MemberHome() {
     },
   });
 
+  // Proxy vote status for the active viewing member (banner gating)
+  const viewKeyIdForProxy = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
+  const { data: myProxyVotes } = useQuery({
+    queryKey: ["my-proxy-votes-banner", viewKeyIdForProxy],
+    enabled: !!viewKeyIdForProxy,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("proxy_votes_2026")
+        .select("action, created_at")
+        .eq("key_id", viewKeyIdForProxy!)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return data;
+    },
+  });
+  const proxySigned = myProxyVotes?.[0]?.action === "signed";
+  const proxyWindowOpen = new Date() < new Date("2026-06-09T00:00:00");
+
   // Compute effective view permissions (real admin's role when not impersonating, impersonated member's role when impersonating)
   const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
   const viewRoles = isImpersonating
