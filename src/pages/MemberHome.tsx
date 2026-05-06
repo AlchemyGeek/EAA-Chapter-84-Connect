@@ -610,15 +610,24 @@ export default function MemberHome() {
                 Officer Services
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1">
-              <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
-              <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Due Payment" />
-              <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
-              <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Manage Chapter Volunteering" />
-              <AdminLink to="/new-member-applications" icon={UserPlus} label={`New Member Applications${pendingAppCount > 0 ? ` (${pendingAppCount})` : ""}`} />
-              <AdminLink to="/buddy-program" icon={Heart} label="New Member Buddy Program" />
-              <AdminLink to="/member-engagement" icon={Activity} label="Member Engagement" />
-              <AdminLink to="/newsletters-admin" icon={Newspaper} label="Manage Newsletters" />
+            <CardContent className="space-y-4">
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Chapter Operations</p>
+                <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Dues" />
+                <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
+                <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
+                <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">New Members</p>
+                <AdminLink to="/new-member-applications" icon={UserPlus} label={`Applications${pendingAppCount > 0 ? ` (${pendingAppCount})` : ""}`} />
+                <AdminLink to="/buddy-program" icon={Heart} label="Buddy Program" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Insights</p>
+                <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
+                <AdminLink to="/member-engagement" icon={Activity} label="Member Engagement" />
+              </div>
             </CardContent>
           </Card>
         )}
