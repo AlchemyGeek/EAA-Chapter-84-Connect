@@ -19,6 +19,7 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
   UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare, Activity, Newspaper,
+  ClipboardList,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
@@ -31,6 +32,7 @@ import {
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
+import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, isOfficerOrAbove, signOut } = useAuth();
@@ -222,6 +224,26 @@ export default function MemberHome() {
       return data;
     },
   });
+
+  // Proxy vote status for the active viewing member (banner gating)
+  const viewKeyIdForProxy = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
+  const { data: myProxyVotes } = useQuery({
+    queryKey: ["my-proxy-votes-banner", viewKeyIdForProxy],
+    enabled: !!viewKeyIdForProxy,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("proxy_votes_2026")
+        .select("action, created_at")
+        .eq("key_id", viewKeyIdForProxy!)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return data;
+    },
+  });
+  const proxySigned = myProxyVotes?.[0]?.action === "signed";
+  const proxyWindowOpen = new Date() < new Date("2026-06-09T00:00:00");
 
   // Compute effective view permissions (real admin's role when not impersonating, impersonated member's role when impersonating)
   const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
@@ -575,6 +597,29 @@ export default function MemberHome() {
           </div>
         )}
 
+        {/* 2026 Bylaws Proxy Vote banner */}
+        {proxyWindowOpen && !isRestricted && member && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="text-2xl shrink-0">📋</div>
+            <div className="flex-1 space-y-1">
+              <h3 className="text-base font-bold text-amber-950 dark:text-amber-100">
+                EAA Chapter 84 — Changes to Bylaws: Voting Proxy Form
+              </h3>
+              <p className="text-sm text-amber-900 dark:text-amber-200">
+                If you will not be available in person to vote on the bylaw change at the June 2026 chapter meeting, please consider signing the proxy vote form.
+              </p>
+              <p className="text-xs text-amber-800/80 dark:text-amber-300/80">
+                Proxy form available through June 8, 2026.{proxySigned ? " ✅ Proxy signed." : ""}
+              </p>
+            </div>
+            <Link to="/proxy-vote">
+              <Button className="bg-amber-600 hover:bg-amber-700 text-white min-h-[44px] whitespace-nowrap">
+                {proxySigned ? "View / Manage Proxy" : "Open Proxy Form →"}
+              </Button>
+            </Link>
+          </div>
+        )}
+
         {/* Member Services */}
         <Card className={isRestricted ? "opacity-60 relative" : ""}>
           <CardHeader className="pb-2">
@@ -617,6 +662,15 @@ export default function MemberHome() {
                 <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
                 <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
                 <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
+                <button
+                  type="button"
+                  onClick={() => exportProxyVoteResults().catch(() => {})}
+                  className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md hover:bg-muted/60 transition-colors min-h-[44px] text-sm"
+                >
+                  <ClipboardList className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="flex-1">2026 Bylaws Proxy Vote Results</span>
+                  <Download className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">New Members</p>

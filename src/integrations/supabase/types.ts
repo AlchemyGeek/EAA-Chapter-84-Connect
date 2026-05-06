@@ -673,6 +673,30 @@ export type Database = {
         }
         Relationships: []
       }
+      proxy_votes_2026: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          key_id: number
+          member_name: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          key_id: number
+          member_name: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          key_id?: number
+          member_name?: string
+        }
+        Relationships: []
+      }
       roster_import_changes: {
         Row: {
           change_type: string
