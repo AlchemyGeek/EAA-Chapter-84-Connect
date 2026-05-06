@@ -19,7 +19,7 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
   UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare, Activity, Newspaper,
-  ClipboardList,
+  ClipboardList, Vote,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
@@ -600,7 +600,7 @@ export default function MemberHome() {
         {/* 2026 Bylaws Proxy Vote banner */}
         {proxyWindowOpen && !isRestricted && member && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="text-2xl shrink-0">📋</div>
+            <div className="shrink-0"><Vote className="h-8 w-8 text-amber-600" /></div>
             <div className="flex-1 space-y-1">
               <h3 className="text-base font-bold text-amber-950 dark:text-amber-100">
                 EAA Chapter 84 — Changes to Bylaws: Voting Proxy Form
