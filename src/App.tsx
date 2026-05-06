@@ -31,6 +31,7 @@ import HangarTalk from "./pages/HangarTalk";
 import MemberEngagement from "./pages/MemberEngagement";
 import Newsletters from "./pages/Newsletters";
 import NewslettersAdmin from "./pages/NewslettersAdmin";
+import ProxyVote from "./pages/ProxyVote";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/newsletters" element={<Newsletters />} />
             <Route path="/newsletters-admin" element={<NewslettersAdmin />} />
             <Route path="/join" element={<NewMemberApplication />} />
+            <Route path="/proxy-vote" element={<ProxyVote />} />
             {/* <Route path="/hangar-talk" element={<HangarTalk />} /> */}
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="*" element={<NotFound />} />
