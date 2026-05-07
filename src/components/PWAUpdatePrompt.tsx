@@ -1,24 +1,52 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, X } from "lucide-react";
 
+// Check for new builds every 10 minutes, in addition to focus/visibility/navigation checks.
+const PERIODIC_CHECK_MS = 10 * 60 * 1000;
+
 export function PWAUpdatePrompt() {
+  const location = useLocation();
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegisteredSW(swUrl, registration) {
-      // Check for updates every hour
-      if (registration) {
-        setInterval(() => {
-          registration.update();
-        }, 60 * 60 * 1000);
-      }
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+
+      const check = () => {
+        if (document.visibilityState === "visible") {
+          registration.update().catch(() => {});
+        }
+      };
+
+      const intervalId = setInterval(check, PERIODIC_CHECK_MS);
+      const onVisibility = () => {
+        if (document.visibilityState === "visible") check();
+      };
+      window.addEventListener("focus", check);
+      document.addEventListener("visibilitychange", onVisibility);
+      (window as any).__pwaCheckForUpdate = check;
+
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener("focus", check);
+        document.removeEventListener("visibilitychange", onVisibility);
+        delete (window as any).__pwaCheckForUpdate;
+      };
     },
     onNeedRefresh() {
       // Show the visible banner so users (especially on iOS) can tap to update.
     },
   });
+
+  // Re-check on every client-side route change.
+  useEffect(() => {
+    const check = (window as any).__pwaCheckForUpdate as (() => void) | undefined;
+    check?.();
+  }, [location.pathname]);
 
   if (!needRefresh) return null;
 
