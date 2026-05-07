@@ -44,7 +44,7 @@ export default function ProxyVote() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, first_name, last_name, nickname, current_standing, email")
+        .select("key_id, first_name, last_name, nickname, current_standing, expiration_date, email")
         .ilike("email", user!.email!.trim())
         .limit(1)
         .maybeSingle();
@@ -103,6 +103,8 @@ export default function ProxyVote() {
   if (!user) return <Navigate to="/auth" replace />;
 
   const isActive = member?.current_standing === "Active";
+  const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
+  const inGoodStanding = isActive && !duesExpired;
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,6 +123,13 @@ export default function ProxyVote() {
           <Card>
             <CardContent className="p-6 text-sm text-muted-foreground">
               This form is available to active EAA Chapter 84 members only.
+            </CardContent>
+          </Card>
+        ) : !inGoodStanding ? (
+          <Card>
+            <CardContent className="p-6 text-sm text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground">Your 2026 chapter dues must be paid to participate in the Bylaws Vote.</p>
+              <p>Please renew your chapter dues, then return here to sign the proxy form.</p>
             </CardContent>
           </Card>
         ) : !isWindowOpen ? (

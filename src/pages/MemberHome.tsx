@@ -598,27 +598,41 @@ export default function MemberHome() {
         )}
 
         {/* 2026 Bylaws Proxy Vote banner */}
-        {proxyWindowOpen && !isRestricted && member && (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="shrink-0"><Vote className="h-8 w-8 text-amber-600" /></div>
-            <div className="flex-1 space-y-1">
-              <h3 className="text-base font-bold text-amber-950 dark:text-amber-100">
-                EAA Chapter 84 — Changes to Bylaws: Voting Proxy Form
-              </h3>
-              <p className="text-sm text-amber-900 dark:text-amber-200">
-                If you will not be available in person to vote on the bylaw change at the June 2026 chapter meeting, please consider signing the proxy vote form.
-              </p>
-              <p className="text-xs text-amber-800/80 dark:text-amber-300/80">
-                Proxy form available through June 8, 2026.{proxySigned ? " ✅ Proxy signed." : ""}
-              </p>
+        {proxyWindowOpen && !isRestricted && member && (() => {
+          const inGoodStanding = member.current_standing === "Active" && !duesExpired;
+          return (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="shrink-0"><Vote className="h-8 w-8 text-amber-600" /></div>
+              <div className="flex-1 space-y-1">
+                <h3 className="text-base font-bold text-amber-950 dark:text-amber-100">
+                  EAA Chapter 84 — Changes to Bylaws: Voting Proxy Form
+                </h3>
+                <p className="text-sm text-amber-900 dark:text-amber-200">
+                  If you will not be available in person to vote on the bylaw change at the June 2026 chapter meeting, please consider signing the proxy vote form.
+                </p>
+                <p className="text-xs text-amber-800/80 dark:text-amber-300/80">
+                  Proxy form available through June 8, 2026.{proxySigned ? " ✅ Proxy signed." : ""}
+                </p>
+                {!inGoodStanding && (
+                  <p className="text-xs font-medium text-amber-900 dark:text-amber-200 pt-1">
+                    Your 2026 chapter dues must be paid to participate in the Bylaws Vote.
+                  </p>
+                )}
+              </div>
+              {inGoodStanding ? (
+                <Link to="/proxy-vote">
+                  <Button className="bg-amber-600 hover:bg-amber-700 text-white min-h-[44px] whitespace-nowrap">
+                    {proxySigned ? "View / Manage Proxy" : "Open Proxy Form →"}
+                  </Button>
+                </Link>
+              ) : (
+                <Button disabled className="bg-amber-600 text-white min-h-[44px] whitespace-nowrap opacity-50 cursor-not-allowed">
+                  Open Proxy Form →
+                </Button>
+              )}
             </div>
-            <Link to="/proxy-vote">
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white min-h-[44px] whitespace-nowrap">
-                {proxySigned ? "View / Manage Proxy" : "Open Proxy Form →"}
-              </Button>
-            </Link>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Member Services */}
         <Card className={isRestricted ? "opacity-60 relative" : ""}>
