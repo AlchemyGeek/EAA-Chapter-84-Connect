@@ -243,7 +243,7 @@ export default function MemberHome() {
     },
   });
   const proxySigned = myProxyVotes?.[0]?.action === "signed";
-  const proxyWindowOpen = new Date() < new Date("2026-06-09T00:00:00");
+  const proxyWindowOpen = new Date() < new Date("2026-06-10T00:00:00");
 
   // Compute effective view permissions (real admin's role when not impersonating, impersonated member's role when impersonating)
   const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
@@ -611,7 +611,7 @@ export default function MemberHome() {
                   If you will not be available in person to vote on the bylaw change at the June 2026 chapter meeting, please consider signing the proxy vote form.
                 </p>
                 <p className="text-xs text-amber-800/80 dark:text-amber-300/80">
-                  Proxy form available through June 8, 2026.{proxySigned ? " ✅ Proxy signed." : ""}
+                  Proxy form available through June 9, 2026.{proxySigned ? " ✅ Proxy signed." : ""}
                 </p>
                 {!inGoodStanding && (
                   <p className="text-xs font-medium text-amber-900 dark:text-amber-200 pt-1">
