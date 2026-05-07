@@ -125,6 +125,13 @@ export default function ProxyVote() {
               This form is available to active EAA Chapter 84 members only.
             </CardContent>
           </Card>
+        ) : !inGoodStanding ? (
+          <Card>
+            <CardContent className="p-6 text-sm text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground">Your 2026 chapter dues must be paid to participate in the Bylaws Vote.</p>
+              <p>Please renew your chapter dues, then return here to sign the proxy form.</p>
+            </CardContent>
+          </Card>
         ) : !isWindowOpen ? (
           <Card>
             <CardContent className="p-6 text-sm text-muted-foreground">
