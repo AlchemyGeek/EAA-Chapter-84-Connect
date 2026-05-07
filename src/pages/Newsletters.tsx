@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Newspaper, Search, ExternalLink, Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import DOMPurify from "dompurify";
 
 type NewsletterRow = {
   id: string;
