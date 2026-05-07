@@ -611,7 +611,7 @@ export default function MemberHome() {
                   If you will not be available in person to vote on the bylaw change at the June 2026 chapter meeting, please consider signing the proxy vote form.
                 </p>
                 <p className="text-xs text-amber-800/80 dark:text-amber-300/80">
-                  Proxy form available through June 8, 2026.{proxySigned ? " ✅ Proxy signed." : ""}
+                  Proxy form available through June 9, 2026.{proxySigned ? " ✅ Proxy signed." : ""}
                 </p>
                 {!inGoodStanding && (
                   <p className="text-xs font-medium text-amber-900 dark:text-amber-200 pt-1">
