@@ -718,6 +718,8 @@ export default function MemberHome() {
             </CardContent>
           </Card>
         )}
+
+        <p className="text-center text-xs text-muted-foreground pt-4">v25.05.01</p>
       </div>
 
       {/* Floating debug button */}
