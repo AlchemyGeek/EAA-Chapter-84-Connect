@@ -49,8 +49,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <PWAUpdatePrompt />
       <BrowserRouter>
+        <PWAUpdatePrompt />
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
