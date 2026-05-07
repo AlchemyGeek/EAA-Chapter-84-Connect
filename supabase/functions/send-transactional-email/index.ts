@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
   const isInternalServiceCall =
     authHeader === `Bearer ${supabaseServiceKey}` || apiKeyHeader === supabaseServiceKey
 
+  let callerEmail: string | null = null
+  let callerIsPrivileged = false
+
   if (!isInternalServiceCall) {
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -83,6 +86,18 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    callerEmail = ((claimsData.claims as any).email as string | undefined)?.toLowerCase() ?? null
+    const callerId = claimsData.claims.sub as string
+
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey)
+    const [adminRes, officerRes] = await Promise.all([
+      adminClient.rpc('has_role', { _user_id: callerId, _role: 'admin' }),
+      callerEmail
+        ? adminClient.rpc('is_officer', { _user_email: callerEmail })
+        : Promise.resolve({ data: false } as any),
+    ])
+    callerIsPrivileged = Boolean(adminRes.data) || Boolean(officerRes.data)
   }
 
   // Parse request body
