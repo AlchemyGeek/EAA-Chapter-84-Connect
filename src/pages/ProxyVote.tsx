@@ -103,6 +103,8 @@ export default function ProxyVote() {
   if (!user) return <Navigate to="/auth" replace />;
 
   const isActive = member?.current_standing === "Active";
+  const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
+  const inGoodStanding = isActive && !duesExpired;
 
   return (
     <div className="min-h-screen bg-background">
