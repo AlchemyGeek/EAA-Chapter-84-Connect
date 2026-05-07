@@ -168,6 +168,22 @@ Deno.serve(async (req) => {
     )
   }
 
+  // Authorization: non-privileged authenticated callers may only send to themselves.
+  // Service-role and admin/officer callers may send to any recipient.
+  if (!isInternalServiceCall && !callerIsPrivileged) {
+    if (!callerEmail || effectiveRecipient.toLowerCase() !== callerEmail) {
+      console.warn('Blocked transactional send: non-privileged caller targeting another recipient', {
+        callerEmail,
+        effectiveRecipient,
+        templateName,
+      })
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
