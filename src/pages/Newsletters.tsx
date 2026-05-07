@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Newspaper, Search, ExternalLink, Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import DOMPurify from "dompurify";
 
 type NewsletterRow = {
   id: string;
@@ -234,7 +235,10 @@ function NewsletterRow({ n, onOpen }: { n: NewsletterRow; onOpen: () => void }) 
           <p
             className="text-xs text-muted-foreground leading-snug mt-1"
             dangerouslySetInnerHTML={{
-              __html: n.snippet.replace(/\s*\.\.\.\s*/g, ' <span class="text-muted-foreground/60 mx-1">…</span> '),
+              __html: DOMPurify.sanitize(
+                n.snippet.replace(/\s*\.\.\.\s*/g, ' <span class="text-muted-foreground/60 mx-1">…</span> '),
+                { ALLOWED_TAGS: ["mark", "span", "b", "em", "strong", "i"], ALLOWED_ATTR: ["class"] }
+              ),
             }}
           />
         )}
