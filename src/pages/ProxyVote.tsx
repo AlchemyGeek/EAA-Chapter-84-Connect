@@ -44,7 +44,7 @@ export default function ProxyVote() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, first_name, last_name, nickname, current_standing, email")
+        .select("key_id, first_name, last_name, nickname, current_standing, expiration_date, email")
         .ilike("email", user!.email!.trim())
         .limit(1)
         .maybeSingle();
