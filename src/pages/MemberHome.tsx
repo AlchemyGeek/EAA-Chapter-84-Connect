@@ -598,7 +598,7 @@ export default function MemberHome() {
         )}
 
         {/* 2026 Bylaws Proxy Vote banner */}
-        {proxyWindowOpen && !isRestricted && member && (() => {
+        {proxyWindowOpen && member && !isInactive && !isProspect && (() => {
           const inGoodStanding = member.current_standing === "Active" && !duesExpired;
           return (
             <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
