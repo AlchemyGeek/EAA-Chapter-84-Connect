@@ -243,7 +243,7 @@ export default function MemberHome() {
     },
   });
   const proxySigned = myProxyVotes?.[0]?.action === "signed";
-  const proxyWindowOpen = new Date() < new Date("2026-06-09T00:00:00");
+  const proxyWindowOpen = new Date() < new Date("2026-06-10T00:00:00");
 
   // Compute effective view permissions (real admin's role when not impersonating, impersonated member's role when impersonating)
   const isImpersonating = !!impersonateKeyId && !!impersonatedMember;
