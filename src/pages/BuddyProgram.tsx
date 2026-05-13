@@ -116,6 +116,20 @@ export default function BuddyProgram() {
     },
   });
 
+  const appRosterKeyIds = completedApps.map((a) => a.roster_key_id).filter(Boolean) as number[];
+  const { data: appRosterMembers = [] } = useQuery({
+    queryKey: ["buddy-app-roster-members", appRosterKeyIds],
+    enabled: appRosterKeyIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, current_joined_on_date")
+        .in("key_id", appRosterKeyIds);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Search roster for adding volunteers
   const { data: searchResults = [] } = useQuery({
     queryKey: ["buddy-search", search],
