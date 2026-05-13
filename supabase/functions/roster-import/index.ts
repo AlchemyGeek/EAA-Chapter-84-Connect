@@ -226,6 +226,7 @@ Deno.serve(async (req) => {
     // Parse multipart form data
     const formData = await req.formData();
     const file = formData.get("file") as File;
+    const dryRun = String(formData.get("dry_run") || "") === "true";
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -241,6 +242,7 @@ Deno.serve(async (req) => {
     }
 
     const incomingRecords = rawRows.map(mapRow).filter((r) => r.key_id != null);
+    const incomingKeyIds = new Set(incomingRecords.map((r) => r.key_id));
 
     // Fetch existing members
     const { data: existingMembers } = await adminClient
@@ -248,6 +250,87 @@ Deno.serve(async (req) => {
       .select("*");
     const existingMap = new Map<number, Record<string, any>>();
     (existingMembers || []).forEach((m: any) => existingMap.set(m.key_id, m));
+
+    // ===== DRY RUN: compute preview without writing =====
+    if (dryRun) {
+      const previewAdded: any[] = [];
+      const previewModified: any[] = [];
+      const previewRemoved: any[] = [];
+      const previewReconciled: any[] = [];
+
+      for (const incoming of incomingRecords) {
+        const existing = existingMap.get(incoming.key_id);
+        if (!existing) {
+          previewAdded.push({
+            key_id: incoming.key_id,
+            first_name: incoming.first_name,
+            last_name: incoming.last_name,
+            eaa_number: incoming.eaa_number,
+            member_type: incoming.member_type,
+          });
+        } else {
+          const diffs = diffRecord(existing, incoming);
+          if (diffs.length > 0) {
+            previewModified.push({
+              key_id: incoming.key_id,
+              first_name: incoming.first_name,
+              last_name: incoming.last_name,
+              eaa_number: incoming.eaa_number,
+              fields: diffs,
+            });
+          }
+        }
+      }
+
+      const incomingByEaaPreview = new Map<string, any>();
+      for (const r of incomingRecords) {
+        const eaa = (r.eaa_number || "").toString().trim();
+        if (!eaa) continue;
+        if (r.member_type && String(r.member_type).toLowerCase() === "prospect") continue;
+        if (!incomingByEaaPreview.has(eaa)) incomingByEaaPreview.set(eaa, r);
+      }
+      for (const [keyId, existing] of existingMap) {
+        if (incomingKeyIds.has(keyId)) continue;
+        const isProspect = existing.member_type && String(existing.member_type).toLowerCase() === "prospect";
+        const eaa = (existing.eaa_number || "").toString().trim();
+        const replacement = isProspect && eaa ? incomingByEaaPreview.get(eaa) : null;
+        if (replacement) {
+          previewReconciled.push({
+            old_key_id: keyId,
+            new_key_id: replacement.key_id,
+            first_name: existing.first_name,
+            last_name: existing.last_name,
+            eaa_number: existing.eaa_number,
+          });
+        }
+        previewRemoved.push({
+          key_id: keyId,
+          first_name: existing.first_name,
+          last_name: existing.last_name,
+          eaa_number: existing.eaa_number,
+          member_type: existing.member_type,
+          reconciled_to_key_id: replacement ? replacement.key_id : null,
+        });
+      }
+
+      return new Response(
+        JSON.stringify({
+          dry_run: true,
+          record_count: incomingRecords.length,
+          counts: {
+            added: previewAdded.length,
+            modified: previewModified.length,
+            removed: previewRemoved.length,
+            reconciled: previewReconciled.length,
+          },
+          added: previewAdded,
+          modified: previewModified,
+          removed: previewRemoved,
+          reconciled: previewReconciled,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Create import record
     const { data: importRecord, error: importError } = await adminClient
@@ -269,7 +352,6 @@ Deno.serve(async (req) => {
     let removedCount = 0;
     const changeRecords: any[] = [];
 
-    const incomingKeyIds = new Set(incomingRecords.map((r) => r.key_id));
 
     // Process each incoming record
     for (const incoming of incomingRecords) {
