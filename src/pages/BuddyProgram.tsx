@@ -907,6 +907,15 @@ function ActiveMembersList({
                     <GraduationCap className="h-3 w-3" />
                     Graduate
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-muted-foreground hover:text-destructive"
+                    onClick={() => onRemove(app.id, `${app.first_name} ${app.last_name}`)}
+                  >
+                    <X className="h-3 w-3" />
+                    Remove
+                  </Button>
                 </div>
               </div>
             ) : (
