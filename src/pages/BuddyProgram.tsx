@@ -555,6 +555,7 @@ export default function BuddyProgram() {
           {viewTab === "active" ? (
             <ActiveMembersList
               completedApps={completedApps}
+              appRosterMembers={appRosterMembers}
               assignments={assignments}
               volunteerMembers={volunteerMembers}
               sortedVolunteers={sortedVolunteers}
