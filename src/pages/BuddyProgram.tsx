@@ -756,6 +756,7 @@ function ActiveMembersList({
   onSendIntro,
   onSendCheckIn,
   onGraduate,
+  onRemove,
   sendEmailPending,
   getEmailStatus,
 }: {
@@ -769,6 +770,7 @@ function ActiveMembersList({
   onSendIntro: (assignmentId: string) => void;
   onSendCheckIn: (assignmentId: string) => void;
   onGraduate: (assignmentId: string) => void;
+  onRemove: (appId: string, name: string) => void;
   sendEmailPending: boolean;
   getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; checkInSent: boolean; checkInSentAt?: string };
 }) {
