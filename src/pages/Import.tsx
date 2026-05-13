@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { Upload, FileUp, CheckCircle, AlertTriangle } from "lucide-react";
+import { Upload, FileUp, CheckCircle, AlertTriangle, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { diffCurrentVsSnapshots } from "@/lib/diffMembers";
 
@@ -14,7 +14,9 @@ const CONFIRM_PHRASE = "overwrite local changes";
 
 export default function Import() {
   const [file, setFile] = useState<File | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [preview, setPreview] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
   const [confirmText, setConfirmText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -79,50 +81,66 @@ export default function Import() {
     return diffCurrentVsSnapshots(members, snapshots);
   }, [members, snapshots]);
 
-  // Check if any local data was modified after the last sync
   const lastSyncedAt = localStorage.getItem("lastExportSyncAt");
   const hasUnsyncedChanges = useMemo(() => {
     if (localChanges.length === 0) return false;
-    // If never synced, there are unsynced changes
     if (!lastSyncedAt) return true;
     const syncDate = new Date(lastSyncedAt);
-    // Check if any member involved in local changes was updated after the last sync
     const changedKeyIds = new Set(localChanges.map(c => c.key_id));
-    const hasNewerData = members
+    return members
       .filter(m => changedKeyIds.has(m.key_id))
       .some(m => new Date(m.updated_at) > syncDate);
-    return hasNewerData;
   }, [localChanges, lastSyncedAt, members]);
-  const confirmMatches = confirmText.trim().toLowerCase() === CONFIRM_PHRASE;
-  const canImport = file && !importing && (!hasUnsyncedChanges || confirmMatches);
 
-  const handleImport = async () => {
+  const confirmMatches = confirmText.trim().toLowerCase() === CONFIRM_PHRASE;
+  const canPreview = file && !previewing && !importing && (!hasUnsyncedChanges || confirmMatches);
+  const canApply = preview && !importing;
+
+  const callImport = async (dryRun: boolean) => {
+    if (!file) return null;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Not authenticated");
+    const formData = new FormData();
+    formData.append("file", file);
+    if (dryRun) formData.append("dry_run", "true");
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/roster-import`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: formData,
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Request failed");
+    return data;
+  };
+
+  const handlePreview = async () => {
+    if (!file) return;
+    setPreviewing(true);
+    setPreview(null);
+    setResult(null);
+    try {
+      const data = await callImport(true);
+      setPreview(data);
+    } catch (e: any) {
+      toast({ title: "Preview failed", description: e.message, variant: "destructive" });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
+  const handleApply = async () => {
     if (!file) return;
     setImporting(true);
-    setResult(null);
-
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/roster-import`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Import failed");
-
+      const data = await callImport(false);
       setResult(data);
+      setPreview(null);
+      setFile(null);
       setConfirmText("");
-      // Invalidate cached queries so the local-changes check uses fresh post-import data
+      if (fileRef.current) fileRef.current.value = "";
       await queryClient.invalidateQueries({ queryKey: ["members-full"] });
       await queryClient.invalidateQueries({ queryKey: ["last-import"] });
       await queryClient.invalidateQueries({ queryKey: ["last-import-snapshots"] });
@@ -130,17 +148,30 @@ export default function Import() {
       await queryClient.invalidateQueries({ queryKey: ["membership-stats-last-import"] });
       await queryClient.invalidateQueries({ queryKey: ["membership-stats-inactive-by-import"] });
       toast({ title: "Import successful", description: `${data.record_count} records processed.` });
-    } catch (error: any) {
-      toast({ title: "Import failed", description: error.message, variant: "destructive" });
+    } catch (e: any) {
+      toast({ title: "Import failed", description: e.message, variant: "destructive" });
     } finally {
       setImporting(false);
     }
   };
 
+  const handleCancel = () => {
+    setPreview(null);
+  };
+
+  const handleFileChange = (f: File | null) => {
+    setFile(f);
+    setPreview(null);
+    setResult(null);
+  };
+
   const modifiedMembers = new Set(localChanges.filter(c => c.change_type === "modified").map(c => c.key_id));
 
+  const fmtName = (r: any) =>
+    `${r.first_name || ""} ${r.last_name || ""}`.trim() + (r.eaa_number ? ` (#${r.eaa_number})` : "");
+
   return (
-    <div className="p-6 max-w-2xl space-y-6">
+    <div className="p-6 max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold">Import Roster</h1>
 
       {dataReady && hasUnsyncedChanges && (
@@ -149,12 +180,12 @@ export default function Import() {
           <AlertTitle>Unsynced Local Changes Detected</AlertTitle>
           <AlertDescription className="space-y-3">
             <p>
-              There are <strong>{localChanges.length}</strong> local change(s) 
-              ({modifiedMembers.size} modified, {localChanges.filter(c => c.change_type === "added").length} added, {localChanges.filter(c => c.change_type === "removed").length} removed) 
+              There are <strong>{localChanges.length}</strong> local change(s)
+              ({modifiedMembers.size} modified, {localChanges.filter(c => c.change_type === "added").length} added, {localChanges.filter(c => c.change_type === "removed").length} removed)
               that have not been synced with the EAA Roster Tool. Importing a new roster will overwrite this data and these changes will be lost.
             </p>
             <p className="text-sm">
-              Consider syncing your changes first from the <strong>Export</strong> page using "Mark Data Synced". 
+              Consider syncing your changes first from the <strong>Export</strong> page using "Mark Data Synced".
               To proceed anyway, type <strong>"{CONFIRM_PHRASE}"</strong> below.
             </p>
             <Input
@@ -164,7 +195,7 @@ export default function Import() {
               className="max-w-sm"
             />
             {confirmMatches && (
-              <p className="text-sm font-medium text-foreground">✓ Confirmed — you may proceed with the import.</p>
+              <p className="text-sm font-medium text-foreground">✓ Confirmed — you may proceed.</p>
             )}
           </AlertDescription>
         </Alert>
@@ -173,7 +204,7 @@ export default function Import() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Upload EAA Roster Export</CardTitle>
-          <CardDescription>Select the .xls file exported from the EAA roster tool. The file will be parsed and compared against existing data.</CardDescription>
+          <CardDescription>Select the .xls file exported from the EAA roster tool. The file will be parsed and a diff preview will be shown for your approval before any changes are applied.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div
@@ -189,16 +220,106 @@ export default function Import() {
               type="file"
               accept=".xls,.html,.htm"
               className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
             />
           </div>
 
-          <Button onClick={handleImport} disabled={!canImport} className="w-full gap-2">
-            <Upload className="h-4 w-4" />
-            {importing ? "Importing..." : "Start Import"}
+          <Button onClick={handlePreview} disabled={!canPreview} className="w-full gap-2">
+            <Eye className="h-4 w-4" />
+            {previewing ? "Computing preview..." : "Preview Changes"}
           </Button>
         </CardContent>
       </Card>
+
+      {preview && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Preview — Approval Required</CardTitle>
+            <CardDescription>
+              Review the changes below. Nothing has been written yet. Click <strong>Apply Import</strong> to commit, or <strong>Cancel</strong> to discard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <dl className="grid grid-cols-2 gap-2 text-sm">
+              <dt className="text-muted-foreground">Records in file</dt>
+              <dd className="font-medium">{preview.record_count}</dd>
+              <dt className="text-muted-foreground">Will add</dt>
+              <dd className="font-medium text-green-600">+{preview.counts.added}</dd>
+              <dt className="text-muted-foreground">Will modify</dt>
+              <dd className="font-medium text-blue-600">{preview.counts.modified}</dd>
+              <dt className="text-muted-foreground">Will remove</dt>
+              <dd className="font-medium text-destructive">{preview.counts.removed}</dd>
+              <dt className="text-muted-foreground">Prospect reconciliations</dt>
+              <dd className="font-medium">{preview.counts.reconciled}</dd>
+            </dl>
+
+            {preview.counts.reconciled > 0 && (
+              <div className="text-sm border rounded p-3 space-y-1">
+                <p className="font-medium">Prospect → Real roster record</p>
+                <ul className="list-disc pl-5 text-muted-foreground">
+                  {preview.reconciled.slice(0, 20).map((r: any, i: number) => (
+                    <li key={i}>{fmtName(r)} — key {r.old_key_id} → {r.new_key_id}</li>
+                  ))}
+                  {preview.reconciled.length > 20 && <li>…and {preview.reconciled.length - 20} more</li>}
+                </ul>
+              </div>
+            )}
+
+            {preview.counts.added > 0 && (
+              <details className="text-sm border rounded p-3">
+                <summary className="font-medium cursor-pointer">Added ({preview.counts.added})</summary>
+                <ul className="list-disc pl-5 mt-2 text-muted-foreground">
+                  {preview.added.slice(0, 50).map((r: any, i: number) => (
+                    <li key={i}>{fmtName(r)} — {r.member_type || "—"}</li>
+                  ))}
+                  {preview.added.length > 50 && <li>…and {preview.added.length - 50} more</li>}
+                </ul>
+              </details>
+            )}
+
+            {preview.counts.removed > 0 && (
+              <details className="text-sm border rounded p-3">
+                <summary className="font-medium cursor-pointer">Removed ({preview.counts.removed})</summary>
+                <ul className="list-disc pl-5 mt-2 text-muted-foreground">
+                  {preview.removed.slice(0, 50).map((r: any, i: number) => (
+                    <li key={i}>
+                      {fmtName(r)} — {r.member_type || "—"}
+                      {r.reconciled_to_key_id && <span className="text-foreground"> (reconciled to key {r.reconciled_to_key_id})</span>}
+                    </li>
+                  ))}
+                  {preview.removed.length > 50 && <li>…and {preview.removed.length - 50} more</li>}
+                </ul>
+              </details>
+            )}
+
+            {preview.counts.modified > 0 && (
+              <details className="text-sm border rounded p-3">
+                <summary className="font-medium cursor-pointer">Modified ({preview.counts.modified})</summary>
+                <ul className="list-disc pl-5 mt-2 text-muted-foreground space-y-1">
+                  {preview.modified.slice(0, 50).map((r: any, i: number) => (
+                    <li key={i}>
+                      {fmtName(r)} — {r.fields.length} field(s):{" "}
+                      {r.fields.slice(0, 5).map((f: any) => f.field).join(", ")}
+                      {r.fields.length > 5 && ` +${r.fields.length - 5}`}
+                    </li>
+                  ))}
+                  {preview.modified.length > 50 && <li>…and {preview.modified.length - 50} more</li>}
+                </ul>
+              </details>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <Button onClick={handleApply} disabled={!canApply} className="flex-1 gap-2">
+                <Upload className="h-4 w-4" />
+                {importing ? "Applying..." : "Apply Import"}
+              </Button>
+              <Button variant="outline" onClick={handleCancel} disabled={importing}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {result && (
         <Card>
