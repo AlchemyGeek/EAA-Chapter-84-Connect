@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Users, UserPlus, Search, Trash2, UserCheck, RefreshCw,
-  Mail, Send, GraduationCap, Plus,
+  Mail, Send, GraduationCap, Plus, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
