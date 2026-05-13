@@ -839,7 +839,9 @@ function ActiveMembersList({
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Joined chapter: {(() => {
-                    const rm = appRosterMembers.find((r) => r.key_id === app.roster_key_id);
+                    const matches = appRosterMembers.filter((r) => r.eaa_number === app.eaa_number);
+                    // Prefer the non-Prospect record (real chapter join). Fallback to any match.
+                    const rm = matches.find((r) => r.member_type !== "Prospect") ?? matches[0];
                     const d = rm?.current_joined_on_date;
                     return d ? fmtDate(`${d}T00:00:00`) : "—";
                   })()}
