@@ -320,6 +320,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Reconcile Prospect stubs: when EAA roster brings in a real (non-Prospect)
+    // record for an EAA number that we previously stubbed as a local Prospect,
+    // repoint the application's roster_key_id to the real record before the
+    // Prospect stub gets deleted by the removal step below. Roster data wins.
+    const incomingByEaa = new Map<string, any>();
+    for (const r of incomingRecords) {
+      const eaa = (r.eaa_number || "").toString().trim();
+      if (!eaa) continue;
+      if (r.member_type && String(r.member_type).toLowerCase() === "prospect") continue;
+      if (!incomingByEaa.has(eaa)) incomingByEaa.set(eaa, r);
+    }
+    for (const [keyId, existing] of existingMap) {
+      if (incomingKeyIds.has(keyId)) continue;
+      const isProspect = existing.member_type && String(existing.member_type).toLowerCase() === "prospect";
+      if (!isProspect) continue;
+      const eaa = (existing.eaa_number || "").toString().trim();
+      if (!eaa) continue;
+      const replacement = incomingByEaa.get(eaa);
+      if (!replacement) continue;
+      // Repoint pending application records to the new roster key_id
+      await adminClient
+        .from("new_member_applications")
+        .update({ roster_key_id: replacement.key_id })
+        .eq("roster_key_id", keyId);
+    }
+
     // Detect and delete removed members
     const removedKeyIds: number[] = [];
     for (const [keyId, existing] of existingMap) {
