@@ -919,21 +919,32 @@ function ActiveMembersList({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <p className="text-xs text-muted-foreground italic">
                   No buddy assigned yet.
                 </p>
-                {sortedVolunteers.length > 0 && (
+                <div className="flex items-center gap-1">
+                  {sortedVolunteers.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => onAssign(app.id)}
+                    >
+                      <UserCheck className="h-3 w-3" />
+                      Assign Buddy
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1"
-                    onClick={() => onAssign(app.id)}
+                    className="h-7 text-xs gap-1 text-muted-foreground hover:text-destructive"
+                    onClick={() => onRemove(app.id, `${app.first_name} ${app.last_name}`)}
                   >
-                    <UserCheck className="h-3 w-3" />
-                    Assign Buddy
+                    <X className="h-3 w-3" />
+                    Remove
                   </Button>
-                )}
+                </div>
               </div>
             )}
           </div>
