@@ -49,6 +49,7 @@ export default function BuddyProgram() {
   const [manualEntrySearch, setManualEntrySearch] = useState("");
   const [manualEntryDialog, setManualEntryDialog] = useState(false);
   const [graduateConfirm, setGraduateConfirm] = useState<string | null>(null);
+  const [removeFromProgram, setRemoveFromProgram] = useState<{ appId: string; name: string } | null>(null);
   const [viewTab, setViewTab] = useState<"active" | "graduated">("active");
 
   // Fetch buddy volunteers with roster info
