@@ -156,8 +156,10 @@ Deno.serve(async (req) => {
       .replace(/\[NewMemberName\]/g, newMemberName)
       .replace(/\[BuddyName\]/g, buddyName)
 
-    // Build recipient list: new member + buddy volunteer
-    const recipients = [app.email, buddy.email].filter(Boolean) as string[]
+    // Build recipient list: new member + buddy volunteer + membership archive
+    // NOTE: The email queue dispatcher does not forward `cc`, so we send to
+    // membership@eaa84.org as a direct recipient to ensure they receive a copy.
+    const recipients = [app.email, buddy.email, 'membership@eaa84.org'].filter(Boolean) as string[]
     if (recipients.length === 0) {
       return new Response(JSON.stringify({ error: 'No valid recipient emails found' }), {
         status: 400,
