@@ -816,6 +816,9 @@ function ActiveMembersList({
                 <p className="text-xs text-muted-foreground truncate">
                   EAA #{app.eaa_number} · {app.email}
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  Joined: {fmtDate(app.created_at)}
+                </p>
               </div>
               {assignment && (
                 <span className="text-xs text-muted-foreground shrink-0" title={`Assigned ${fmtDate(assignment.assigned_at)}`}>
