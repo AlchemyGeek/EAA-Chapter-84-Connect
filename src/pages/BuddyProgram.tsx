@@ -762,6 +762,7 @@ export default function BuddyProgram() {
 // Active members sub-component
 function ActiveMembersList({
   completedApps,
+  appRosterMembers,
   assignments,
   volunteerMembers,
   sortedVolunteers,
@@ -776,6 +777,7 @@ function ActiveMembersList({
   getEmailStatus,
 }: {
   completedApps: any[];
+  appRosterMembers: any[];
   assignments: any[];
   volunteerMembers: any[];
   sortedVolunteers: any[];
