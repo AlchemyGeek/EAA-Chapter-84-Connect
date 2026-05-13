@@ -553,6 +553,7 @@ export default function BuddyProgram() {
               onSendIntro={(id) => sendBuddyEmail.mutate({ assignmentId: id, type: "intro" })}
               onSendCheckIn={(id) => sendBuddyEmail.mutate({ assignmentId: id, type: "check_in" })}
               onGraduate={(id) => setGraduateConfirm(id)}
+              onRemove={(appId, name) => setRemoveFromProgram({ appId, name })}
               sendEmailPending={sendBuddyEmail.isPending}
               getEmailStatus={getEmailStatus}
             />
