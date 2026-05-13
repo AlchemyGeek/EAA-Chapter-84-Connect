@@ -352,7 +352,6 @@ Deno.serve(async (req) => {
     let removedCount = 0;
     const changeRecords: any[] = [];
 
-    const incomingKeyIds = new Set(incomingRecords.map((r) => r.key_id));
 
     // Process each incoming record
     for (const incoming of incomingRecords) {
