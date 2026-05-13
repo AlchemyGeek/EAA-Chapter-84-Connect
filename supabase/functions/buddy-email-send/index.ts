@@ -198,7 +198,6 @@ Deno.serve(async (req) => {
         queue_name: 'transactional_emails',
         payload: {
           to: recipient,
-          cc: ['membership@eaa84.org'],
           from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
           sender_domain: 'notify.eaa84.org',
           subject: processedSubject,
