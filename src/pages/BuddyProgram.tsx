@@ -717,6 +717,29 @@ export default function BuddyProgram() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Remove from Program Confirmation */}
+      <AlertDialog open={!!removeFromProgram} onOpenChange={() => setRemoveFromProgram(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from Buddy Program?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removeFromProgram?.name
+                ? `${removeFromProgram.name} will be removed from the buddy program. Any current buddy assignment will also be deleted. The roster record itself will not be affected.`
+                : "This member will be removed from the buddy program."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => removeFromProgram && removeMemberFromProgram.mutate(removeFromProgram.appId)}
+              disabled={removeMemberFromProgram.isPending}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
