@@ -116,15 +116,19 @@ export default function BuddyProgram() {
     },
   });
 
-  const appRosterKeyIds = completedApps.map((a) => a.roster_key_id).filter(Boolean) as number[];
+  // Look up roster join date by EAA number — when a prospect is accepted, EAA creates
+  // a new Regular roster record (different key_id) with the real chapter join date.
+  const appEaaNumbers = Array.from(
+    new Set(completedApps.map((a) => a.eaa_number).filter((n): n is string => !!n))
+  );
   const { data: appRosterMembers = [] } = useQuery({
-    queryKey: ["buddy-app-roster-members", appRosterKeyIds],
-    enabled: appRosterKeyIds.length > 0,
+    queryKey: ["buddy-app-roster-by-eaa", appEaaNumbers],
+    enabled: appEaaNumbers.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, current_joined_on_date")
-        .in("key_id", appRosterKeyIds);
+        .select("key_id, eaa_number, member_type, current_joined_on_date")
+        .in("eaa_number", appEaaNumbers);
       if (error) throw error;
       return data;
     },
@@ -835,7 +839,9 @@ function ActiveMembersList({
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Joined chapter: {(() => {
-                    const rm = appRosterMembers.find((r) => r.key_id === app.roster_key_id);
+                    const matches = appRosterMembers.filter((r) => r.eaa_number === app.eaa_number);
+                    // Prefer the non-Prospect record (real chapter join). Fallback to any match.
+                    const rm = matches.find((r) => r.member_type !== "Prospect") ?? matches[0];
                     const d = rm?.current_joined_on_date;
                     return d ? fmtDate(`${d}T00:00:00`) : "—";
                   })()}
