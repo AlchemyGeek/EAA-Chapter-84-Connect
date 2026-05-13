@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Users, UserPlus, Search, Trash2, UserCheck, RefreshCw,
-  Mail, Send, GraduationCap, Plus,
+  Mail, Send, GraduationCap, Plus, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,6 +49,7 @@ export default function BuddyProgram() {
   const [manualEntrySearch, setManualEntrySearch] = useState("");
   const [manualEntryDialog, setManualEntryDialog] = useState(false);
   const [graduateConfirm, setGraduateConfirm] = useState<string | null>(null);
+  const [removeFromProgram, setRemoveFromProgram] = useState<{ appId: string; name: string } | null>(null);
   const [viewTab, setViewTab] = useState<"active" | "graduated">("active");
 
   // Fetch buddy volunteers with roster info
@@ -288,7 +289,31 @@ export default function BuddyProgram() {
     },
   });
 
-  // Manual entry: add a roster member as a new member in the buddy program
+  const removeMemberFromProgram = useMutation({
+    mutationFn: async (applicationId: string) => {
+      // Delete any buddy assignment first
+      const { error: assignErr } = await supabase
+        .from("buddy_assignments")
+        .delete()
+        .eq("application_id", applicationId);
+      if (assignErr) throw assignErr;
+      // Delete the application record so it disappears from the buddy program list
+      const { error: appErr } = await supabase
+        .from("new_member_applications")
+        .delete()
+        .eq("id", applicationId);
+      if (appErr) throw appErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["completed-applications-buddy"] });
+      setRemoveFromProgram(null);
+      toast({ title: "Member removed from buddy program" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
   // Creates a pseudo-application entry or directly creates an assignment
   const addManualEntry = useMutation({
     mutationFn: async (member: { key_id: number; first_name: string; last_name: string; email: string; eaa_number: string }) => {
@@ -528,6 +553,7 @@ export default function BuddyProgram() {
               onSendIntro={(id) => sendBuddyEmail.mutate({ assignmentId: id, type: "intro" })}
               onSendCheckIn={(id) => sendBuddyEmail.mutate({ assignmentId: id, type: "check_in" })}
               onGraduate={(id) => setGraduateConfirm(id)}
+              onRemove={(appId, name) => setRemoveFromProgram({ appId, name })}
               sendEmailPending={sendBuddyEmail.isPending}
               getEmailStatus={getEmailStatus}
             />
@@ -691,6 +717,29 @@ export default function BuddyProgram() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Remove from Program Confirmation */}
+      <AlertDialog open={!!removeFromProgram} onOpenChange={() => setRemoveFromProgram(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from Buddy Program?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removeFromProgram?.name
+                ? `${removeFromProgram.name} will be removed from the buddy program. Any current buddy assignment will also be deleted. The roster record itself will not be affected.`
+                : "This member will be removed from the buddy program."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => removeFromProgram && removeMemberFromProgram.mutate(removeFromProgram.appId)}
+              disabled={removeMemberFromProgram.isPending}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -707,6 +756,7 @@ function ActiveMembersList({
   onSendIntro,
   onSendCheckIn,
   onGraduate,
+  onRemove,
   sendEmailPending,
   getEmailStatus,
 }: {
@@ -720,6 +770,7 @@ function ActiveMembersList({
   onSendIntro: (assignmentId: string) => void;
   onSendCheckIn: (assignmentId: string) => void;
   onGraduate: (assignmentId: string) => void;
+  onRemove: (appId: string, name: string) => void;
   sendEmailPending: boolean;
   getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; checkInSent: boolean; checkInSentAt?: string };
 }) {
@@ -764,6 +815,9 @@ function ActiveMembersList({
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   EAA #{app.eaa_number} · {app.email}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Joined: {fmtDate(app.created_at)}
                 </p>
               </div>
               {assignment && (
@@ -853,24 +907,44 @@ function ActiveMembersList({
                     <GraduationCap className="h-3 w-3" />
                     Graduate
                   </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground italic">
-                  No buddy assigned yet.
-                </p>
-                {sortedVolunteers.length > 0 && (
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs gap-1"
-                    onClick={() => onAssign(app.id)}
+                    className="h-7 text-xs gap-1 text-muted-foreground hover:text-destructive"
+                    onClick={() => onRemove(app.id, `${app.first_name} ${app.last_name}`)}
                   >
-                    <UserCheck className="h-3 w-3" />
-                    Assign Buddy
+                    <X className="h-3 w-3" />
+                    Remove
                   </Button>
-                )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-xs text-muted-foreground italic">
+                  No buddy assigned yet.
+                </p>
+                <div className="flex items-center gap-1">
+                  {sortedVolunteers.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => onAssign(app.id)}
+                    >
+                      <UserCheck className="h-3 w-3" />
+                      Assign Buddy
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 text-muted-foreground hover:text-destructive"
+                    onClick={() => onRemove(app.id, `${app.first_name} ${app.last_name}`)}
+                  >
+                    <X className="h-3 w-3" />
+                    Remove
+                  </Button>
+                </div>
               </div>
             )}
           </div>
