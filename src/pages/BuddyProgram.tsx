@@ -834,7 +834,11 @@ function ActiveMembersList({
                   EAA #{app.eaa_number} · {app.email}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Joined: {fmtDate(app.created_at)}
+                  Joined chapter: {(() => {
+                    const rm = appRosterMembers.find((r) => r.key_id === app.roster_key_id);
+                    const d = rm?.current_joined_on_date;
+                    return d ? fmtDate(`${d}T00:00:00`) : "—";
+                  })()}
                 </p>
               </div>
               {assignment && (
