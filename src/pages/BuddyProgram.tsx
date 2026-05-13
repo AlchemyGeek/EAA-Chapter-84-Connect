@@ -289,7 +289,31 @@ export default function BuddyProgram() {
     },
   });
 
-  // Manual entry: add a roster member as a new member in the buddy program
+  const removeMemberFromProgram = useMutation({
+    mutationFn: async (applicationId: string) => {
+      // Delete any buddy assignment first
+      const { error: assignErr } = await supabase
+        .from("buddy_assignments")
+        .delete()
+        .eq("application_id", applicationId);
+      if (assignErr) throw assignErr;
+      // Delete the application record so it disappears from the buddy program list
+      const { error: appErr } = await supabase
+        .from("new_member_applications")
+        .delete()
+        .eq("id", applicationId);
+      if (appErr) throw appErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["buddy-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["completed-applications-buddy"] });
+      setRemoveFromProgram(null);
+      toast({ title: "Member removed from buddy program" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
   // Creates a pseudo-application entry or directly creates an assignment
   const addManualEntry = useMutation({
     mutationFn: async (member: { key_id: number; first_name: string; last_name: string; email: string; eaa_number: string }) => {
