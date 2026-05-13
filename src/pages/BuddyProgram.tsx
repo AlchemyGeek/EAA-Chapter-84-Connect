@@ -116,6 +116,20 @@ export default function BuddyProgram() {
     },
   });
 
+  const appRosterKeyIds = completedApps.map((a) => a.roster_key_id).filter(Boolean) as number[];
+  const { data: appRosterMembers = [] } = useQuery({
+    queryKey: ["buddy-app-roster-members", appRosterKeyIds],
+    enabled: appRosterKeyIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, current_joined_on_date")
+        .in("key_id", appRosterKeyIds);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Search roster for adding volunteers
   const { data: searchResults = [] } = useQuery({
     queryKey: ["buddy-search", search],
@@ -541,6 +555,7 @@ export default function BuddyProgram() {
           {viewTab === "active" ? (
             <ActiveMembersList
               completedApps={completedApps}
+              appRosterMembers={appRosterMembers}
               assignments={assignments}
               volunteerMembers={volunteerMembers}
               sortedVolunteers={sortedVolunteers}
@@ -747,6 +762,7 @@ export default function BuddyProgram() {
 // Active members sub-component
 function ActiveMembersList({
   completedApps,
+  appRosterMembers,
   assignments,
   volunteerMembers,
   sortedVolunteers,
@@ -761,6 +777,7 @@ function ActiveMembersList({
   getEmailStatus,
 }: {
   completedApps: any[];
+  appRosterMembers: any[];
   assignments: any[];
   volunteerMembers: any[];
   sortedVolunteers: any[];
@@ -817,7 +834,11 @@ function ActiveMembersList({
                   EAA #{app.eaa_number} · {app.email}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Joined: {fmtDate(app.created_at)}
+                  Joined chapter: {(() => {
+                    const rm = appRosterMembers.find((r) => r.key_id === app.roster_key_id);
+                    const d = rm?.current_joined_on_date;
+                    return d ? fmtDate(`${d}T00:00:00`) : "—";
+                  })()}
                 </p>
               </div>
               {assignment && (
