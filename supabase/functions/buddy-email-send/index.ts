@@ -5,6 +5,58 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function htmlEscape(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+async function getOrCreateUnsubscribeToken(
+  supabase: ReturnType<typeof createClient>,
+  email: string,
+) {
+  const normalizedEmail = email.toLowerCase()
+  const { data: existingUnsubscribeToken } = await supabase
+    .from('email_unsubscribe_tokens')
+    .select('token')
+    .ilike('email', normalizedEmail)
+    .is('used_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (existingUnsubscribeToken?.token) {
+    return existingUnsubscribeToken.token
+  }
+
+  const token = crypto.randomUUID()
+  const { error: insertError } = await supabase
+    .from('email_unsubscribe_tokens')
+    .insert({ email: normalizedEmail, token })
+
+  if (!insertError) {
+    return token
+  }
+
+  const { data: racedToken } = await supabase
+    .from('email_unsubscribe_tokens')
+    .select('token')
+    .ilike('email', normalizedEmail)
+    .is('used_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (racedToken?.token) {
+    return racedToken.token
+  }
+
+  throw new Error('Unable to prepare unsubscribe token')
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
