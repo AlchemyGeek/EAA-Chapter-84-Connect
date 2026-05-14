@@ -201,12 +201,15 @@ Deno.serve(async (req) => {
     // Replace placeholders
     const newMemberName = app.first_name || 'New Member'
     const buddyName = buddy.first_name || 'Buddy'
-    const processedSubject = template.subject
+    const newMemberEmail = app.email || ''
+    const buddyEmail = buddy.email || ''
+    const applyPlaceholders = (s: string) => s
       .replace(/\[NewMemberName\]/g, newMemberName)
       .replace(/\[BuddyName\]/g, buddyName)
-    const baseProcessedBody = template.body
-      .replace(/\[NewMemberName\]/g, newMemberName)
-      .replace(/\[BuddyName\]/g, buddyName)
+      .replace(/\[NewMemberEmail\]/g, newMemberEmail)
+      .replace(/\[BuddyEmail\]/g, buddyEmail)
+    const processedSubject = applyPlaceholders(template.subject)
+    const baseProcessedBody = applyPlaceholders(template.body)
 
     // Lovable Email currently sends only one direct recipient per queued item.
     // Queue separate copies with per-recipient Reply-To so "Reply" reaches the
@@ -234,32 +237,22 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Append a contact block so participants can reply directly to each other.
-    // The queue dispatcher sends one email per recipient (no shared To/Cc),
-    // so we must surface both email addresses in the body itself.
-    const newMemberFullName = [app.first_name, app.last_name].filter(Boolean).join(' ') || 'New Member'
-    const buddyFullName = [buddy.first_name, buddy.last_name].filter(Boolean).join(' ') || 'Buddy'
-    const contactTextLines = [
-      '',
-      '---',
-      'Contact information:',
-      app.email ? `  • ${newMemberFullName} (new member): ${app.email}` : null,
-      buddy.email ? `  • ${buddyFullName} (buddy): ${buddy.email}` : null,
-      'Reply directly to the other party to coordinate.',
-    ].filter(Boolean).join('\n')
-    const processedBody = `${baseProcessedBody}\n${contactTextLines}`
+    // Emails are now embedded in the template via [NewMemberEmail] / [BuddyEmail]
+    // placeholders, so no extra contact block is appended.
+    const processedBody = baseProcessedBody
 
-    const contactHtml =
-      `<hr style="border:none;border-top:1px solid #e0e0e0;margin:20px 0;" />` +
-      `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;">` +
-      `<strong>Contact information:</strong><br>` +
-      (app.email ? `${htmlEscape(newMemberFullName)} (new member): <a href="mailto:${htmlEscape(app.email)}">${htmlEscape(app.email)}</a><br>` : '') +
-      (buddy.email ? `${htmlEscape(buddyFullName)} (buddy): <a href="mailto:${htmlEscape(buddy.email)}">${htmlEscape(buddy.email)}</a><br>` : '') +
-      `<span style="color:#666;">Reply directly to the other party to coordinate.</span>` +
-      `</div>`
-
-    // Convert plain text body to simple HTML, then append contact block
-    const htmlBody = baseProcessedBody.replace(/\n/g, '<br>') + contactHtml
+    // Convert plain text body to simple HTML, linkify mailto for known emails
+    let htmlBody = baseProcessedBody.replace(/\n/g, '<br>')
+    if (newMemberEmail) {
+      htmlBody = htmlBody.split(htmlEscape(newMemberEmail)).join(
+        `<a href="mailto:${htmlEscape(newMemberEmail)}">${htmlEscape(newMemberEmail)}</a>`
+      )
+    }
+    if (buddyEmail) {
+      htmlBody = htmlBody.split(htmlEscape(buddyEmail)).join(
+        `<a href="mailto:${htmlEscape(buddyEmail)}">${htmlEscape(buddyEmail)}</a>`
+      )
+    }
 
     // Generate a unique message ID for idempotency
     const messageId = crypto.randomUUID()
