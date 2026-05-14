@@ -208,14 +208,26 @@ Deno.serve(async (req) => {
       .replace(/\[NewMemberName\]/g, newMemberName)
       .replace(/\[BuddyName\]/g, buddyName)
 
-    // Send one shared introduction/check-in email so the participants can use
-    // Reply All from the actual message headers. Membership receives the archive copy as CC.
-    const participantEmails = [app.email, buddy.email].filter(Boolean) as string[]
+    // Lovable Email currently sends only one direct recipient per queued item.
+    // Queue separate copies with per-recipient Reply-To so "Reply" reaches the
+    // other participant instead of notify@notify.eaa84.org.
     const archiveEmail = 'membership@eaa84.org'
-    const primaryRecipient = app.email || buddy.email
-    const ccRecipients = [buddy.email && buddy.email !== primaryRecipient ? buddy.email : null, archiveEmail].filter(Boolean) as string[]
+    const recipients = [
+      app.email
+        ? { to: app.email, replyTo: buddy.email || archiveEmail, audience: 'new-member' }
+        : null,
+      buddy.email
+        ? { to: buddy.email, replyTo: app.email || archiveEmail, audience: 'buddy' }
+        : null,
+      archiveEmail
+        ? { to: archiveEmail, replyTo: app.email || buddy.email || archiveEmail, audience: 'membership' }
+        : null,
+    ].filter(
+      (recipient): recipient is { to: string; replyTo: string; audience: string } =>
+        Boolean(recipient?.to && recipient.replyTo),
+    )
 
-    if (!primaryRecipient) {
+    if (recipients.length === 0) {
       return new Response(JSON.stringify({ error: 'No valid recipient emails found' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -241,8 +253,8 @@ Deno.serve(async (req) => {
       `<hr style="border:none;border-top:1px solid #e0e0e0;margin:20px 0;" />` +
       `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;">` +
       `<strong>Contact information:</strong><br>` +
-      (app.email ? `${newMemberFullName} (new member): <a href="mailto:${app.email}">${app.email}</a><br>` : '') +
-      (buddy.email ? `${buddyFullName} (buddy): <a href="mailto:${buddy.email}">${buddy.email}</a><br>` : '') +
+      (app.email ? `${htmlEscape(newMemberFullName)} (new member): <a href="mailto:${htmlEscape(app.email)}">${htmlEscape(app.email)}</a><br>` : '') +
+      (buddy.email ? `${htmlEscape(buddyFullName)} (buddy): <a href="mailto:${htmlEscape(buddy.email)}">${htmlEscape(buddy.email)}</a><br>` : '') +
       `<span style="color:#666;">Reply directly to the other party to coordinate.</span>` +
       `</div>`
 
@@ -252,47 +264,31 @@ Deno.serve(async (req) => {
     // Generate a unique message ID for idempotency
     const messageId = crypto.randomUUID()
 
-    const { data: existingUnsubscribeToken } = await supabase
-      .from('email_unsubscribe_tokens')
-      .select('token')
-      .eq('email', primaryRecipient)
-      .is('used_at', null)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
+    for (const recipient of recipients) {
+      const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient.to)
 
-    const unsubscribeToken = existingUnsubscribeToken?.token ?? crypto.randomUUID()
+      const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+        queue_name: 'transactional_emails',
+        payload: {
+          to: recipient.to,
+          from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
+          reply_to: recipient.replyTo,
+          sender_domain: 'notify.eaa84.org',
+          subject: processedSubject,
+          html: htmlBody,
+          text: processedBody,
+          purpose: 'transactional',
+          label: `buddy_${email_type}`,
+          idempotency_key: `buddy-${assignment_id}-${email_type}-${recipient.audience}`,
+          unsubscribe_token: unsubscribeToken,
+          message_id: `${messageId}-${recipient.audience}`,
+          queued_at: new Date().toISOString(),
+        },
+      })
 
-    if (!existingUnsubscribeToken) {
-      await supabase
-        .from('email_unsubscribe_tokens')
-        .insert({ email: primaryRecipient, token: unsubscribeToken })
-    }
-
-    const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-      queue_name: 'transactional_emails',
-      payload: {
-        to: primaryRecipient,
-        cc: ccRecipients,
-        from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
-        // reply_to omitted: the Lovable email API only accepts a single address
-        // and rejects arrays/comma-lists. To+Cc already enable Reply All to reach
-        // both participants and membership@.
-        sender_domain: 'notify.eaa84.org',
-        subject: processedSubject,
-        html: htmlBody,
-        text: processedBody,
-        purpose: 'transactional',
-        label: `buddy_${email_type}`,
-        idempotency_key: `buddy-${assignment_id}-${email_type}`,
-        unsubscribe_token: unsubscribeToken,
-        message_id: messageId,
-        queued_at: new Date().toISOString(),
-      },
-    })
-
-    if (enqueueError) {
-      throw new Error(`Failed to enqueue buddy email: ${enqueueError.message}`)
+      if (enqueueError) {
+        throw new Error(`Failed to enqueue buddy email: ${enqueueError.message}`)
+      }
     }
 
     // Log the send
