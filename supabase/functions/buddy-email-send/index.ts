@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
         to: primaryRecipient,
         cc: ccRecipients,
         from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
-        reply_to: participantEmails.join(', '),
+        reply_to: participantEmails,
         sender_domain: 'notify.eaa84.org',
         subject: processedSubject,
         html: htmlBody,
