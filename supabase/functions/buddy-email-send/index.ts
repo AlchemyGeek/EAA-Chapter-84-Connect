@@ -201,12 +201,15 @@ Deno.serve(async (req) => {
     // Replace placeholders
     const newMemberName = app.first_name || 'New Member'
     const buddyName = buddy.first_name || 'Buddy'
-    const processedSubject = template.subject
+    const newMemberEmail = app.email || ''
+    const buddyEmail = buddy.email || ''
+    const applyPlaceholders = (s: string) => s
       .replace(/\[NewMemberName\]/g, newMemberName)
       .replace(/\[BuddyName\]/g, buddyName)
-    const baseProcessedBody = template.body
-      .replace(/\[NewMemberName\]/g, newMemberName)
-      .replace(/\[BuddyName\]/g, buddyName)
+      .replace(/\[NewMemberEmail\]/g, newMemberEmail)
+      .replace(/\[BuddyEmail\]/g, buddyEmail)
+    const processedSubject = applyPlaceholders(template.subject)
+    const baseProcessedBody = applyPlaceholders(template.body)
 
     // Lovable Email currently sends only one direct recipient per queued item.
     // Queue separate copies with per-recipient Reply-To so "Reply" reaches the
