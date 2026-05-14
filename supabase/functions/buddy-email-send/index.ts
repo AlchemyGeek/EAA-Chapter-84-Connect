@@ -156,11 +156,14 @@ Deno.serve(async (req) => {
       .replace(/\[NewMemberName\]/g, newMemberName)
       .replace(/\[BuddyName\]/g, buddyName)
 
-    // Build recipient list: new member + buddy volunteer + membership archive
-    // NOTE: The email queue dispatcher does not forward `cc`, so we send to
-    // membership@eaa84.org as a direct recipient to ensure they receive a copy.
-    const recipients = [app.email, buddy.email, 'membership@eaa84.org'].filter(Boolean) as string[]
-    if (recipients.length === 0) {
+    // Send one shared introduction/check-in email so the participants can use
+    // Reply All from the actual message headers. Membership receives the archive copy as CC.
+    const participantEmails = [app.email, buddy.email].filter(Boolean) as string[]
+    const archiveEmail = 'membership@eaa84.org'
+    const primaryRecipient = app.email || buddy.email
+    const ccRecipients = [buddy.email && buddy.email !== primaryRecipient ? buddy.email : null, archiveEmail].filter(Boolean) as string[]
+
+    if (!primaryRecipient) {
       return new Response(JSON.stringify({ error: 'No valid recipient emails found' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -197,48 +200,45 @@ Deno.serve(async (req) => {
     // Generate a unique message ID for idempotency
     const messageId = crypto.randomUUID()
 
-    // Send to each recipient individually (required by transactional email queue)
-    for (const recipient of recipients) {
-      const recipientMessageId = `${messageId}-${recipient}`
+    const { data: existingUnsubscribeToken } = await supabase
+      .from('email_unsubscribe_tokens')
+      .select('token')
+      .eq('email', primaryRecipient)
+      .is('used_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-      const { data: existingUnsubscribeToken } = await supabase
+    const unsubscribeToken = existingUnsubscribeToken?.token ?? crypto.randomUUID()
+
+    if (!existingUnsubscribeToken) {
+      await supabase
         .from('email_unsubscribe_tokens')
-        .select('token')
-        .eq('email', recipient)
-        .is('used_at', null)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+        .insert({ email: primaryRecipient, token: unsubscribeToken })
+    }
 
-      const unsubscribeToken = existingUnsubscribeToken?.token ?? crypto.randomUUID()
+    const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+      queue_name: 'transactional_emails',
+      payload: {
+        to: primaryRecipient,
+        cc: ccRecipients,
+        from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
+        reply_to: participantEmails.join(', '),
+        sender_domain: 'notify.eaa84.org',
+        subject: processedSubject,
+        html: htmlBody,
+        text: processedBody,
+        purpose: 'transactional',
+        label: `buddy_${email_type}`,
+        idempotency_key: `buddy-${assignment_id}-${email_type}`,
+        unsubscribe_token: unsubscribeToken,
+        message_id: messageId,
+        queued_at: new Date().toISOString(),
+      },
+    })
 
-      if (!existingUnsubscribeToken) {
-        await supabase
-          .from('email_unsubscribe_tokens')
-          .insert({ email: recipient, token: unsubscribeToken })
-      }
-
-      const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-        queue_name: 'transactional_emails',
-        payload: {
-          to: recipient,
-          from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
-          sender_domain: 'notify.eaa84.org',
-          subject: processedSubject,
-          html: htmlBody,
-          text: processedBody,
-          purpose: 'transactional',
-          label: `buddy_${email_type}`,
-          idempotency_key: `buddy-${assignment_id}-${email_type}-${recipientMessageId}`,
-          unsubscribe_token: unsubscribeToken,
-          message_id: recipientMessageId,
-          queued_at: new Date().toISOString(),
-        },
-      })
-
-      if (enqueueError) {
-        throw new Error(`Failed to enqueue email to ${recipient}: ${enqueueError.message}`)
-      }
+    if (enqueueError) {
+      throw new Error(`Failed to enqueue buddy email: ${enqueueError.message}`)
     }
 
     // Log the send
