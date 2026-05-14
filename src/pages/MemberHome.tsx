@@ -255,6 +255,24 @@ export default function MemberHome() {
     ? (viewRoles?.includes("admin") || viewRoles?.includes("officer") || isOfficer)
     : isOfficerOrAbove;
 
+  const { data: proxyVoteSignCount = 0 } = useQuery({
+    queryKey: ["proxy-vote-sign-count"],
+    enabled: viewIsOfficerOrAbove,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("proxy_votes_2026")
+        .select("key_id, action, created_at")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const byMember = new Map<number, string>();
+      (data || []).forEach((r: any) => {
+        byMember.set(r.key_id, r.action);
+      });
+      return Array.from(byMember.values()).filter((a) => a === "signed").length;
+    },
+  });
+
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
