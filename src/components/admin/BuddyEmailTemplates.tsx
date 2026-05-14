@@ -102,9 +102,11 @@ export function BuddyEmailTemplates() {
           <CollapsibleContent>
             <CardContent className="pt-0">
               <p className="text-xs text-muted-foreground mb-3">
-                Edit the email templates sent to buddy pairs. Use{" "}
-                <code className="text-xs bg-muted px-1 rounded">[NewMemberName]</code> and{" "}
-                <code className="text-xs bg-muted px-1 rounded">[BuddyName]</code> as placeholders.
+                Edit the email templates sent to buddy pairs. Placeholders:{" "}
+                <code className="text-xs bg-muted px-1 rounded">[NewMemberName]</code>,{" "}
+                <code className="text-xs bg-muted px-1 rounded">[BuddyName]</code>,{" "}
+                <code className="text-xs bg-muted px-1 rounded">[NewMemberEmail]</code>,{" "}
+                <code className="text-xs bg-muted px-1 rounded">[BuddyEmail]</code>.
               </p>
           {isLoading ? (
             <div className="text-sm text-muted-foreground animate-pulse py-4">Loading templates...</div>
