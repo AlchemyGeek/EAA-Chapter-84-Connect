@@ -176,7 +176,7 @@ export function BuddyEmailTemplates() {
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Available placeholders: <code>[NewMemberName]</code>, <code>[BuddyName]</code>
+                Available placeholders: <code>[NewMemberName]</code>, <code>[BuddyName]</code>, <code>[NewMemberEmail]</code>, <code>[BuddyEmail]</code>
               </p>
             </div>
             <div className="flex justify-end gap-2">
