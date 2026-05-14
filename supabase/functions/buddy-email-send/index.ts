@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
     const processedSubject = template.subject
       .replace(/\[NewMemberName\]/g, newMemberName)
       .replace(/\[BuddyName\]/g, buddyName)
-    const processedBody = template.body
+    const baseProcessedBody = template.body
       .replace(/\[NewMemberName\]/g, newMemberName)
       .replace(/\[BuddyName\]/g, buddyName)
 
@@ -167,8 +167,32 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Convert plain text to simple HTML
-    const htmlBody = processedBody.replace(/\n/g, '<br>')
+    // Append a contact block so participants can reply directly to each other.
+    // The queue dispatcher sends one email per recipient (no shared To/Cc),
+    // so we must surface both email addresses in the body itself.
+    const newMemberFullName = [app.first_name, app.last_name].filter(Boolean).join(' ') || 'New Member'
+    const buddyFullName = [buddy.first_name, buddy.last_name].filter(Boolean).join(' ') || 'Buddy'
+    const contactTextLines = [
+      '',
+      '---',
+      'Contact information:',
+      app.email ? `  • ${newMemberFullName} (new member): ${app.email}` : null,
+      buddy.email ? `  • ${buddyFullName} (buddy): ${buddy.email}` : null,
+      'Reply directly to the other party to coordinate.',
+    ].filter(Boolean).join('\n')
+    const processedBody = `${baseProcessedBody}\n${contactTextLines}`
+
+    const contactHtml =
+      `<hr style="border:none;border-top:1px solid #e0e0e0;margin:20px 0;" />` +
+      `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;">` +
+      `<strong>Contact information:</strong><br>` +
+      (app.email ? `${newMemberFullName} (new member): <a href="mailto:${app.email}">${app.email}</a><br>` : '') +
+      (buddy.email ? `${buddyFullName} (buddy): <a href="mailto:${buddy.email}">${buddy.email}</a><br>` : '') +
+      `<span style="color:#666;">Reply directly to the other party to coordinate.</span>` +
+      `</div>`
+
+    // Convert plain text body to simple HTML, then append contact block
+    const htmlBody = baseProcessedBody.replace(/\n/g, '<br>') + contactHtml
 
     // Generate a unique message ID for idempotency
     const messageId = crypto.randomUUID()
