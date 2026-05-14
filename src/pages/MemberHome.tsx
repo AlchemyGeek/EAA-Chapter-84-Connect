@@ -255,6 +255,24 @@ export default function MemberHome() {
     ? (viewRoles?.includes("admin") || viewRoles?.includes("officer") || isOfficer)
     : isOfficerOrAbove;
 
+  const { data: proxyVoteSignCount = 0 } = useQuery({
+    queryKey: ["proxy-vote-sign-count"],
+    enabled: viewIsOfficerOrAbove,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("proxy_votes_2026")
+        .select("key_id, action, created_at")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const byMember = new Map<number, string>();
+      (data || []).forEach((r: any) => {
+        byMember.set(r.key_id, r.action);
+      });
+      return Array.from(byMember.values()).filter((a) => a === "signed").length;
+    },
+  });
+
   const isLoading = authLoading || myLoading || (impersonateKeyId && impLoading);
 
   if (authLoading || myLoading) {
@@ -682,7 +700,7 @@ export default function MemberHome() {
                   className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md hover:bg-muted/60 transition-colors min-h-[44px] text-sm"
                 >
                   <ClipboardList className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="flex-1">2026 Bylaws Proxy Vote Results</span>
+                  <span className="flex-1">2026 Bylaws Proxy Vote Results{proxyVoteSignCount > 0 ? ` (${proxyVoteSignCount})` : ""}</span>
                   <Download className="h-4 w-4 text-muted-foreground" />
                 </button>
               </div>
