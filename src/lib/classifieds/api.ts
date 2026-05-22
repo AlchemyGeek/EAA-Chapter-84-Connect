@@ -31,7 +31,7 @@ interface ClassifiedRow {
   category: Category;
   tags: string[];
   price: number | string | null;
-  links: string[] | null;
+  links: unknown;
   status: "active" | "expired" | "hidden";
   author_key_id: number;
   author_name: string;
