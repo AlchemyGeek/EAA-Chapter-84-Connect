@@ -175,6 +175,7 @@ export default function Classifieds() {
           value={filters}
           onChange={setFilters}
           onClear={() => setFilters(DEFAULT_FILTERS)}
+          availableTags={availableTags}
         />
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
