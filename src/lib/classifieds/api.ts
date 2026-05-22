@@ -232,6 +232,8 @@ export function useCreateListing() {
           description: values.description.trim(),
           category: values.category,
           tags: values.tags,
+          price: values.category === "for-sale" ? values.price : null,
+          links: values.links,
           status: "active",
           author_key_id: member.key_id,
           author_name: authorName,
