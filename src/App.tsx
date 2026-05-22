@@ -38,7 +38,7 @@ import ClassifiedNew from "./pages/ClassifiedNew";
 import ClassifiedEdit from "./pages/ClassifiedEdit";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
-import { ClassifiedsProvider } from "./lib/classifieds/store";
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,7 +57,7 @@ const App = () => (
       <BrowserRouter>
         <PWAUpdatePrompt />
         <AuthProvider>
-          <ClassifiedsProvider>
+          
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
@@ -80,6 +80,8 @@ const App = () => (
                 <Route path="/member-engagement" element={<MemberEngagement />} />
                 <Route path="/classifieds" element={<Classifieds />} />
                 <Route path="/classifieds/:id" element={<ClassifiedDetail />} />
+                <Route path="/classifieds/new" element={<ClassifiedNew />} />
+                <Route path="/classifieds/:id/edit" element={<ClassifiedEdit />} />
             </Route>
             <Route path="/directory/:keyId" element={<MemberProfile />} />
             <Route path="/dues-payment" element={<DuesPayment />} />
@@ -93,7 +95,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </ClassifiedsProvider>
+          
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
