@@ -76,7 +76,7 @@ export function ClassifiedForm({
       ? String(initial.price)
       : "",
   );
-  const [links, setLinks] = useState<string[]>(initial?.links ?? []);
+  const [links, setLinks] = useState<ClassifiedLink[]>(initial?.links ?? []);
   const [keptPhotoIds, setKeptPhotoIds] = useState<string[]>(
     initial?.existingPhotos.map((p) => p.id) ?? [],
   );
