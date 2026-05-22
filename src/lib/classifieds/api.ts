@@ -253,7 +253,7 @@ export function useCreateListing() {
           category: values.category,
           tags: values.tags,
           price: values.category === "for-sale" ? values.price : null,
-          links: values.links,
+          links: values.links as unknown as string[],
           status: "active",
           author_key_id: member.key_id,
           author_name: authorName,
