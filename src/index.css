@@ -52,6 +52,16 @@
     --success-foreground: 0 0% 100%;
     --info: 215 55% 45%;
     --info-foreground: 0 0% 100%;
+
+    /* Classifieds — category badge tokens */
+    --category-for-sale: 215 75% 45%;
+    --category-wanted: 180 55% 40%;
+    --category-hangar: 12 75% 58%;
+    --category-services: 270 50% 50%;
+    --category-training: 35 90% 50%;
+    --category-expertise: 142 55% 40%;
+    --category-free: 215 10% 50%;
+    --category-misc: 215 10% 50%;
   }
 
   * {

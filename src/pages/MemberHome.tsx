@@ -19,7 +19,7 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
   UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare, Activity, Newspaper,
-  ClipboardList, Vote,
+  ClipboardList, Vote, Tag,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
@@ -672,6 +672,7 @@ export default function MemberHome() {
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
+                <AdminLink to="/classifieds" icon={Tag} label="Classifieds" />
                 {/* <AdminLink to={impersonateKeyId ? `/hangar-talk?viewAs=${impersonateKeyId}` : "/hangar-talk"} icon={MessageSquare} label="Hangar Talk" /> */}
               </>
             )}
