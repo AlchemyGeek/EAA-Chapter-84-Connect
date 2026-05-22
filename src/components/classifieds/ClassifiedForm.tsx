@@ -25,7 +25,7 @@ import type { ListingFormValues } from "@/lib/classifieds/api";
 
 const schema = z.object({
   title: z.string().trim().min(1, "Title is required").max(100, "Max 100 characters"),
-  description: z.string().trim().min(20, "Description must be at least 20 characters"),
+  description: z.string().trim(),
   category: z.string().min(1, "Category is required"),
 });
 
