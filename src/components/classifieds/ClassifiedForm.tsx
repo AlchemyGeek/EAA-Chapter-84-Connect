@@ -13,9 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PhotoUploader, type ExistingPhoto } from "./PhotoUploader";
+import { TagInput } from "./TagInput";
+import { LinksInput } from "./LinksInput";
 import {
   CATEGORY_OPTIONS,
-  TAG_OPTIONS,
   type Category,
   type Tag,
 } from "@/lib/classifieds/types";
@@ -34,6 +35,8 @@ interface Props {
     description: string;
     category: Category;
     tags: Tag[];
+    price: number | null;
+    links: string[];
     existingPhotos: ExistingPhoto[];
   };
   submitting?: boolean;
@@ -67,6 +70,12 @@ export function ClassifiedForm({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [category, setCategory] = useState<Category | "">(initial?.category ?? "");
   const [tags, setTags] = useState<Tag[]>(initial?.tags ?? []);
+  const [priceInput, setPriceInput] = useState<string>(
+    initial?.price !== undefined && initial?.price !== null
+      ? String(initial.price)
+      : "",
+  );
+  const [links, setLinks] = useState<string[]>(initial?.links ?? []);
   const [keptPhotoIds, setKeptPhotoIds] = useState<string[]>(
     initial?.existingPhotos.map((p) => p.id) ?? [],
   );
@@ -80,6 +89,12 @@ export function ClassifiedForm({
       setDescription(initial.description);
       setCategory(initial.category);
       setTags(initial.tags);
+      setPriceInput(
+        initial.price !== null && initial.price !== undefined
+          ? String(initial.price)
+          : "",
+      );
+      setLinks(initial.links);
       setKeptPhotoIds(initial.existingPhotos.map((p) => p.id));
     }
   }, [initial]);
@@ -94,18 +109,30 @@ export function ClassifiedForm({
     [duration],
   );
 
-  const toggleTag = (t: Tag) => {
-    setTags((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const result = schema.safeParse({ title, description, category });
+    const errs: Record<string, string> = {};
     if (!result.success) {
-      const errs: Record<string, string> = {};
       for (const issue of result.error.issues) {
         errs[issue.path[0] as string] = issue.message;
       }
+    }
+    let parsedPrice: number | null = null;
+    if (category === "for-sale") {
+      const trimmed = priceInput.trim();
+      if (trimmed === "") {
+        errs.price = "Price is required for For Sale listings.";
+      } else {
+        const num = Number(trimmed.replace(/[^0-9.]/g, ""));
+        if (Number.isNaN(num) || num < 0) {
+          errs.price = "Enter a valid non-negative price.";
+        } else {
+          parsedPrice = Math.round(num * 100) / 100;
+        }
+      }
+    }
+    if (Object.keys(errs).length) {
       setErrors(errs);
       return;
     }
@@ -115,6 +142,8 @@ export function ClassifiedForm({
       description,
       category: category as Category,
       tags,
+      price: parsedPrice,
+      links,
       keptPhotoIds,
       newPhotos: newFiles,
       durationMonths: mode === "create" ? duration : undefined,
@@ -164,27 +193,38 @@ export function ClassifiedForm({
         )}
       </div>
 
+      {category === "for-sale" && (
+        <div className="space-y-2">
+          <Label htmlFor="price">
+            Price (USD) <span className="text-destructive">*</span>
+          </Label>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              $
+            </span>
+            <Input
+              id="price"
+              type="text"
+              inputMode="decimal"
+              value={priceInput}
+              onChange={(e) => setPriceInput(e.target.value)}
+              placeholder="0.00"
+              className="pl-7"
+              aria-invalid={!!errors.price}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Enter <strong>0</strong> to mark as free or open to offers.
+          </p>
+          {errors.price && (
+            <p className="text-xs text-destructive">{errors.price}</p>
+          )}
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label>Tags</Label>
-        <div className="flex flex-wrap gap-2">
-          {TAG_OPTIONS.map((o) => {
-            const active = tags.includes(o.value);
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => toggleTag(o.value)}
-                className={`min-h-[36px] rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                  active
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background hover:bg-muted"
-                }`}
-              >
-                {o.label}
-              </button>
-            );
-          })}
-        </div>
+        <TagInput value={tags} onChange={setTags} />
       </div>
 
       <div className="space-y-2">
@@ -202,6 +242,11 @@ export function ClassifiedForm({
         {errors.description && (
           <p className="text-xs text-destructive">{errors.description}</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Links</Label>
+        <LinksInput value={links} onChange={setLinks} />
       </div>
 
       <div className="space-y-2">
