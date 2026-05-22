@@ -10,6 +10,8 @@ interface ClassifiedRow {
   description: string;
   category: Category;
   tags: string[];
+  price: number | string | null;
+  links: string[] | null;
   status: "active" | "expired" | "hidden";
   author_key_id: number;
   author_name: string;
