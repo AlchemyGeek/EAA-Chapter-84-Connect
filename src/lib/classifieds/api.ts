@@ -404,6 +404,87 @@ export function useToggleHidden() {
   });
 }
 
+export interface RosterSearchResult {
+  key_id: number;
+  first_name: string | null;
+  last_name: string | null;
+  nickname: string | null;
+  eaa_number: string | null;
+  email: string | null;
+  current_standing: string | null;
+}
+
+export function useRosterSearch(query: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["classifieds-roster-search", query],
+    enabled: enabled && query.trim().length >= 2,
+    staleTime: 30_000,
+    queryFn: async (): Promise<RosterSearchResult[]> => {
+      const q = query.trim();
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, nickname, eaa_number, email, current_standing")
+        .or(
+          `first_name.ilike.%${q}%,last_name.ilike.%${q}%,nickname.ilike.%${q}%,eaa_number.ilike.%${q}%,email.ilike.%${q}%`,
+        )
+        .eq("current_standing", "Active")
+        .order("last_name")
+        .limit(15);
+      if (error) throw error;
+      return (data ?? []) as RosterSearchResult[];
+    },
+  });
+}
+
+export function useReassignClassifiedAuthor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { id: string; keyId: number }) => {
+      const { data: rm, error: rmErr } = await supabase
+        .from("roster_members")
+        .select(
+          "key_id, first_name, last_name, nickname, email, cell_phone, cell_phone_private",
+        )
+        .eq("key_id", args.keyId)
+        .maybeSingle();
+      if (rmErr) throw rmErr;
+      if (!rm) throw new Error("Member not found");
+
+      const { data: mcd } = await supabase
+        .from("member_chapter_data")
+        .select("contact_visible_in_directory")
+        .eq("key_id", rm.key_id)
+        .maybeSingle();
+
+      const authorName =
+        [rm.nickname || rm.first_name, rm.last_name]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || (rm.email ?? "Member");
+      const phoneVisible =
+        !!rm.cell_phone &&
+        !rm.cell_phone_private &&
+        !!mcd?.contact_visible_in_directory;
+
+      const { error } = await supabase
+        .from("classifieds")
+        .update({
+          author_key_id: rm.key_id,
+          author_name: authorName,
+          author_email: rm.email ?? "",
+          author_phone: phoneVisible ? rm.cell_phone : null,
+          author_phone_visible: phoneVisible,
+        })
+        .eq("id", args.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["classifieds"] });
+      qc.invalidateQueries({ queryKey: ["classifieds", vars.id] });
+    },
+  });
+}
+
 async function uploadAndAttachPhotos(
   classifiedId: string,
   authorKeyId: number,
