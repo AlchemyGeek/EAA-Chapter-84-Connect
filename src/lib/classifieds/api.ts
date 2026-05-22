@@ -1,8 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { Category, Listing, Tag } from "./types";
+import type { Category, ClassifiedLink, Listing, Tag } from "./types";
 import { STORAGE_BUCKET } from "./types";
+
+function normalizeLinks(raw: unknown): ClassifiedLink[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ClassifiedLink[] = [];
+  for (const item of raw) {
+    if (typeof item === "string") {
+      out.push({ url: item, label: item });
+    } else if (item && typeof item === "object") {
+      const url = (item as { url?: unknown }).url;
+      const label = (item as { label?: unknown }).label;
+      if (typeof url === "string" && url) {
+        out.push({
+          url,
+          label: typeof label === "string" && label ? label : url,
+        });
+      }
+    }
+  }
+  return out;
+}
 
 interface ClassifiedRow {
   id: string;
