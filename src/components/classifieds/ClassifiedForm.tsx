@@ -230,7 +230,7 @@ export function ClassifiedForm({
 
       <div className="space-y-2">
         <Label htmlFor="description">
-          Description <span className="text-destructive">*</span>
+          Description
         </Label>
         <Textarea
           id="description"
