@@ -94,6 +94,8 @@ export default function ClassifiedEdit() {
             description: listing.description,
             category: listing.category,
             tags: listing.tags,
+            price: listing.price,
+            links: listing.links,
             existingPhotos,
           }}
           submitting={update.isPending}
