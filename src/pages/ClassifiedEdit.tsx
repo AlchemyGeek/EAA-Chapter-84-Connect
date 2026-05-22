@@ -121,37 +121,48 @@ export default function ClassifiedEdit() {
           }}
           preSubmitSlot={
             isOfficerOrAbove ? (
-              <div className="rounded-md border bg-muted/30 p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Moderation
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    const next = await toggleHidden.mutateAsync({
-                      id: listing.id,
-                      currentDbStatus: listing.dbStatus,
-                      expiresAt: listing.expiresAt,
-                    });
-                    if (next === "hidden") {
-                      toast.success("Listing hidden. It is no longer visible to members.");
-                    } else {
-                      toast.success("Listing restored. It is now visible to members.");
-                    }
-                  }}
-                >
-                  {isHidden ? (
-                    <>
-                      <Eye className="h-4 w-4" /> Unhide listing
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="h-4 w-4" /> Hide listing
-                    </>
-                  )}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const next = await toggleHidden.mutateAsync({
+                        id: listing.id,
+                        currentDbStatus: listing.dbStatus,
+                        expiresAt: listing.expiresAt,
+                      });
+                      if (next === "hidden") {
+                        toast.success("Listing hidden. It is no longer visible to members.");
+                      } else {
+                        toast.success("Listing restored. It is now visible to members.");
+                      }
+                    }}
+                  >
+                    {isHidden ? (
+                      <>
+                        <Eye className="h-4 w-4" /> Unhide listing
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="h-4 w-4" /> Hide listing
+                      </>
+                    )}
+                  </Button>
+                  <ReassignAuthorDialog
+                    classifiedId={listing.id}
+                    currentAuthorName={listing.authorName}
+                    currentAuthorKeyId={listing.authorKeyId}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Use "Change author" to post on behalf of another member. The listing's
+                  ownership and contact info will be updated to that member.
+                </p>
               </div>
             ) : null
           }
