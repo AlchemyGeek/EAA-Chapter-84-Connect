@@ -1458,6 +1458,10 @@ export type Database = {
           title: string
         }[]
       }
+      sync_classifieds_contact: {
+        Args: { _key_id: number }
+        Returns: undefined
+      }
       ts_lexize_words: {
         Args: { _query: string }
         Returns: {
