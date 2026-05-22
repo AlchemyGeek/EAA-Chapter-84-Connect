@@ -236,7 +236,7 @@ export function useCreateListing() {
       const months = values.durationMonths ?? 1;
       const expires = addMonths(new Date(), months);
       const authorName =
-        [member.nickname || member.first_name, member.last_name]
+        [member.nickname?.trim() || member.first_name, member.last_name]
           .filter(Boolean)
           .join(" ")
           .trim() || (member.email ?? "Member");
