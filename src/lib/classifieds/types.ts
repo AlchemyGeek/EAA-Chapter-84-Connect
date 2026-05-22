@@ -28,9 +28,16 @@ export interface Listing {
   description: string;
   category: Category;
   tags: Tag[];
+  /** Resolved signed URLs for display. */
   photos: string[];
+  /** Raw storage paths, used by editor and gallery management. */
+  photoRows: { id: string; storagePath: string; url: string }[];
+  /** Derived display status (hidden > expired > active). */
   status: ListingStatus;
-  authorId: string;
+  /** Raw DB status — distinguishes "hidden" from time-based "expired". */
+  dbStatus: "active" | "expired" | "hidden";
+  authorId: string; // string-cast key_id
+  authorKeyId: number;
   authorName: string;
   authorEmail: string;
   authorPhone: string | null;
@@ -94,3 +101,6 @@ export const DISCLAIMER_FULL =
 
 export const DISCLAIMER_SHORT =
   "EAA Chapter 84 does not endorse the safety, quality, or airworthiness of any listing.";
+
+export const MAX_PHOTOS = 4;
+export const STORAGE_BUCKET = "classifieds";
