@@ -1,47 +1,50 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Link, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DisclaimerBar } from "@/components/classifieds/DisclaimerBar";
 import { ClassifiedFilters } from "@/components/classifieds/ClassifiedFilters";
 import { ClassifiedCard } from "@/components/classifieds/ClassifiedCard";
 import { EmptyState } from "@/components/classifieds/EmptyState";
 import { RenewDialog } from "@/components/classifieds/RenewDialog";
-import { useClassifieds } from "@/lib/classifieds/store";
-import { applyFilters, DEFAULT_FILTERS } from "@/lib/classifieds/filters";
+import {
+  useCurrentMember,
+  useDeleteListing,
+  useListings,
+  useRenewListing,
+} from "@/lib/classifieds/api";
+import { applyFilters, DEFAULT_FILTERS, formatDate } from "@/lib/classifieds/filters";
 import type { FilterState } from "@/lib/classifieds/filters";
 import type { Listing } from "@/lib/classifieds/types";
-import { RotateCcw } from "lucide-react";
+import { Pencil, Plus, RotateCcw, Trash2, Eye } from "lucide-react";
 
 type TabKey = "active" | "archived" | "mine";
 
 export default function Classifieds() {
-  const { user, isOfficerOrAbove } = useAuth();
-  const { listings, renew } = useClassifieds();
+  const { isOfficerOrAbove } = useAuth();
+  const { data: member } = useCurrentMember();
+  const { data: listings = [], isLoading } = useListings();
+  const renew = useRenewListing();
+  const remove = useDeleteListing();
   const [params, setParams] = useSearchParams();
   const tab = (params.get("tab") as TabKey) || "active";
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [renewTarget, setRenewTarget] = useState<Listing | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Listing | null>(null);
 
-  // Resolve current member's key_id (used for "My Listings" / author detection)
-  const { data: myMember } = useQuery({
-    queryKey: ["my-member-classifieds", user?.email],
-    enabled: !!user?.email,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_members")
-        .select("key_id")
-        .ilike("email", user!.email!)
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-  const myKeyId = myMember?.key_id ? String(myMember.key_id) : null;
+  const myKeyId = member?.key_id ? String(member.key_id) : null;
 
   const setTab = (next: TabKey) => {
     const np = new URLSearchParams(params);
@@ -49,24 +52,85 @@ export default function Classifieds() {
     setParams(np, { replace: true });
   };
 
-  // Visibility: hide "hidden" listings from non-officers
-  const visibleListings = useMemo(
-    () => listings.filter((l) => isOfficerOrAbove || l.status !== "hidden"),
-    [listings, isOfficerOrAbove],
-  );
-
   const tabFiltered = useMemo(() => {
     if (tab === "active") {
-      return visibleListings.filter((l) => l.status === "active" || l.status === "hidden");
-      // hidden only included for officers (already filtered above)
+      return listings.filter(
+        (l) =>
+          l.status === "active" || (isOfficerOrAbove && l.status === "hidden"),
+      );
     }
     if (tab === "archived") {
-      return visibleListings.filter((l) => l.status === "expired");
+      return listings.filter((l) => l.status === "expired");
     }
-    return visibleListings.filter((l) => l.authorId === myKeyId);
-  }, [visibleListings, tab, myKeyId]);
+    return listings.filter((l) => l.authorId === myKeyId);
+  }, [listings, tab, myKeyId, isOfficerOrAbove]);
 
   const filtered = useMemo(() => applyFilters(tabFiltered, filters), [tabFiltered, filters]);
+
+  const handleRenew = async (months: 1 | 2 | 3) => {
+    if (!renewTarget) return;
+    try {
+      const expires = await renew.mutateAsync({ id: renewTarget.id, months });
+      toast.success(`Your listing has been renewed. It will expire on ${formatDate(expires.toISOString())}.`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to renew listing");
+    } finally {
+      setRenewTarget(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await remove.mutateAsync({
+        id: deleteTarget.id,
+        photoPaths: deleteTarget.photoRows.map((p) => p.storagePath),
+      });
+      toast.success("Your listing has been deleted.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete listing");
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
+
+  const renderCardActions = (l: Listing) => {
+    const isMine = !!myKeyId && l.authorId === myKeyId;
+    const showOnMine = tab === "mine";
+    const showOnArchived = tab === "archived" && isMine;
+    const showOnHiddenForOfficer =
+      isOfficerOrAbove && l.status === "hidden" && tab === "active";
+    if (!showOnMine && !showOnArchived && !showOnHiddenForOfficer) return null;
+
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {(l.status === "expired" && (isMine || showOnArchived)) && (
+          <Button size="sm" variant="secondary" onClick={() => setRenewTarget(l)}>
+            <RotateCcw className="h-4 w-4" /> Renew
+          </Button>
+        )}
+        {(isMine || isOfficerOrAbove) && (
+          <Button asChild size="sm" variant="outline">
+            <Link to={`/classifieds/${l.id}/edit`}>
+              <Pencil className="h-4 w-4" /> Edit
+            </Link>
+          </Button>
+        )}
+        {showOnHiddenForOfficer && (
+          <Button asChild size="sm" variant="outline">
+            <Link to={`/classifieds/${l.id}`}>
+              <Eye className="h-4 w-4" /> View
+            </Link>
+          </Button>
+        )}
+        {(isMine || isOfficerOrAbove) && (
+          <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(l)}>
+            <Trash2 className="h-4 w-4" /> Delete
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   const renderGrid = (items: Listing[], emptyMessage: string, showPost = false) => {
     if (items.length === 0) return <EmptyState message={emptyMessage} showPostButton={showPost} />;
@@ -74,23 +138,13 @@ export default function Classifieds() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {items.map((l) => {
           const isMine = !!myKeyId && l.authorId === myKeyId;
-          const trailing =
-            tab === "archived" && isMine ? (
-              <Button size="sm" variant="secondary" onClick={() => setRenewTarget(l)}>
-                <RotateCcw className="h-4 w-4" /> Renew
-              </Button>
-            ) : tab === "mine" && l.status === "expired" ? (
-              <Button size="sm" variant="secondary" onClick={() => setRenewTarget(l)}>
-                <RotateCcw className="h-4 w-4" /> Renew
-              </Button>
-            ) : null;
           return (
             <ClassifiedCard
               key={l.id}
               listing={l}
               isMine={isMine}
               isOfficer={isOfficerOrAbove}
-              trailing={trailing}
+              trailing={renderCardActions(l)}
             />
           );
         })}
@@ -100,8 +154,13 @@ export default function Classifieds() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-      <header className="mb-3">
+      <header className="mb-3 flex items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold">Classifieds</h1>
+        <Button asChild>
+          <Link to="/classifieds/new">
+            <Plus className="h-4 w-4" /> Post a Classified
+          </Link>
+        </Button>
       </header>
       <DisclaimerBar />
 
@@ -120,12 +179,16 @@ export default function Classifieds() {
           </TabsList>
 
           <TabsContent value="active" className="mt-4">
-            {renderGrid(
-              filtered,
-              tabFiltered.length === 0
-                ? "No active classifieds right now. Check back soon, or post your own!"
-                : "No listings found. Try adjusting your filters.",
-              tabFiltered.length === 0,
+            {isLoading ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+            ) : (
+              renderGrid(
+                filtered,
+                tabFiltered.length === 0
+                  ? "No active classifieds right now. Check back soon, or post your own!"
+                  : "No listings found. Try adjusting your filters.",
+                tabFiltered.length === 0,
+              )
             )}
           </TabsContent>
           <TabsContent value="archived" className="mt-4">
@@ -149,11 +212,23 @@ export default function Classifieds() {
       <RenewDialog
         open={!!renewTarget}
         onOpenChange={(v) => !v && setRenewTarget(null)}
-        onConfirm={(months) => {
-          if (renewTarget) renew(renewTarget.id, months);
-          setRenewTarget(null);
-        }}
+        onConfirm={handleRenew}
       />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this listing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this listing? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

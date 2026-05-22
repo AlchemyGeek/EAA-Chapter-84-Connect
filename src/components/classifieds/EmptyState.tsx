@@ -1,4 +1,4 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -11,16 +11,9 @@ export function EmptyState({ message, showPostButton }: Props) {
     <div className="flex flex-col items-center gap-4 rounded-md border bg-muted/20 px-6 py-12 text-center">
       <p className="text-sm text-muted-foreground">{message}</p>
       {showPostButton && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0}>
-                <Button disabled>Post a Classified</Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Coming soon</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button asChild>
+          <Link to="/classifieds/new">Post a Classified</Link>
+        </Button>
       )}
     </div>
   );

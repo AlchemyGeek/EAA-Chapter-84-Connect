@@ -1,125 +1,140 @@
+# Classifieds Pass 2 — Authoring, Editing, Moderation (Real Backend)
 
-# Classifieds — Pass 1 (Browse Experience)
+This pass replaces the in-memory mock store from Pass 1 with a real Postgres-backed feature, adds the Post / Edit / Delete / Renew / Hide flows, and wires the My Listings tab and officer controls. Pass 1 routes, components, and visuals stay; only their data source changes.
 
-Implements the listings list and detail pages using mock/seed data. No authoring, moderation backend, or DB schema in this pass.
+## What's being built
 
-## Routes
+### New routes
+- `/classifieds/new` — Post a new listing (any authenticated active member)
+- `/classifieds/:id/edit` — Edit a listing (author, officer, or admin only)
 
-- `/classifieds` → `Classifieds.tsx` (list, default Active tab)
-- `/classifieds/:id` → `ClassifiedDetail.tsx` (detail)
+### Page 3 — Post a New Listing
+- Standard Connect shell, "← Back to Classifieds", H1 "Post a Classified", single-column form (max-w 680px).
+- **Phone nudge banner** at top of form, only when current member's `cell_phone` is missing OR `cell_phone_private = true` OR `member_chapter_data.contact_visible_in_directory = false`. Dismissible per session via sessionStorage. Links to the member's profile page.
+- Fields: Title (≤100 chars, char counter), Category (required dropdown — 8 options from Pass 1), Tags (multi-select pill toggles, optional, 10 options from Pass 1), Description (textarea, min 20 chars), Photos (up to 4, drag-drop + picker, thumbnails with × remove), Duration (segmented 1/2/3 months, default 1, dynamic "Your listing will expire on …" preview).
+- Validation via zod. Inline errors on submit.
+- Submit → insert listing + uploaded photos, navigate to `/classifieds/:id`, toast "Your listing has been posted."
 
-Both wrapped in the existing `AppLayout` shell so nav/header match the rest of the app. Add a "Classifieds" entry to the member menu on `MemberHome` so members can reach it.
+### Page 4 — Edit a Listing
+- Same form. Pre-populated. Existing photos shown as thumbnails with × remove; new ones can be added up to 4 total.
+- Access guard: if not author and not officer/admin → redirect to `/classifieds/:id`.
+- Officer/admin editing someone else's listing: subtle banner "You are editing a listing posted by [Member Name]. Changes are immediate." Hide/Unhide toggle visible inline.
+- "Danger zone" section with divider: **Delete this listing** → AlertDialog confirm → delete + redirect to `/classifieds` with toast.
+- Save → toast "Your listing has been updated."
 
-## File structure
+### My Listings tab (Pass 1 wiring)
+- Active card: Edit · Delete (confirm dialog).
+- Expired card: Renew (existing RenewDialog 1/2/3 months) · Edit · Delete.
+- Hidden card (officer view): Unhide · Edit · Delete.
+- All actions update DB and refresh React Query cache.
 
-```text
-src/
-  pages/
-    Classifieds.tsx
-    ClassifiedDetail.tsx
-  components/classifieds/
-    DisclaimerBar.tsx          // banner + modal trigger
-    DisclaimerModal.tsx        // full disclaimer modal
-    DisclaimerCallout.tsx      // inline subdued block (detail page)
-    ClassifiedFilters.tsx      // search, category, tags, clear; mobile drawer
-    ClassifiedCard.tsx         // card used in list grid
-    ClassifiedTabs.tsx         // Active / Archived / My Listings
-    CategoryBadge.tsx          // colored pill per category
-    TagBadges.tsx              // gray pills with +N overflow
-    ContactCard.tsx            // right-column contact block
-    PhotoGallery.tsx           // primary + thumbnail strip
-    OfficerToolbar.tsx         // edit / delete / hide-unhide (UI only this pass)
-    RenewDialog.tsx            // 1/2/3 month duration picker (UI only)
-    EmptyState.tsx             // shared empty-state block
-  lib/classifieds/
-    mockData.ts                // seed listings (mix of categories, tags, statuses, photos)
-    types.ts                   // Listing type, Category, Tag enums, helpers
-    filters.ts                 // pure filter/search functions
+### Officer / Admin moderation (wiring Pass 1 surfaces)
+- Detail page OfficerToolbar: Edit links to `/classifieds/:id/edit`; Delete and Hide/Unhide call DB.
+- Listings list: hidden listings still hidden from non-officers; officers see them across tabs with "Hidden" badge.
+- All moderation actions are immediate. No author notification, no audit log this pass.
+
+### Toasts
+Exact strings per spec (posted / updated / deleted / renewed with date / hidden / restored).
+
+## Technical Section
+
+### Database schema (new migration)
+
+```sql
+-- enums
+create type classified_category as enum (
+  'for-sale','wanted','hangar-space','services','training',
+  'expertise-help','free-giveaway','miscellaneous'
+);
+create type classified_status as enum ('active','expired','hidden');
+
+-- tags as text[] with CHECK against allowed set
+create table public.classifieds (
+  id uuid primary key default gen_random_uuid(),
+  title text not null check (char_length(title) between 1 and 100),
+  description text not null check (char_length(description) >= 20),
+  category classified_category not null,
+  tags text[] not null default '{}',
+  status classified_status not null default 'active',
+  author_key_id integer not null,        -- roster_members.key_id
+  author_name text not null,             -- snapshotted at create
+  author_email text not null,            -- snapshotted at create
+  author_phone text,                     -- nullable, snapshotted
+  author_phone_visible boolean not null default false,
+  posted_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index on public.classifieds (status, expires_at);
+create index on public.classifieds (author_key_id);
+
+create table public.classified_photos (
+  id uuid primary key default gen_random_uuid(),
+  classified_id uuid not null references public.classifieds(id) on delete cascade,
+  storage_path text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+create index on public.classified_photos (classified_id, sort_order);
 ```
 
-All colors via existing semantic tokens in `index.css` / `tailwind.config.ts`. Category badge colors added as new HSL tokens (e.g. `--category-for-sale`, `--category-wanted`, …) so they theme correctly. Hairline borders, no drop shadows (per project memory).
+**RLS**
 
-## Data shape (mock)
+- `classifieds`
+  - SELECT (authenticated): `status <> 'hidden'` OR caller is author OR `has_role(auth.uid(),'admin')` OR `is_officer(auth.jwt()->>'email')`.
+  - INSERT: `author_key_id` resolves to caller via `roster_members` (case-insensitive email match) AND caller is `current_standing='Active'`.
+  - UPDATE: caller is author (by key_id ↔ email) OR admin OR officer.
+  - DELETE: same as UPDATE.
+- `classified_photos`: SELECT mirrors parent listing visibility; INSERT/DELETE allowed when caller can update parent.
 
-```ts
-type Category =
-  | "for-sale" | "wanted" | "hangar-space" | "services"
-  | "training" | "expertise-help" | "free-giveaway" | "miscellaneous";
+**Status maintenance**: client-side filter treats listings with `expires_at <= now()` and `status='active'` as expired for display. A scheduled flip is out of scope; the simple `status` field tracks Hidden vs Active vs Expired-by-officer. Renew sets `status='active'` and bumps `expires_at`.
 
-type Tag =
-  | "aircraft" | "engine" | "avionics" | "kit-build" | "tools"
-  | "young-eagles" | "fabric-covering" | "sheet-metal" | "welding" | "books-manuals";
+### Storage
 
-type ListingStatus = "active" | "expired" | "hidden";
+- New private bucket `classifieds` (mirrors `member-images` pattern).
+- Storage RLS policies on `storage.objects` for bucket `classifieds`:
+  - SELECT: any authenticated user (gallery is visible to all signed-in members; aligns with detail page).
+  - INSERT: authenticated; the path must start with `<author_key_id>/…` matching caller's roster `key_id`.
+  - UPDATE/DELETE: author by path prefix OR admin/officer (via `has_role` / `is_officer`).
+- Path convention: `classifieds/<author_key_id>/<classified_id>/<uuid>.<ext>`. Display uses signed URLs (1 hour) requested in the React Query loader, mirroring existing `MemberImageGallery` behavior.
 
-interface Listing {
-  id: string;
-  title: string;
-  description: string;
-  category: Category;
-  tags: Tag[];
-  photos: string[];           // empty if none
-  status: ListingStatus;
-  authorId: string;           // member key_id as string
-  authorName: string;
-  authorEmail: string;
-  authorPhone: string | null;
-  authorPhoneVisible: boolean;
-  postedAt: string;           // ISO
-  expiresAt: string;          // ISO
-}
-```
+### Frontend changes
 
-Author/officer detection reuses `useAuth()` (`role`, `isOfficerOrAbove`). Current member's `key_id` is read via the existing roster lookup pattern used elsewhere in the app.
+- **Replace** `src/lib/classifieds/store.tsx` (in-memory) with React Query hooks in `src/lib/classifieds/api.ts`:
+  - `useListings(filters)`, `useListing(id)`, `useCreateListing`, `useUpdateListing`, `useDeleteListing`, `useRenewListing`, `useToggleHidden`.
+  - Each mutation invalidates `["classifieds"]` and `["classifieds", id]`.
+  - `staleTime: 0` per project caching policy for admin/moderation views.
+- Remove `ClassifiedsProvider` wrapper from `App.tsx` and the import; keep all consumer components but switch them to the new hooks.
+- Update `src/lib/classifieds/types.ts` to align with DB column names (still expose camelCase via a mapper).
+- New components:
+  - `src/components/classifieds/ClassifiedForm.tsx` — shared form (used by Post + Edit) with zod schema.
+  - `src/components/classifieds/PhoneNudgeBanner.tsx` — checks roster_members + member_chapter_data; sessionStorage dismiss key `classifieds-phone-nudge-dismissed`.
+  - `src/components/classifieds/PhotoUploader.tsx` — drag-drop + picker, ≤4, preview, removes for both pending uploads and existing rows.
+  - `src/components/classifieds/DeleteListingDialog.tsx` — AlertDialog confirmation.
+- New pages:
+  - `src/pages/ClassifiedNew.tsx`
+  - `src/pages/ClassifiedEdit.tsx`
+- Wire up `ClassifiedCard` actions on My Listings tab (Edit/Delete/Renew). Wire up `OfficerToolbar` on detail page. Replace `EmptyState` "Post a Classified" tooltip with a real link to `/classifieds/new`.
+- Add routes inside the existing `AppLayout` group in `App.tsx`.
 
-## Page 1 — `/classifieds`
+### Author identity & phone nudge
 
-1. H1 "Classifieds"
-2. `<DisclaimerBar />` — muted text, link triggers `<DisclaimerModal />`
-3. `<ClassifiedTabs />` — Active (default) · Archived · My Listings (state in URL `?tab=`)
-4. `<ClassifiedFilters />` — search input, Category single-select, Tags multi-select, "Clear filters" link only when any filter is active. On mobile (`useIsMobile`), Category + Tags collapse into a "Filters" button opening a bottom `Sheet`.
-5. Grid: `grid-cols-1 md:grid-cols-2 gap-4` of `<ClassifiedCard />`.
+- On mount of `/classifieds/new` and on submit, look up the caller in `roster_members` by `auth.jwt().email` (case-insensitive) to obtain `key_id`, `first_name`, `last_name`, `cell_phone`, `cell_phone_private`. Join `member_chapter_data` for `contact_visible_in_directory`.
+- Snapshot into `classifieds` row at insert time so the listing keeps the author's name/email/phone-visible state at the moment of posting (matches Pass 1 shape).
 
-Card: thumbnail (only if photos), title, `<CategoryBadge />`, up to 3 tag pills with "+N more", posted-by, "X days ago", "Expires in N days" or "Expired" (destructive token), "View listing" → `/classifieds/:id`. "Your listing" muted badge if `authorId === currentKeyId`. "Hidden" badge only for officers/admins; hidden listings filtered out for everyone else.
+### Permissions matrix (enforced both client-side guards and DB RLS)
 
-Tab logic:
-- **Active** — `status === "active"` (hidden filtered out for non-officers)
-- **Archived** — `status === "expired"`; show "Renew" on own cards
-- **My Listings** — `authorId === currentKeyId`, both active+expired, show Edit/Delete/Renew (UI only)
+| Action | Author | Other member | Officer/Admin |
+|---|---|---|---|
+| View active/expired | yes | yes | yes |
+| View hidden | own only | no | yes |
+| Post | yes | yes | yes |
+| Edit | own | no | any |
+| Delete | own | no | any |
+| Renew | own | no | no |
+| Hide / Unhide | no | no | any |
 
-Empty states per spec. The "Post a Classified" button on empty states is rendered as **disabled with a "Coming soon" tooltip** (not yet wired up this pass).
+### Out of scope (per spec)
 
-## Page 2 — `/classifieds/:id`
-
-- "← Back to Classifieds" link
-- Desktop: `lg:grid-cols-3`, content `col-span-2`, contact `col-span-1`. Mobile: stacked, contact below.
-
-Left column:
-- Title (h1)
-- CategoryBadge + tag pills
-- `<PhotoGallery />` only when `photos.length > 0` (primary + up to 4 thumbnails; click swaps primary)
-- Description
-- Meta row: posted-by · posted date · expires date (muted)
-- `<DisclaimerCallout />` — inline subdued block with full disclaimer text
-
-Right column `<ContactCard />`:
-- "Contact seller"
-- Member name
-- Email as `mailto:`
-- Phone shown only if `authorPhoneVisible && authorPhone`; otherwise omitted entirely
-
-**Expired:** top-of-page warning banner; if author, prominent "Renew listing" → `<RenewDialog />` (1/2/3 months; updates mock state with `expiresAt = now + N months`). Listing remains readable.
-
-**Officer/Admin** (`isOfficerOrAbove`): `<OfficerToolbar />` with Edit, Delete (confirm via `AlertDialog`), Hide/Unhide toggle. Edit is disabled with "Coming soon" tooltip; Delete and Hide/Unhide mutate the in-memory mock store this pass.
-
-## State management
-
-In-memory mock store via a `ClassifiedsProvider` context mounted around the two routes, so Hide/Unhide/Renew/Delete reflect across list and detail without a backend. Filtering done client-side in `lib/classifieds/filters.ts` — pure functions, easy to unit-test later. No persistence across reloads in pass 1.
-
-## Reused primitives
-
-shadcn `Card`, `Badge`, `Button`, `Input`, `Select`, `Tabs`, `Sheet`, `Dialog`, `AlertDialog`, `Popover`, `Tooltip`. 44px min tap targets, 16px min text.
-
-## Out of scope (deferred)
-
-Post/Edit forms, moderation queue, reminder emails, listing caps, payments, real DB schema/RLS, image uploads, mailing.
+Reminder emails, hide-notifications, listing caps, payments, audit log, scheduled status flip job.
