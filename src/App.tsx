@@ -55,6 +55,7 @@ const App = () => (
       <BrowserRouter>
         <PWAUpdatePrompt />
         <AuthProvider>
+          <ClassifiedsProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
@@ -75,6 +76,8 @@ const App = () => (
                 <Route path="/new-member-applications" element={<NewMemberApplications />} />
                 <Route path="/buddy-program" element={<BuddyProgram />} />
                 <Route path="/member-engagement" element={<MemberEngagement />} />
+                <Route path="/classifieds" element={<Classifieds />} />
+                <Route path="/classifieds/:id" element={<ClassifiedDetail />} />
             </Route>
             <Route path="/directory/:keyId" element={<MemberProfile />} />
             <Route path="/dues-payment" element={<DuesPayment />} />
@@ -88,6 +91,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </ClassifiedsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
