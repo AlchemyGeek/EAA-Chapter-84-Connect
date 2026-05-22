@@ -108,15 +108,16 @@ export default function ClassifiedDetail() {
                 Links
               </h2>
               <ul className="space-y-1">
-                {listing.links.map((url) => (
-                  <li key={url} className="text-sm">
+                {listing.links.map((link) => (
+                  <li key={link.url} className="text-sm">
                     <a
-                      href={url}
+                      href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="break-all text-primary underline-offset-2 hover:underline"
+                      title={link.url}
+                      className="inline-flex items-center gap-1 break-all text-primary underline-offset-2 hover:underline"
                     >
-                      {url}
+                      {link.label}
                     </a>
                   </li>
                 ))}

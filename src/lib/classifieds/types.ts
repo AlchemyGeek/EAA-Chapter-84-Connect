@@ -11,6 +11,11 @@ export type Category =
 /** Tags are now user-defined free-form strings (stored capitalized). */
 export type Tag = string;
 
+export interface ClassifiedLink {
+  url: string;
+  label: string;
+}
+
 export type ListingStatus = "active" | "expired" | "hidden";
 
 export interface Listing {
@@ -21,8 +26,8 @@ export interface Listing {
   tags: Tag[];
   /** Price in USD. Only meaningful for "for-sale" listings. */
   price: number | null;
-  /** External links (URLs). */
-  links: string[];
+  /** External links with optional descriptive labels. */
+  links: ClassifiedLink[];
   /** Resolved signed URLs for display. */
   photos: string[];
   /** Raw storage paths, used by editor and gallery management. */

@@ -1,8 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { Category, Listing, Tag } from "./types";
+import type { Category, ClassifiedLink, Listing, Tag } from "./types";
 import { STORAGE_BUCKET } from "./types";
+
+function normalizeLinks(raw: unknown): ClassifiedLink[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ClassifiedLink[] = [];
+  for (const item of raw) {
+    if (typeof item === "string") {
+      out.push({ url: item, label: item });
+    } else if (item && typeof item === "object") {
+      const url = (item as { url?: unknown }).url;
+      const label = (item as { label?: unknown }).label;
+      if (typeof url === "string" && url) {
+        out.push({
+          url,
+          label: typeof label === "string" && label ? label : url,
+        });
+      }
+    }
+  }
+  return out;
+}
 
 interface ClassifiedRow {
   id: string;
@@ -11,7 +31,7 @@ interface ClassifiedRow {
   category: Category;
   tags: string[];
   price: number | string | null;
-  links: string[] | null;
+  links: unknown;
   status: "active" | "expired" | "hidden";
   author_key_id: number;
   author_name: string;
@@ -76,7 +96,7 @@ async function buildListings(
       category: r.category,
       tags: (r.tags ?? []) as Tag[],
       price: r.price === null || r.price === undefined ? null : Number(r.price),
-      links: r.links ?? [],
+      links: normalizeLinks(r.links),
       photos: photoRows.map((p) => p.url).filter(Boolean),
       photoRows,
       status: deriveStatus(r),
@@ -190,7 +210,7 @@ export interface ListingFormValues {
   category: Category;
   tags: Tag[];
   price: number | null;
-  links: string[];
+  links: ClassifiedLink[];
   /** Existing photo rows kept after edit. */
   keptPhotoIds: string[];
   /** New photo files to upload. */
@@ -233,7 +253,7 @@ export function useCreateListing() {
           category: values.category,
           tags: values.tags,
           price: values.category === "for-sale" ? values.price : null,
-          links: values.links,
+          links: values.links as unknown as string[],
           status: "active",
           author_key_id: member.key_id,
           author_name: authorName,
@@ -274,7 +294,7 @@ export function useUpdateListing() {
           category: values.category,
           tags: values.tags,
           price: values.category === "for-sale" ? values.price : null,
-          links: values.links,
+          links: values.links as unknown as string[],
         })
         .eq("id", id);
       if (error) throw error;

@@ -18,6 +18,7 @@ import { LinksInput } from "./LinksInput";
 import {
   CATEGORY_OPTIONS,
   type Category,
+  type ClassifiedLink,
   type Tag,
 } from "@/lib/classifieds/types";
 import type { ListingFormValues } from "@/lib/classifieds/api";
@@ -36,7 +37,7 @@ interface Props {
     category: Category;
     tags: Tag[];
     price: number | null;
-    links: string[];
+    links: ClassifiedLink[];
     existingPhotos: ExistingPhoto[];
   };
   submitting?: boolean;
@@ -75,7 +76,7 @@ export function ClassifiedForm({
       ? String(initial.price)
       : "",
   );
-  const [links, setLinks] = useState<string[]>(initial?.links ?? []);
+  const [links, setLinks] = useState<ClassifiedLink[]>(initial?.links ?? []);
   const [keptPhotoIds, setKeptPhotoIds] = useState<string[]>(
     initial?.existingPhotos.map((p) => p.id) ?? [],
   );
