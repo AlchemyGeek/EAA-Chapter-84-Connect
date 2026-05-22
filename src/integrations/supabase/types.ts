@@ -208,6 +208,92 @@ export type Database = {
         }
         Relationships: []
       }
+      classified_photos: {
+        Row: {
+          classified_id: string
+          created_at: string
+          id: string
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          classified_id: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          classified_id?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classified_photos_classified_id_fkey"
+            columns: ["classified_id"]
+            isOneToOne: false
+            referencedRelation: "classifieds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classifieds: {
+        Row: {
+          author_email: string
+          author_key_id: number
+          author_name: string
+          author_phone: string | null
+          author_phone_visible: boolean
+          category: Database["public"]["Enums"]["classified_category"]
+          created_at: string
+          description: string
+          expires_at: string
+          id: string
+          posted_at: string
+          status: Database["public"]["Enums"]["classified_status"]
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_email: string
+          author_key_id: number
+          author_name: string
+          author_phone?: string | null
+          author_phone_visible?: boolean
+          category: Database["public"]["Enums"]["classified_category"]
+          created_at?: string
+          description: string
+          expires_at: string
+          id?: string
+          posted_at?: string
+          status?: Database["public"]["Enums"]["classified_status"]
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_email?: string
+          author_key_id?: number
+          author_name?: string
+          author_phone?: string | null
+          author_phone_visible?: boolean
+          category?: Database["public"]["Enums"]["classified_category"]
+          created_at?: string
+          description?: string
+          expires_at?: string
+          id?: string
+          posted_at?: string
+          status?: Database["public"]["Enums"]["classified_status"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dues_payments: {
         Row: {
           amount: number
@@ -1272,6 +1358,7 @@ export type Database = {
           total_members: number
         }[]
       }
+      is_classified_author: { Args: { _key_id: number }; Returns: boolean }
       is_officer: { Args: { _user_email: string }; Returns: boolean }
       member_update_own_record:
         | {
@@ -1374,6 +1461,16 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member" | "officer"
+      classified_category:
+        | "for-sale"
+        | "wanted"
+        | "hangar-space"
+        | "services"
+        | "training"
+        | "expertise-help"
+        | "free-giveaway"
+        | "miscellaneous"
+      classified_status: "active" | "expired" | "hidden"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1502,6 +1599,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member", "officer"],
+      classified_category: [
+        "for-sale",
+        "wanted",
+        "hangar-space",
+        "services",
+        "training",
+        "expertise-help",
+        "free-giveaway",
+        "miscellaneous",
+      ],
+      classified_status: ["active", "expired", "hidden"],
     },
   },
 } as const
