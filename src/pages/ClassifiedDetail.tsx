@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, RotateCcw, AlertTriangle, EyeOff, Pencil } from "lucide-react";
 import { CategoryBadge } from "@/components/classifieds/CategoryBadge";
 import { TagBadges } from "@/components/classifieds/TagBadges";
+import { PriceTag } from "@/components/classifieds/PriceTag";
 import { PhotoGallery } from "@/components/classifieds/PhotoGallery";
 import { ContactCard } from "@/components/classifieds/ContactCard";
 import { DisclaimerCallout } from "@/components/classifieds/DisclaimerCallout";
