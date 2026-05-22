@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RotateCcw, AlertTriangle, EyeOff } from "lucide-react";
+import { ArrowLeft, RotateCcw, AlertTriangle, EyeOff, Pencil } from "lucide-react";
 import { CategoryBadge } from "@/components/classifieds/CategoryBadge";
 import { TagBadges } from "@/components/classifieds/TagBadges";
 import { PhotoGallery } from "@/components/classifieds/PhotoGallery";
@@ -12,33 +11,33 @@ import { ContactCard } from "@/components/classifieds/ContactCard";
 import { DisclaimerCallout } from "@/components/classifieds/DisclaimerCallout";
 import { OfficerToolbar } from "@/components/classifieds/OfficerToolbar";
 import { RenewDialog } from "@/components/classifieds/RenewDialog";
-import { useClassifieds } from "@/lib/classifieds/store";
+import {
+  useCurrentMember,
+  useDeleteListing,
+  useListing,
+  useRenewListing,
+  useToggleHidden,
+} from "@/lib/classifieds/api";
 import { formatDate, relativeTime } from "@/lib/classifieds/filters";
 
 export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isOfficerOrAbove } = useAuth();
-  const { getById, toggleHidden, remove, renew } = useClassifieds();
+  const { isOfficerOrAbove } = useAuth();
+  const { data: member } = useCurrentMember();
+  const { data: listing, isLoading } = useListing(id);
+  const remove = useDeleteListing();
+  const renew = useRenewListing();
+  const toggleHidden = useToggleHidden();
   const [renewOpen, setRenewOpen] = useState(false);
 
-  const listing = id ? getById(id) : undefined;
-
-  const { data: myMember } = useQuery({
-    queryKey: ["my-member-classified-detail", user?.email],
-    enabled: !!user?.email,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_members")
-        .select("key_id")
-        .ilike("email", user!.email!)
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-  const myKeyId = myMember?.key_id ? String(myMember.key_id) : null;
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
 
   if (!listing) {
     return (
@@ -53,23 +52,10 @@ export default function ClassifiedDetail() {
     );
   }
 
-  const isMine = !!myKeyId && listing.authorId === myKeyId;
+  const isMine = !!member && member.key_id === listing.authorKeyId;
   const isExpired = listing.status === "expired";
-  const isHidden = listing.status === "hidden";
-  const canSeeHidden = isOfficerOrAbove;
-
-  if (isHidden && !canSeeHidden) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <Link to="/classifieds" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back to Classifieds
-        </Link>
-        <div className="mt-8 rounded-md border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-          This listing is not available.
-        </div>
-      </div>
-    );
-  }
+  const isHidden = listing.dbStatus === "hidden";
+  const canEdit = isMine || isOfficerOrAbove;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
@@ -89,7 +75,7 @@ export default function ClassifiedDetail() {
         </div>
       )}
 
-      {isHidden && canSeeHidden && (
+      {isHidden && isOfficerOrAbove && (
         <div className="mt-4 flex items-center gap-2 rounded-md border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
           <EyeOff className="h-4 w-4 shrink-0" />
           This listing is hidden from members. Only officers and admins can see it.
@@ -126,6 +112,14 @@ export default function ClassifiedDetail() {
         <aside className="space-y-4">
           <ContactCard listing={listing} />
 
+          {canEdit && (
+            <Button asChild variant="outline" className="w-full">
+              <Link to={`/classifieds/${listing.id}/edit`}>
+                <Pencil className="h-4 w-4" /> Edit listing
+              </Link>
+            </Button>
+          )}
+
           {isMine && isExpired && (
             <Button className="w-full" onClick={() => setRenewOpen(true)}>
               <RotateCcw className="h-4 w-4" /> Renew listing
@@ -135,11 +129,34 @@ export default function ClassifiedDetail() {
           {isOfficerOrAbove && (
             <OfficerToolbar
               listing={listing}
-              onDelete={() => {
-                remove(listing.id);
-                navigate("/classifieds");
+              onDelete={async () => {
+                try {
+                  await remove.mutateAsync({
+                    id: listing.id,
+                    photoPaths: listing.photoRows.map((p) => p.storagePath),
+                  });
+                  toast.success("Your listing has been deleted.");
+                  navigate("/classifieds");
+                } catch (err: unknown) {
+                  toast.error(err instanceof Error ? err.message : "Failed to delete");
+                }
               }}
-              onToggleHidden={() => toggleHidden(listing.id)}
+              onToggleHidden={async () => {
+                try {
+                  const next = await toggleHidden.mutateAsync({
+                    id: listing.id,
+                    currentDbStatus: listing.dbStatus,
+                    expiresAt: listing.expiresAt,
+                  });
+                  if (next === "hidden") {
+                    toast.success("Listing hidden. It is no longer visible to members.");
+                  } else {
+                    toast.success("Listing restored. It is now visible to members.");
+                  }
+                } catch (err: unknown) {
+                  toast.error(err instanceof Error ? err.message : "Failed to update");
+                }
+              }}
             />
           )}
         </aside>
@@ -148,7 +165,14 @@ export default function ClassifiedDetail() {
       <RenewDialog
         open={renewOpen}
         onOpenChange={setRenewOpen}
-        onConfirm={(months) => renew(listing.id, months)}
+        onConfirm={async (months) => {
+          try {
+            const expires = await renew.mutateAsync({ id: listing.id, months });
+            toast.success(`Your listing has been renewed. It will expire on ${formatDate(expires.toISOString())}.`);
+          } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : "Failed to renew");
+          }
+        }}
       />
     </div>
   );
