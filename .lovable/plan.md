@@ -1,124 +1,125 @@
-# 2026 Bylaws Proxy Vote Feature
 
-A temporal feature active through **June 8, 2026** with three surfaces:
-1. Banner on Member Home
-2. New `/proxy-vote` form page
-3. Permanent officer results export under Chapter Operations
+# Classifieds — Pass 1 (Browse Experience)
 
----
+Implements the listings list and detail pages using mock/seed data. No authoring, moderation backend, or DB schema in this pass.
 
-## 1. Database
+## Routes
 
-New table `proxy_votes_2026` to store an audit trail (signs and revocations both preserved).
+- `/classifieds` → `Classifieds.tsx` (list, default Active tab)
+- `/classifieds/:id` → `ClassifiedDetail.tsx` (detail)
 
-Columns:
-- `key_id` (member roster id)
-- `member_name` (snapshot at signing)
-- `action` ('signed' | 'revoked')
-- `created_at`
+Both wrapped in the existing `AppLayout` shell so nav/header match the rest of the app. Add a "Classifieds" entry to the member menu on `MemberHome` so members can reach it.
 
-Helper function `get_current_proxy_vote(_key_id)` returns the latest action for a member (used to show signed/revoked state).
+## File structure
 
-RLS:
-- Members can `INSERT` rows where `key_id` matches their own roster record.
-- Members can `SELECT` their own rows.
-- Officers and admins can `SELECT` all rows (for export).
-- No `UPDATE` or `DELETE` (audit integrity).
+```text
+src/
+  pages/
+    Classifieds.tsx
+    ClassifiedDetail.tsx
+  components/classifieds/
+    DisclaimerBar.tsx          // banner + modal trigger
+    DisclaimerModal.tsx        // full disclaimer modal
+    DisclaimerCallout.tsx      // inline subdued block (detail page)
+    ClassifiedFilters.tsx      // search, category, tags, clear; mobile drawer
+    ClassifiedCard.tsx         // card used in list grid
+    ClassifiedTabs.tsx         // Active / Archived / My Listings
+    CategoryBadge.tsx          // colored pill per category
+    TagBadges.tsx              // gray pills with +N overflow
+    ContactCard.tsx            // right-column contact block
+    PhotoGallery.tsx           // primary + thumbnail strip
+    OfficerToolbar.tsx         // edit / delete / hide-unhide (UI only this pass)
+    RenewDialog.tsx            // 1/2/3 month duration picker (UI only)
+    EmptyState.tsx             // shared empty-state block
+  lib/classifieds/
+    mockData.ts                // seed listings (mix of categories, tags, statuses, photos)
+    types.ts                   // Listing type, Category, Tag enums, helpers
+    filters.ts                 // pure filter/search functions
+```
 
-A view `proxy_votes_2026_summary` (or client-side aggregation) gives officers one row per member with: latest status, first signed timestamp, latest revoked timestamp.
+All colors via existing semantic tokens in `index.css` / `tailwind.config.ts`. Category badge colors added as new HSL tokens (e.g. `--category-for-sale`, `--category-wanted`, …) so they theme correctly. Hairline borders, no drop shadows (per project memory).
 
-## 2. Member Homepage Banner (`src/pages/MemberHome.tsx`)
+## Data shape (mock)
 
-Inserted between Member Photos and Member Services sections.
+```ts
+type Category =
+  | "for-sale" | "wanted" | "hangar-space" | "services"
+  | "training" | "expertise-help" | "free-giveaway" | "miscellaneous";
 
-Render conditions (ALL must be true):
-- Today < `2026-06-09`
-- Viewer is an active member (existing `isRestricted === false` check)
+type Tag =
+  | "aircraft" | "engine" | "avionics" | "kit-build" | "tools"
+  | "young-eagles" | "fabric-covering" | "sheet-metal" | "welding" | "books-manuals";
 
-Visual:
-- Amber/gold background card (`bg-amber-50 dark:bg-amber-950/30`, `border-amber-300`)
-- 📋 icon left
-- Headline: "EAA Chapter 84 — Changes to Bylaws: Voting Proxy Form"
-- Subtext explaining the proxy
-- Small muted line: "Proxy form available through June 8, 2026."
-- Primary CTA `Open Proxy Form →` linking to `/proxy-vote`
+type ListingStatus = "active" | "expired" | "hidden";
 
-If the member has already signed, show a small inline confirmation chip ("✅ Proxy signed") inside the same banner; CTA changes to "View / Manage Proxy".
+interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  category: Category;
+  tags: Tag[];
+  photos: string[];           // empty if none
+  status: ListingStatus;
+  authorId: string;           // member key_id as string
+  authorName: string;
+  authorEmail: string;
+  authorPhone: string | null;
+  authorPhoneVisible: boolean;
+  postedAt: string;           // ISO
+  expiresAt: string;          // ISO
+}
+```
 
-## 3. Proxy Vote Page — `/proxy-vote`
+Author/officer detection reuses `useAuth()` (`role`, `isOfficerOrAbove`). Current member's `key_id` is read via the existing roster lookup pattern used elsewhere in the app.
 
-New file `src/pages/ProxyVote.tsx`, registered in `src/App.tsx`. Uses the standard authenticated mobile-first layout (matches existing pages like DuesPayment).
+## Page 1 — `/classifieds`
 
-Access gates (in order):
-1. Not authenticated → redirect to `/auth`
-2. Authenticated but not active member → message: "This form is available to active EAA Chapter 84 members only."
-3. Today > 2026-06-08 → message: "The proxy voting period has closed. Thank you to all members who participated."
-4. Otherwise → render the form
+1. H1 "Classifieds"
+2. `<DisclaimerBar />` — muted text, link triggers `<DisclaimerModal />`
+3. `<ClassifiedTabs />` — Active (default) · Archived · My Listings (state in URL `?tab=`)
+4. `<ClassifiedFilters />` — search input, Category single-select, Tags multi-select, "Clear filters" link only when any filter is active. On mobile (`useIsMobile`), Category + Tags collapse into a "Filters" button opening a bottom `Sheet`.
+5. Grid: `grid-cols-1 md:grid-cols-2 gap-4` of `<ClassifiedCard />`.
 
-### Form card (document-style)
-White card, hairline border, generous padding, centered title:
-**"EAA CHAPTER 84 VOTING PROXY FORM (Washington Nonprofit)"**
+Card: thumbnail (only if photos), title, `<CategoryBadge />`, up to 3 tag pills with "+N more", posted-by, "X days ago", "Expires in N days" or "Expired" (destructive token), "View listing" → `/classifieds/:id`. "Your listing" muted badge if `authorId === currentKeyId`. "Hidden" badge only for officers/admins; hidden listings filtered out for everyone else.
 
-Fields rendered as labeled rows. Pre-filled values appear in a lightly shaded read-only box using a monospace font.
+Tab logic:
+- **Active** — `status === "active"` (hidden filtered out for non-officers)
+- **Archived** — `status === "expired"`; show "Renew" on own cards
+- **My Listings** — `authorId === currentKeyId`, both active+expired, show Edit/Delete/Renew (UI only)
 
-| Label | Value | Font |
-|---|---|---|
-| I, ___ (Member Name) | Authenticated member's full name | mono |
-| appoint ___ (Proxy Name) | Michael Zyskowski | mono |
-| Organization | EAA Chapter 84 | mono |
-| Meeting Date | 06/09/2026 | mono |
+Empty states per spec. The "Post a Classified" button on empty states is rendered as **disabled with a "Coming soon" tooltip** (not yet wired up this pass).
 
-Italic block between fields:
+## Page 2 — `/classifieds/:id`
 
-> **Limited Proxy** — My proxy may vote only as follows: To vote on changing of the EAA Chapter 84 Bylaws.
->
-> This proxy is valid for this meeting and any adjournment unless revoked by me.
+- "← Back to Classifieds" link
+- Desktop: `lg:grid-cols-3`, content `col-span-2`, contact `col-span-1`. Mobile: stacked, contact below.
 
-Then:
-- Member Signature (handwriting font — Dancing Script via Google Fonts) showing the member's name once signed
-- Date — today's date in MM/DD/YYYY, monospace, filled when signed
+Left column:
+- Title (h1)
+- CategoryBadge + tag pills
+- `<PhotoGallery />` only when `photos.length > 0` (primary + up to 4 thumbnails; click swaps primary)
+- Description
+- Meta row: posted-by · posted date · expires date (muted)
+- `<DisclaimerCallout />` — inline subdued block with full disclaimer text
 
-### States
-- **Unsigned**: Show button `✍️ Click Here to Sign Proxy`. On click → insert row `action='signed'`. No extra confirmation dialog (the click itself is the affirmative action).
-- **Signed**: Replace button with green confirmation banner: `✅ Your proxy vote has been recorded on [MM/DD/YYYY] at [HH:MM AM/PM].` Below the form add an outlined destructive `Revoke My Proxy Vote` button.
-- **Revoke action**: AlertDialog confirms intent. On confirm → insert `action='revoked'` row. Show neutral banner: `Your proxy vote has been revoked as of [...]. You may re-sign if the voting period is still open.` Sign button reappears.
+Right column `<ContactCard />`:
+- "Contact seller"
+- Member name
+- Email as `mailto:`
+- Phone shown only if `authorPhoneVisible && authorPhone`; otherwise omitted entirely
 
-Audit trail preserved — never deletes rows.
+**Expired:** top-of-page warning banner; if author, prominent "Renew listing" → `<RenewDialog />` (1/2/3 months; updates mock state with `expiresAt = now + N months`). Listing remains readable.
 
-## 4. Officer Export — Chapter Operations
+**Officer/Admin** (`isOfficerOrAbove`): `<OfficerToolbar />` with Edit, Delete (confirm via `AlertDialog`), Hide/Unhide toggle. Edit is disabled with "Coming soon" tooltip; Delete and Hide/Unhide mutate the in-memory mock store this pass.
 
-In MemberHome's Officer Services / Chapter Operations subsection, add an entry:
-`📊 2026 Bylaws Proxy Vote Results` (always visible, no expiration).
+## State management
 
-Implementation: a small handler component (or inline button styled like `AdminLink`) that, on click:
-1. Queries `proxy_votes_2026` for all members, ordered by member then created_at.
-2. Aggregates per `key_id`: latest action, first 'signed' timestamp, latest 'revoked' timestamp (if status=revoked).
-3. Generates `.xlsx` via existing `xlsx` package (already used in `src/lib/export.ts`).
-4. Filename: `EAA84_ProxyVote_Results_YYYY-MM-DD.xlsx`
+In-memory mock store via a `ClassifiedsProvider` context mounted around the two routes, so Hide/Unhide/Renew/Delete reflect across list and detail without a backend. Filtering done client-side in `lib/classifieds/filters.ts` — pure functions, easy to unit-test later. No persistence across reloads in pass 1.
 
-Columns:
-- Member Name
-- Member ID (key_id)
-- Date Signed (MM/DD/YYYY)
-- Time Signed (HH:MM AM/PM local)
-- Status (Signed | Revoked)
-- Date Revoked (blank if not revoked)
-- Time Revoked (blank if not revoked)
+## Reused primitives
 
-Only members with at least one row are included.
+shadcn `Card`, `Badge`, `Button`, `Input`, `Select`, `Tabs`, `Sheet`, `Dialog`, `AlertDialog`, `Popover`, `Tooltip`. 44px min tap targets, 16px min text.
 
-## 5. Files Touched
+## Out of scope (deferred)
 
-- New: `supabase` migration for `proxy_votes_2026` + RLS
-- New: `src/pages/ProxyVote.tsx`
-- New: `src/lib/exportProxyVotes.ts` (xlsx export helper)
-- Edit: `src/App.tsx` (register `/proxy-vote` route)
-- Edit: `src/pages/MemberHome.tsx` (banner + officer export link)
-- Edit: `index.html` or a CSS import for Dancing Script Google Font
-
-## Technical Notes
-
-- Cutoff date constant `PROXY_DEADLINE = new Date('2026-06-09T00:00:00')` in a shared constant file; banner and form gate on this.
-- Member full name = `nickname || first_name + ' ' + last_name` (matches existing patterns).
-- Use `useQuery` with `staleTime: 0` for the member's current proxy state so signing/revoking reflects immediately.
-- Officer export uses `useMutation` to fetch on demand (no cached query).
+Post/Edit forms, moderation queue, reminder emails, listing caps, payments, real DB schema/RLS, image uploads, mailing.
