@@ -23,6 +23,7 @@ import {
   useToggleHidden,
   useUpdateListing,
 } from "@/lib/classifieds/api";
+import { ReassignAuthorDialog } from "@/components/classifieds/ReassignAuthorDialog";
 
 export default function ClassifiedEdit() {
   const { id } = useParams<{ id: string }>();
