@@ -1,6 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Phone } from "lucide-react";
-import type { Listing } from "@/lib/classifieds/types";
+import type { Category, Listing } from "@/lib/classifieds/types";
+
+const CONTACT_TITLE: Record<Category, string> = {
+  "for-sale": "Contact seller",
+  wanted: "Contact requester",
+  "hangar-space": "Contact poster",
+  services: "Contact provider",
+  training: "Contact instructor",
+  "expertise-help": "Contact poster",
+  "free-giveaway": "Contact giver",
+  miscellaneous: "Contact poster",
+};
 
 export function ContactCard({ listing }: { listing: Listing }) {
   const showPhone = listing.authorPhoneVisible && !!listing.authorPhone;
@@ -8,7 +19,7 @@ export function ContactCard({ listing }: { listing: Listing }) {
     <Card className="shadow-none">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Contact seller
+          {CONTACT_TITLE[listing.category] ?? "Contact poster"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
