@@ -96,7 +96,7 @@ async function buildListings(
       category: r.category,
       tags: (r.tags ?? []) as Tag[],
       price: r.price === null || r.price === undefined ? null : Number(r.price),
-      links: r.links ?? [],
+      links: normalizeLinks(r.links),
       photos: photoRows.map((p) => p.url).filter(Boolean),
       photoRows,
       status: deriveStatus(r),
