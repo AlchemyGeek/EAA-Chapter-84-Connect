@@ -294,7 +294,7 @@ export function useUpdateListing() {
           category: values.category,
           tags: values.tags,
           price: values.category === "for-sale" ? values.price : null,
-          links: values.links,
+          links: values.links as unknown as string[],
         })
         .eq("id", id);
       if (error) throw error;
