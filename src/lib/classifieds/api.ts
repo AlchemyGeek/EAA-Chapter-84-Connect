@@ -457,7 +457,7 @@ export function useReassignClassifiedAuthor() {
         .maybeSingle();
 
       const authorName =
-        [rm.nickname || rm.first_name, rm.last_name]
+        [rm.nickname?.trim() || rm.first_name, rm.last_name]
           .filter(Boolean)
           .join(" ")
           .trim() || (rm.email ?? "Member");
