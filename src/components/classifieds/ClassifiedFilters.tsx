@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { CATEGORY_OPTIONS, TAG_OPTIONS, type Category, type Tag } from "@/lib/classifieds/types";
+import { CATEGORY_OPTIONS, type Category, type Tag } from "@/lib/classifieds/types";
 import { isFilterActive, type FilterState } from "@/lib/classifieds/filters";
 import { useState } from "react";
 
@@ -12,31 +12,42 @@ interface Props {
   value: FilterState;
   onChange: (v: FilterState) => void;
   onClear: () => void;
+  /** Tags currently in use across visible listings — used as filter suggestions. */
+  availableTags: Tag[];
 }
 
 function TagChips({
   tags,
+  selected,
   onToggle,
 }: {
   tags: Tag[];
+  selected: Tag[];
   onToggle: (t: Tag) => void;
 }) {
+  if (!tags.length) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No tags yet. They'll appear here as members add them.
+      </p>
+    );
+  }
   return (
     <div className="flex flex-wrap gap-2">
-      {TAG_OPTIONS.map((opt) => {
-        const active = tags.includes(opt.value);
+      {tags.map((t) => {
+        const active = selected.includes(t);
         return (
           <button
-            key={opt.value}
+            key={t}
             type="button"
-            onClick={() => onToggle(opt.value)}
+            onClick={() => onToggle(t)}
             className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
               active
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-background text-foreground hover:bg-muted"
             }`}
           >
-            {opt.label}
+            {t}
           </button>
         );
       })}
@@ -44,7 +55,7 @@ function TagChips({
   );
 }
 
-export function ClassifiedFilters({ value, onChange, onClear }: Props) {
+export function ClassifiedFilters({ value, onChange, onClear, availableTags }: Props) {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -103,7 +114,7 @@ export function ClassifiedFilters({ value, onChange, onClear }: Props) {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tags</label>
-                <TagChips tags={value.tags} onToggle={toggleTag} />
+                <TagChips tags={availableTags} selected={value.tags} onToggle={toggleTag} />
               </div>
               {active && (
                 <Button variant="ghost" onClick={onClear} className="w-full">
@@ -124,24 +135,26 @@ export function ClassifiedFilters({ value, onChange, onClear }: Props) {
               ))}
             </SelectContent>
           </Select>
-          <Select
-            value="__placeholder__"
-            onValueChange={(v) => {
-              if (v && v !== "__placeholder__") toggleTag(v as Tag);
-            }}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={value.tags.length ? `${value.tags.length} tag${value.tags.length === 1 ? "" : "s"}` : "Tags"} />
-            </SelectTrigger>
-            <SelectContent>
-              {TAG_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {value.tags.includes(o.value) ? "✓ " : ""}
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {availableTags.length > 0 && (
+            <Select
+              value="__placeholder__"
+              onValueChange={(v) => {
+                if (v && v !== "__placeholder__") toggleTag(v as Tag);
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={value.tags.length ? `${value.tags.length} tag${value.tags.length === 1 ? "" : "s"}` : "Tags"} />
+              </SelectTrigger>
+              <SelectContent>
+                {availableTags.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {value.tags.includes(t) ? "✓ " : ""}
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {active && (
             <Button variant="ghost" size="sm" onClick={onClear}>
               <X className="h-4 w-4" /> Clear filters
