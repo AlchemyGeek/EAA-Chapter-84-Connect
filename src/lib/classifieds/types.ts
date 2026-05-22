@@ -11,6 +11,11 @@ export type Category =
 /** Tags are now user-defined free-form strings (stored capitalized). */
 export type Tag = string;
 
+export interface ClassifiedLink {
+  url: string;
+  label: string;
+}
+
 export type ListingStatus = "active" | "expired" | "hidden";
 
 export interface Listing {
