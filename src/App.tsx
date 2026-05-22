@@ -32,8 +32,11 @@ import MemberEngagement from "./pages/MemberEngagement";
 import Newsletters from "./pages/Newsletters";
 import NewslettersAdmin from "./pages/NewslettersAdmin";
 import ProxyVote from "./pages/ProxyVote";
+import Classifieds from "./pages/Classifieds";
+import ClassifiedDetail from "./pages/ClassifiedDetail";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
+import { ClassifiedsProvider } from "./lib/classifieds/store";
 
 const queryClient = new QueryClient({
   defaultOptions: {
