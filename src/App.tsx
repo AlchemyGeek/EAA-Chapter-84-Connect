@@ -34,6 +34,8 @@ import NewslettersAdmin from "./pages/NewslettersAdmin";
 import ProxyVote from "./pages/ProxyVote";
 import Classifieds from "./pages/Classifieds";
 import ClassifiedDetail from "./pages/ClassifiedDetail";
+import ClassifiedNew from "./pages/ClassifiedNew";
+import ClassifiedEdit from "./pages/ClassifiedEdit";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 import { ClassifiedsProvider } from "./lib/classifieds/store";
