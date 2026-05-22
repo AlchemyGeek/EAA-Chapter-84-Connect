@@ -131,4 +131,5 @@ For more on self-hosting Lovable projects, see https://docs.lovable.dev/tips-tri
 
 ## License
 
-This project is maintained by EAA Chapter 84. Contact the chapter for usage terms.
+Released under the [MIT License](./LICENSE). Maintained by EAA Chapter 84.
+
