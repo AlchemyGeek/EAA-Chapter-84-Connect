@@ -210,7 +210,7 @@ export interface ListingFormValues {
   category: Category;
   tags: Tag[];
   price: number | null;
-  links: string[];
+  links: ClassifiedLink[];
   /** Existing photo rows kept after edit. */
   keptPhotoIds: string[];
   /** New photo files to upload. */
