@@ -252,7 +252,7 @@ export type Database = {
           description: string
           expires_at: string
           id: string
-          links: string[]
+          links: Json
           posted_at: string
           price: number | null
           status: Database["public"]["Enums"]["classified_status"]
@@ -271,7 +271,7 @@ export type Database = {
           description: string
           expires_at: string
           id?: string
-          links?: string[]
+          links?: Json
           posted_at?: string
           price?: number | null
           status?: Database["public"]["Enums"]["classified_status"]
@@ -290,7 +290,7 @@ export type Database = {
           description?: string
           expires_at?: string
           id?: string
-          links?: string[]
+          links?: Json
           posted_at?: string
           price?: number | null
           status?: Database["public"]["Enums"]["classified_status"]
