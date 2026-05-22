@@ -18,6 +18,7 @@ import { LinksInput } from "./LinksInput";
 import {
   CATEGORY_OPTIONS,
   type Category,
+  type ClassifiedLink,
   type Tag,
 } from "@/lib/classifieds/types";
 import type { ListingFormValues } from "@/lib/classifieds/api";
@@ -36,7 +37,7 @@ interface Props {
     category: Category;
     tags: Tag[];
     price: number | null;
-    links: string[];
+    links: ClassifiedLink[];
     existingPhotos: ExistingPhoto[];
   };
   submitting?: boolean;
