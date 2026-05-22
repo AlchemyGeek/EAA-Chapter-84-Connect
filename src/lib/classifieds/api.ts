@@ -273,6 +273,8 @@ export function useUpdateListing() {
           description: values.description.trim(),
           category: values.category,
           tags: values.tags,
+          price: values.category === "for-sale" ? values.price : null,
+          links: values.links,
         })
         .eq("id", id);
       if (error) throw error;
