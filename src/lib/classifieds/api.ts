@@ -189,6 +189,8 @@ export interface ListingFormValues {
   description: string;
   category: Category;
   tags: Tag[];
+  price: number | null;
+  links: string[];
   /** Existing photo rows kept after edit. */
   keptPhotoIds: string[];
   /** New photo files to upload. */
