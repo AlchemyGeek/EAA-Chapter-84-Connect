@@ -1,4 +1,4 @@
-import { TAG_LABELS, type Tag } from "@/lib/classifieds/types";
+import type { Tag } from "@/lib/classifieds/types";
 
 export function TagBadges({ tags, max }: { tags: Tag[]; max?: number }) {
   if (!tags.length) return null;
@@ -12,7 +12,7 @@ export function TagBadges({ tags, max }: { tags: Tag[]; max?: number }) {
           key={t}
           className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
         >
-          {TAG_LABELS[t]}
+          {t}
         </span>
       ))}
       {overflow > 0 && (
