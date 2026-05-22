@@ -37,6 +37,10 @@ export function ClassifiedCard({ listing, isMine, isOfficer, trailing }: Props) 
           <CategoryBadge category={listing.category} />
         </div>
 
+        {listing.category === "for-sale" && listing.price !== null && (
+          <PriceTag price={listing.price} size="md" />
+        )}
+
         <TagBadges tags={listing.tags} max={3} />
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
