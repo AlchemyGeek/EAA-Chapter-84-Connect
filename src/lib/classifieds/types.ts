@@ -21,8 +21,8 @@ export interface Listing {
   tags: Tag[];
   /** Price in USD. Only meaningful for "for-sale" listings. */
   price: number | null;
-  /** External links (URLs). */
-  links: string[];
+  /** External links with optional descriptive labels. */
+  links: ClassifiedLink[];
   /** Resolved signed URLs for display. */
   photos: string[];
   /** Raw storage paths, used by editor and gallery management. */
