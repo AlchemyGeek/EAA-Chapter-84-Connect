@@ -67,6 +67,12 @@ export default function Classifieds() {
 
   const filtered = useMemo(() => applyFilters(tabFiltered, filters), [tabFiltered, filters]);
 
+  const availableTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of listings) for (const t of l.tags) set.add(t);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [listings]);
+
   const handleRenew = async (months: 1 | 2 | 3) => {
     if (!renewTarget) return;
     try {
@@ -169,6 +175,7 @@ export default function Classifieds() {
           value={filters}
           onChange={setFilters}
           onClear={() => setFilters(DEFAULT_FILTERS)}
+          availableTags={availableTags}
         />
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>

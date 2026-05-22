@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CategoryBadge } from "./CategoryBadge";
 import { TagBadges } from "./TagBadges";
+import { PriceTag } from "./PriceTag";
 import { expiresLabel, relativeTime } from "@/lib/classifieds/filters";
 import type { Listing } from "@/lib/classifieds/types";
 import { EyeOff } from "lucide-react";
@@ -35,6 +36,10 @@ export function ClassifiedCard({ listing, isMine, isOfficer, trailing }: Props) 
           <h3 className="text-base font-medium leading-snug">{listing.title}</h3>
           <CategoryBadge category={listing.category} />
         </div>
+
+        {listing.category === "for-sale" && listing.price !== null && (
+          <PriceTag price={listing.price} size="md" />
+        )}
 
         <TagBadges tags={listing.tags} max={3} />
 

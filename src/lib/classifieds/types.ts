@@ -8,17 +8,8 @@ export type Category =
   | "free-giveaway"
   | "miscellaneous";
 
-export type Tag =
-  | "aircraft"
-  | "engine"
-  | "avionics"
-  | "kit-build"
-  | "tools"
-  | "young-eagles"
-  | "fabric-covering"
-  | "sheet-metal"
-  | "welding"
-  | "books-manuals";
+/** Tags are now user-defined free-form strings (stored capitalized). */
+export type Tag = string;
 
 export type ListingStatus = "active" | "expired" | "hidden";
 
@@ -28,6 +19,10 @@ export interface Listing {
   description: string;
   category: Category;
   tags: Tag[];
+  /** Price in USD. Only meaningful for "for-sale" listings. */
+  price: number | null;
+  /** External links (URLs). */
+  links: string[];
   /** Resolved signed URLs for display. */
   photos: string[];
   /** Raw storage paths, used by editor and gallery management. */
@@ -68,23 +63,6 @@ export const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
   { value: "miscellaneous", label: "Miscellaneous" },
 ];
 
-export const TAG_LABELS: Record<Tag, string> = {
-  aircraft: "Aircraft",
-  engine: "Engine",
-  avionics: "Avionics",
-  "kit-build": "Kit Build",
-  tools: "Tools",
-  "young-eagles": "Young Eagles",
-  "fabric-covering": "Fabric & Covering",
-  "sheet-metal": "Sheet Metal",
-  welding: "Welding",
-  "books-manuals": "Books & Manuals",
-};
-
-export const TAG_OPTIONS: { value: Tag; label: string }[] = (
-  Object.keys(TAG_LABELS) as Tag[]
-).map((value) => ({ value, label: TAG_LABELS[value] }));
-
 export const CATEGORY_BADGE_CLASS: Record<Category, string> = {
   "for-sale": "bg-[hsl(var(--category-for-sale))] text-white",
   wanted: "bg-[hsl(var(--category-wanted))] text-white",
@@ -103,4 +81,36 @@ export const DISCLAIMER_SHORT =
   "EAA Chapter 84 does not endorse the safety, quality, or airworthiness of any listing.";
 
 export const MAX_PHOTOS = 4;
+export const MAX_LINKS = 5;
 export const STORAGE_BUCKET = "classifieds";
+
+/** Capitalize each whitespace-separated word, preserving hyphens/slashes. */
+export function normalizeTag(input: string): string {
+  return input
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((w) =>
+      w
+        .split(/([-/])/)
+        .map((p) =>
+          p === "-" || p === "/"
+            ? p
+            : p.length === 0
+              ? p
+              : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase(),
+        )
+        .join(""),
+    )
+    .join(" ");
+}
+
+export function formatPrice(value: number | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  if (value === 0) return "Free";
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+  }).format(value);
+}

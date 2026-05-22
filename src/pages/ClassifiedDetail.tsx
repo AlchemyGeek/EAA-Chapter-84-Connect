@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, RotateCcw, AlertTriangle, EyeOff, Pencil } from "lucide-react";
 import { CategoryBadge } from "@/components/classifieds/CategoryBadge";
 import { TagBadges } from "@/components/classifieds/TagBadges";
+import { PriceTag } from "@/components/classifieds/PriceTag";
 import { PhotoGallery } from "@/components/classifieds/PhotoGallery";
 import { ContactCard } from "@/components/classifieds/ContactCard";
 import { DisclaimerCallout } from "@/components/classifieds/DisclaimerCallout";
@@ -90,6 +91,9 @@ export default function ClassifiedDetail() {
               <CategoryBadge category={listing.category} />
               <TagBadges tags={listing.tags} />
             </div>
+            {listing.category === "for-sale" && listing.price !== null && (
+              <PriceTag price={listing.price} size="lg" />
+            )}
           </div>
 
           {listing.photos.length > 0 && <PhotoGallery photos={listing.photos} alt={listing.title} />}
@@ -97,6 +101,28 @@ export default function ClassifiedDetail() {
           <div className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
             {listing.description}
           </div>
+
+          {listing.links.length > 0 && (
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Links
+              </h2>
+              <ul className="space-y-1">
+                {listing.links.map((url) => (
+                  <li key={url} className="text-sm">
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="break-all text-primary underline-offset-2 hover:underline"
+                    >
+                      {url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-x-3 gap-y-1 border-t pt-3 text-xs text-muted-foreground">
             <span>Posted by {listing.authorName}</span>

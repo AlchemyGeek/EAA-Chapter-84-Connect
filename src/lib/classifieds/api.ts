@@ -10,6 +10,8 @@ interface ClassifiedRow {
   description: string;
   category: Category;
   tags: string[];
+  price: number | string | null;
+  links: string[] | null;
   status: "active" | "expired" | "hidden";
   author_key_id: number;
   author_name: string;
@@ -72,7 +74,9 @@ async function buildListings(
       title: r.title,
       description: r.description,
       category: r.category,
-      tags: r.tags as Tag[],
+      tags: (r.tags ?? []) as Tag[],
+      price: r.price === null || r.price === undefined ? null : Number(r.price),
+      links: r.links ?? [],
       photos: photoRows.map((p) => p.url).filter(Boolean),
       photoRows,
       status: deriveStatus(r),
@@ -185,6 +189,8 @@ export interface ListingFormValues {
   description: string;
   category: Category;
   tags: Tag[];
+  price: number | null;
+  links: string[];
   /** Existing photo rows kept after edit. */
   keptPhotoIds: string[];
   /** New photo files to upload. */
@@ -226,6 +232,8 @@ export function useCreateListing() {
           description: values.description.trim(),
           category: values.category,
           tags: values.tags,
+          price: values.category === "for-sale" ? values.price : null,
+          links: values.links,
           status: "active",
           author_key_id: member.key_id,
           author_name: authorName,
@@ -265,6 +273,8 @@ export function useUpdateListing() {
           description: values.description.trim(),
           category: values.category,
           tags: values.tags,
+          price: values.category === "for-sale" ? values.price : null,
+          links: values.links,
         })
         .eq("id", id);
       if (error) throw error;
