@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const trendChartConfig = {
@@ -258,63 +260,130 @@ export default function MemberEngagement() {
           ) : filteredSorted.length === 0 ? (
             <p className="text-muted-foreground text-sm">No matching members.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      <button onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">
-                        Member <ArrowUpDown className="h-3 w-3" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => toggleSort("total_events")} className="inline-flex items-center gap-1 hover:text-foreground">
-                        Total <ArrowUpDown className="h-3 w-3" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => toggleSort("events_30d")} className="inline-flex items-center gap-1 hover:text-foreground">
-                        30d <ArrowUpDown className="h-3 w-3" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => toggleSort("events_7d")} className="inline-flex items-center gap-1 hover:text-foreground">
-                        7d <ArrowUpDown className="h-3 w-3" />
-                      </button>
-                    </TableHead>
-                    <TableHead className="text-right">
-                      <button onClick={() => toggleSort("last_seen")} className="inline-flex items-center gap-1 hover:text-foreground">
-                        Last seen <ArrowUpDown className="h-3 w-3" />
-                      </button>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <>
+              {/* Mobile: stacked cards + sort control */}
+              <div className="sm:hidden space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground shrink-0">Sort by</span>
+                  <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+                    <SelectTrigger className="h-9 flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="last_seen">Last seen</SelectItem>
+                      <SelectItem value="total_events">Total events</SelectItem>
+                      <SelectItem value="events_30d">Last 30 days</SelectItem>
+                      <SelectItem value="events_7d">Last 7 days</SelectItem>
+                      <SelectItem value="name">Name</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => setSortDir(sortDir === "asc" ? "desc" : "asc")}
+                    aria-label={`Sort ${sortDir === "asc" ? "ascending" : "descending"}`}
+                  >
+                    {sortDir === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                  </Button>
+                </div>
+
+                <ul className="divide-y border-t border-b">
                   {filteredSorted.map((m) => (
-                    <TableRow key={m.key_id}>
-                      <TableCell>
-                        <Link
-                          to={`/directory/${m.key_id}`}
-                          className="text-primary hover:underline"
-                        >
-                          {displayName(m)}
-                        </Link>
-                        {m.email && (
-                          <div className="text-xs text-muted-foreground">{m.email}</div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{m.total_events}</TableCell>
-                      <TableCell className="text-right tabular-nums">{m.events_30d}</TableCell>
-                      <TableCell className="text-right tabular-nums">{m.events_7d}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">{formatRelative(m.last_seen)}</TableCell>
-                    </TableRow>
+                    <li key={m.key_id} className="py-3 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            to={`/directory/${m.key_id}`}
+                            className="text-primary hover:underline font-medium block truncate"
+                          >
+                            {displayName(m)}
+                          </Link>
+                          {m.email && (
+                            <div className="text-xs text-muted-foreground truncate">{m.email}</div>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0 pt-0.5">
+                          {formatRelative(m.last_seen)}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 text-xs">
+                        <span className="px-2 py-1 rounded border tabular-nums">
+                          <span className="text-muted-foreground">Total</span> <span className="font-medium">{m.total_events}</span>
+                        </span>
+                        <span className="px-2 py-1 rounded border tabular-nums">
+                          <span className="text-muted-foreground">30d</span> <span className="font-medium">{m.events_30d}</span>
+                        </span>
+                        <span className="px-2 py-1 rounded border tabular-nums">
+                          <span className="text-muted-foreground">7d</span> <span className="font-medium">{m.events_7d}</span>
+                        </span>
+                      </div>
+                    </li>
                   ))}
-                </TableBody>
-              </Table>
+                </ul>
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
+                        <button onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">
+                          Member <ArrowUpDown className="h-3 w-3" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button onClick={() => toggleSort("total_events")} className="inline-flex items-center gap-1 hover:text-foreground">
+                          Total <ArrowUpDown className="h-3 w-3" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button onClick={() => toggleSort("events_30d")} className="inline-flex items-center gap-1 hover:text-foreground">
+                          30d <ArrowUpDown className="h-3 w-3" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button onClick={() => toggleSort("events_7d")} className="inline-flex items-center gap-1 hover:text-foreground">
+                          7d <ArrowUpDown className="h-3 w-3" />
+                        </button>
+                      </TableHead>
+                      <TableHead className="text-right">
+                        <button onClick={() => toggleSort("last_seen")} className="inline-flex items-center gap-1 hover:text-foreground">
+                          Last seen <ArrowUpDown className="h-3 w-3" />
+                        </button>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSorted.map((m) => (
+                      <TableRow key={m.key_id}>
+                        <TableCell>
+                          <Link
+                            to={`/directory/${m.key_id}`}
+                            className="text-primary hover:underline"
+                          >
+                            {displayName(m)}
+                          </Link>
+                          {m.email && (
+                            <div className="text-xs text-muted-foreground">{m.email}</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">{m.total_events}</TableCell>
+                        <TableCell className="text-right tabular-nums">{m.events_30d}</TableCell>
+                        <TableCell className="text-right tabular-nums">{m.events_7d}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{formatRelative(m.last_seen)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
               <p className="mt-2 text-xs text-muted-foreground">
                 {filteredSorted.length} member{filteredSorted.length === 1 ? "" : "s"} with activity
               </p>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>
