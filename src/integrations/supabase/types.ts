@@ -1288,6 +1288,20 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      engagement_by_member: {
+        Args: never
+        Returns: {
+          email: string
+          events_30d: number
+          events_7d: number
+          first_name: string
+          key_id: number
+          last_name: string
+          last_seen: string
+          nickname: string
+          total_events: number
+        }[]
+      }
       engagement_kpis: {
         Args: never
         Returns: {
