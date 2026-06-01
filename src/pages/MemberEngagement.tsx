@@ -1,10 +1,15 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
-import { Activity, Users, TrendingUp, Star, Moon, MousePointerClick, Info } from "lucide-react";
+import { Activity, Users, TrendingUp, Star, Moon, MousePointerClick, Info, ArrowUpDown, Download } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Link } from "react-router-dom";
 
 const trendChartConfig = {
   active_members: {
@@ -12,6 +17,40 @@ const trendChartConfig = {
     color: "hsl(var(--primary))",
   },
 };
+
+type MemberRow = {
+  key_id: number;
+  first_name: string | null;
+  last_name: string | null;
+  nickname: string | null;
+  email: string | null;
+  total_events: number;
+  events_30d: number;
+  events_7d: number;
+  last_seen: string | null;
+};
+
+type SortKey = "name" | "total_events" | "events_30d" | "events_7d" | "last_seen";
+
+function formatRelative(iso: string | null): string {
+  if (!iso) return "—";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
+function displayName(m: MemberRow): string {
+  const first = m.nickname?.trim() || m.first_name?.trim() || "";
+  return `${first} ${m.last_name ?? ""}`.trim() || "Unknown";
+}
 
 export default function MemberEngagement() {
   const { data: kpis, isLoading: kpisLoading } = useQuery({
@@ -36,6 +75,83 @@ export default function MemberEngagement() {
       }));
     },
   });
+
+  const { data: members = [], isLoading: membersLoading } = useQuery({
+    queryKey: ["engagement-by-member"],
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("engagement_by_member");
+      if (error) throw error;
+      return (data ?? []) as MemberRow[];
+    },
+  });
+
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("last_seen");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const filteredSorted = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q
+      ? members.filter((m) => displayName(m).toLowerCase().includes(q) || (m.email ?? "").toLowerCase().includes(q))
+      : members;
+    const sorted = [...filtered].sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "name":
+          cmp = displayName(a).localeCompare(displayName(b));
+          break;
+        case "total_events":
+          cmp = Number(a.total_events) - Number(b.total_events);
+          break;
+        case "events_30d":
+          cmp = Number(a.events_30d) - Number(b.events_30d);
+          break;
+        case "events_7d":
+          cmp = Number(a.events_7d) - Number(b.events_7d);
+          break;
+        case "last_seen": {
+          const at = a.last_seen ? new Date(a.last_seen).getTime() : 0;
+          const bt = b.last_seen ? new Date(b.last_seen).getTime() : 0;
+          cmp = at - bt;
+          break;
+        }
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [members, search, sortKey, sortDir]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "name" ? "asc" : "desc");
+    }
+  };
+
+  const exportCsv = () => {
+    const header = ["Name", "Email", "Total", "Last 30d", "Last 7d", "Last seen"];
+    const rows = filteredSorted.map((m) => [
+      displayName(m),
+      m.email ?? "",
+      m.total_events,
+      m.events_30d,
+      m.events_7d,
+      m.last_seen ?? "",
+    ]);
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `member-activity-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const engagementRate =
     kpis && kpis.total_active_members > 0
@@ -110,6 +226,95 @@ export default function MemberEngagement() {
                 />
               </LineChart>
             </ChartContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-base">Member Activity</CardTitle>
+          <div className="flex gap-2 items-center">
+            <Input
+              placeholder="Search by name or email…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 w-full sm:w-64"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportCsv}
+              disabled={filteredSorted.length === 0}
+              className="gap-1.5"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export</span>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {membersLoading ? (
+            <p className="text-muted-foreground text-sm">Loading members…</p>
+          ) : filteredSorted.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No matching members.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <button onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">
+                        Member <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button onClick={() => toggleSort("total_events")} className="inline-flex items-center gap-1 hover:text-foreground">
+                        Total <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button onClick={() => toggleSort("events_30d")} className="inline-flex items-center gap-1 hover:text-foreground">
+                        30d <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button onClick={() => toggleSort("events_7d")} className="inline-flex items-center gap-1 hover:text-foreground">
+                        7d <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button onClick={() => toggleSort("last_seen")} className="inline-flex items-center gap-1 hover:text-foreground">
+                        Last seen <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSorted.map((m) => (
+                    <TableRow key={m.key_id}>
+                      <TableCell>
+                        <Link
+                          to={`/directory/${m.key_id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {displayName(m)}
+                        </Link>
+                        {m.email && (
+                          <div className="text-xs text-muted-foreground">{m.email}</div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{m.total_events}</TableCell>
+                      <TableCell className="text-right tabular-nums">{m.events_30d}</TableCell>
+                      <TableCell className="text-right tabular-nums">{m.events_7d}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatRelative(m.last_seen)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {filteredSorted.length} member{filteredSorted.length === 1 ? "" : "s"} with activity
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
