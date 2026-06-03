@@ -29,6 +29,7 @@ import NewMemberApplications from "./pages/NewMemberApplications";
 import BuddyProgram from "./pages/BuddyProgram";
 import HangarTalk from "./pages/HangarTalk";
 import MemberEngagement from "./pages/MemberEngagement";
+import EmailListBuilder from "./pages/EmailListBuilder";
 import Newsletters from "./pages/Newsletters";
 import NewslettersAdmin from "./pages/NewslettersAdmin";
 import ProxyVote from "./pages/ProxyVote";
@@ -78,6 +79,7 @@ const App = () => (
                 <Route path="/new-member-applications" element={<NewMemberApplications />} />
                 <Route path="/buddy-program" element={<BuddyProgram />} />
                 <Route path="/member-engagement" element={<MemberEngagement />} />
+                <Route path="/email-lists" element={<EmailListBuilder />} />
                 <Route path="/classifieds" element={<Classifieds />} />
                 <Route path="/classifieds/:id" element={<ClassifiedDetail />} />
                 <Route path="/classifieds/new" element={<ClassifiedNew />} />

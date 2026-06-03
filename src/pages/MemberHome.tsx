@@ -695,6 +695,7 @@ export default function MemberHome() {
                 <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
                 <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
                 <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
+                <AdminLink to="/email-lists" icon={Mail} label="Email List Builder" />
                 <button
                   type="button"
                   onClick={() => exportProxyVoteResults().catch(() => {})}
