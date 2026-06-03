@@ -1452,6 +1452,10 @@ export type Database = {
           email: string
         }[]
       }
+      officer_email_audience_missing_count: {
+        Args: { _audience: string }
+        Returns: number
+      }
       promote_pending_roles: {
         Args: { _email: string; _user_id: string }
         Returns: undefined
