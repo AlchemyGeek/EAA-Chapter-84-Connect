@@ -53,7 +53,7 @@ const AUDIENCES: { value: AudienceKey; label: string; description: string }[] = 
 export default function EmailListBuilder() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const [audience, setAudience] = useState<AudienceKey>("active_all");
-  const [separator, setSeparator] = useState<"comma" | "semicolon">("comma");
+  const [separator, setSeparator] = useState<"comma" | "semicolon">("semicolon");
 
   const { data: emails = [], isLoading } = useQuery({
     queryKey: ["email-audience", audience],
