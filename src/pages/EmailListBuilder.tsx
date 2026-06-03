@@ -100,11 +100,36 @@ export default function EmailListBuilder() {
   if (!isOfficerOrAbove) return <Navigate to="/home" replace />;
 
   async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(joined);
+    const ok = await copyToClipboard(joined);
+    if (ok) {
       toast({ title: "Copied", description: `${emails.length} email address${emails.length === 1 ? "" : "es"} copied.` });
-    } catch {
+    } else {
       toast({ title: "Copy failed", description: "Select the text and copy manually.", variant: "destructive" });
+    }
+  }
+
+  async function copyToClipboard(text: string): Promise<boolean> {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      // fall through to legacy
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.setAttribute("readonly", "");
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
     }
   }
 
