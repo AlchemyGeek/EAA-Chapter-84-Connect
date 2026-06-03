@@ -108,11 +108,7 @@ export default function MembershipStatistics() {
     return new Date(m.date_added).getFullYear() === currentYear;
   }).length;
 
-  const inactive = members.filter((m) => {
-    if (m.current_standing !== "Active") return true;
-    if (m.expiration_date && new Date(m.expiration_date) < new Date()) return true;
-    return false;
-  }).length;
+  const inactive = members.filter((m) => m.current_standing !== "Active").length;
 
   // Retention KPI — Active members only
   // Last year base: Active members with expiration >= currentYear, minus new members added this year
