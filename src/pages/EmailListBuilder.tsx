@@ -86,12 +86,6 @@ export default function EmailListBuilder() {
     return emails.join(sep);
   }, [emails, separator]);
 
-  const mailtoHref = useMemo(() => {
-    // mailto BCC: use commas per RFC 6068 (most clients also accept semicolons but commas are spec)
-    return `mailto:?bcc=${encodeURIComponent(emails.join(","))}`;
-  }, [emails]);
-
-  const mailtoTooLong = mailtoHref.length > MAILTO_MAX;
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
