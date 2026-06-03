@@ -115,18 +115,18 @@ export default function EmailListBuilder() {
           <RadioGroup
             value={audience}
             onValueChange={(v) => setAudience(v as AudienceKey)}
-            className="space-y-2"
+            className="space-y-1"
           >
             {AUDIENCES.map((a) => (
               <label
                 key={a.value}
                 htmlFor={`aud-${a.value}`}
-                className="flex items-start gap-3 rounded-md border px-3 py-3 cursor-pointer hover:bg-muted/40 min-h-[44px]"
+                className="flex items-start gap-2.5 rounded px-2 py-1.5 cursor-pointer hover:bg-muted/40"
               >
-                <RadioGroupItem id={`aud-${a.value}`} value={a.value} className="mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{a.label}</div>
-                  <div className="text-xs text-muted-foreground">{a.description}</div>
+                <RadioGroupItem id={`aud-${a.value}`} value={a.value} className="mt-1 h-3.5 w-3.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium leading-tight">{a.label}</div>
+                  <div className="text-xs text-muted-foreground leading-snug">{a.description}</div>
                 </div>
               </label>
             ))}
