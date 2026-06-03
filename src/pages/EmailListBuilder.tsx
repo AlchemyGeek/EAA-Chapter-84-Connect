@@ -48,7 +48,7 @@ const AUDIENCES: { value: AudienceKey; label: string; description: string }[] = 
   },
 ];
 
-const MAILTO_MAX = 1800;
+
 
 export default function EmailListBuilder() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
