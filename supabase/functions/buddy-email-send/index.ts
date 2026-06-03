@@ -203,13 +203,18 @@ Deno.serve(async (req) => {
     const buddyName = buddy.first_name || 'Buddy'
     const newMemberEmail = app.email || ''
     const buddyEmail = buddy.email || ''
-    const applyPlaceholders = (s: string) => s
-      .replace(/\[NewMemberName\]/g, newMemberName)
-      .replace(/\[BuddyName\]/g, buddyName)
-      .replace(/\[NewMemberEmail\]/g, newMemberEmail)
-      .replace(/\[BuddyEmail\]/g, buddyEmail)
-    const processedSubject = applyPlaceholders(template.subject)
-    const baseProcessedBody = applyPlaceholders(template.body)
+    const applyPlaceholders = (s: string, escape: boolean) => {
+      const v = (x: string) => (escape ? htmlEscape(x) : x)
+      return s
+        .replace(/\[NewMemberName\]/g, v(newMemberName))
+        .replace(/\[BuddyName\]/g, v(buddyName))
+        .replace(/\[NewMemberEmail\]/g, v(newMemberEmail))
+        .replace(/\[BuddyEmail\]/g, v(buddyEmail))
+    }
+    // Subject is plaintext; body is rendered as HTML so escape user-controlled values.
+    const processedSubject = applyPlaceholders(template.subject, false)
+    const baseProcessedBody = applyPlaceholders(template.body, true)
+    const plainTextBody = applyPlaceholders(template.body, false)
 
     // Lovable Email currently sends only one direct recipient per queued item.
     // Queue separate copies with per-recipient Reply-To so "Reply" reaches the
