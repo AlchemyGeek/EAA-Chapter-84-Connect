@@ -149,9 +149,14 @@ export default function EmailListBuilder() {
 
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 flex-wrap">
             <Users className="h-4 w-4 text-muted-foreground" />
             {isLoading ? "Loading…" : `${emails.length} recipient${emails.length === 1 ? "" : "s"}`}
+            {missingCount > 0 && (
+              <span className="text-xs font-normal text-muted-foreground">
+                ({missingCount} member{missingCount === 1 ? "" : "s"} in this cohort {missingCount === 1 ? "has" : "have"} no email on file)
+              </span>
+            )}
           </CardTitle>
           <Tabs value={separator} onValueChange={(v) => setSeparator(v as "comma" | "semicolon")}>
             <TabsList>
