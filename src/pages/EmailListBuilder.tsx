@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Copy, Send, Users } from "lucide-react";
+import { Mail, Copy, Users } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type AudienceKey =
@@ -48,7 +48,7 @@ const AUDIENCES: { value: AudienceKey; label: string; description: string }[] = 
   },
 ];
 
-const MAILTO_MAX = 1800;
+
 
 export default function EmailListBuilder() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
@@ -86,12 +86,6 @@ export default function EmailListBuilder() {
     return emails.join(sep);
   }, [emails, separator]);
 
-  const mailtoHref = useMemo(() => {
-    // mailto BCC: use commas per RFC 6068 (most clients also accept semicolons but commas are spec)
-    return `mailto:?bcc=${encodeURIComponent(emails.join(","))}`;
-  }, [emails]);
-
-  const mailtoTooLong = mailtoHref.length > MAILTO_MAX;
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
@@ -209,30 +203,6 @@ export default function EmailListBuilder() {
               <Copy className="h-4 w-4 mr-2" />
               Copy {separator === "comma" ? "comma" : "semicolon"} list
             </Button>
-            <Button
-              asChild={!mailtoTooLong}
-              variant="outline"
-              disabled={emails.length === 0 || mailtoTooLong}
-              className="min-h-[44px]"
-              title={mailtoTooLong ? "List too long for mailto — use Copy instead." : undefined}
-            >
-              {mailtoTooLong ? (
-                <span>
-                  <Send className="h-4 w-4 mr-2" />
-                  Open in mail client (BCC)
-                </span>
-              ) : (
-                <a href={mailtoHref}>
-                  <Send className="h-4 w-4 mr-2" />
-                  Open in mail client (BCC)
-                </a>
-              )}
-            </Button>
-            {mailtoTooLong && (
-              <p className="text-xs text-muted-foreground self-center">
-                List too long for mailto — use Copy instead.
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
