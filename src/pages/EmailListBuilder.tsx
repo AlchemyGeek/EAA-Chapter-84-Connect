@@ -175,8 +175,8 @@ export default function EmailListBuilder() {
           </CardTitle>
           <Tabs value={separator} onValueChange={(v) => setSeparator(v as "comma" | "semicolon")}>
             <TabsList>
-              <TabsTrigger value="comma">Comma</TabsTrigger>
               <TabsTrigger value="semicolon">Semicolon (Outlook)</TabsTrigger>
+              <TabsTrigger value="comma">Comma</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
