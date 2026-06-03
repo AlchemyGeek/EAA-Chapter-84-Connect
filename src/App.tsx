@@ -44,8 +44,12 @@ import Unsubscribe from "./pages/Unsubscribe";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
+      // Short stale window so navigating back to a page shows fresh data,
+      // while still de-duplicating bursts of fetches within the same interaction.
+      staleTime: 30 * 1000,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: true,
     },
   },
 });

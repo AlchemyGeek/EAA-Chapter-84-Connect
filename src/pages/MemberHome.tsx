@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
+import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
 import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
@@ -404,6 +405,7 @@ export default function MemberHome() {
                 <Mail className="h-4 w-4 sm:mr-1.5" />
                 <span className="hidden sm:inline">Contact Us</span>
               </a>
+              <CheckForUpdatesButton className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px]" />
               <Button
                 variant="ghost"
                 size="sm"
