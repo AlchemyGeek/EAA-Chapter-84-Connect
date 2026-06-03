@@ -1446,6 +1446,12 @@ export type Database = {
         }
         Returns: number
       }
+      officer_email_audience: {
+        Args: { _audience: string }
+        Returns: {
+          email: string
+        }[]
+      }
       promote_pending_roles: {
         Args: { _email: string; _user_id: string }
         Returns: undefined
