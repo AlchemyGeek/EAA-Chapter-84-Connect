@@ -209,30 +209,6 @@ export default function EmailListBuilder() {
               <Copy className="h-4 w-4 mr-2" />
               Copy {separator === "comma" ? "comma" : "semicolon"} list
             </Button>
-            <Button
-              asChild={!mailtoTooLong}
-              variant="outline"
-              disabled={emails.length === 0 || mailtoTooLong}
-              className="min-h-[44px]"
-              title={mailtoTooLong ? "List too long for mailto — use Copy instead." : undefined}
-            >
-              {mailtoTooLong ? (
-                <span>
-                  <Send className="h-4 w-4 mr-2" />
-                  Open in mail client (BCC)
-                </span>
-              ) : (
-                <a href={mailtoHref}>
-                  <Send className="h-4 w-4 mr-2" />
-                  Open in mail client (BCC)
-                </a>
-              )}
-            </Button>
-            {mailtoTooLong && (
-              <p className="text-xs text-muted-foreground self-center">
-                List too long for mailto — use Copy instead.
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
