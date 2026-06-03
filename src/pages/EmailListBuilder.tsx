@@ -68,6 +68,19 @@ export default function EmailListBuilder() {
     },
   });
 
+  const { data: missingCount = 0 } = useQuery({
+    queryKey: ["email-audience-missing", audience],
+    enabled: !!user && isOfficerOrAbove,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("officer_email_audience_missing_count", {
+        _audience: audience,
+      });
+      if (error) throw error;
+      return (data as number) ?? 0;
+    },
+  });
+
   const joined = useMemo(() => {
     const sep = separator === "comma" ? ", " : "; ";
     return emails.join(sep);
