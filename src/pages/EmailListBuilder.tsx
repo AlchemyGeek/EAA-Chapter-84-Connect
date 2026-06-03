@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mail, Copy, Send, Users } from "lucide-react";
@@ -124,26 +124,22 @@ export default function EmailListBuilder() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold">Choose an audience</CardTitle>
         </CardHeader>
-        <CardContent>
-          <RadioGroup
-            value={audience}
-            onValueChange={(v) => setAudience(v as AudienceKey)}
-            className="space-y-1"
-          >
-            {AUDIENCES.map((a) => (
-              <label
-                key={a.value}
-                htmlFor={`aud-${a.value}`}
-                className="flex items-start gap-2.5 rounded px-2 py-1.5 cursor-pointer hover:bg-muted/40"
-              >
-                <RadioGroupItem id={`aud-${a.value}`} value={a.value} className="mt-1 h-3 w-3 ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:h-1.5 [&_svg]:w-1.5" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium leading-tight">{a.label}</div>
-                  <div className="text-xs text-muted-foreground leading-snug">{a.description}</div>
-                </div>
-              </label>
-            ))}
-          </RadioGroup>
+        <CardContent className="space-y-2">
+          <Select value={audience} onValueChange={(v) => setAudience(v as AudienceKey)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {AUDIENCES.map((a) => (
+                <SelectItem key={a.value} value={a.value}>
+                  {a.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {AUDIENCES.find((a) => a.value === audience)?.description}
+          </p>
         </CardContent>
       </Card>
 
