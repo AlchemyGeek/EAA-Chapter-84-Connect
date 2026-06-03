@@ -29,6 +29,7 @@ import NewMemberApplications from "./pages/NewMemberApplications";
 import BuddyProgram from "./pages/BuddyProgram";
 import HangarTalk from "./pages/HangarTalk";
 import MemberEngagement from "./pages/MemberEngagement";
+import EmailListBuilder from "./pages/EmailListBuilder";
 import Newsletters from "./pages/Newsletters";
 import NewslettersAdmin from "./pages/NewslettersAdmin";
 import ProxyVote from "./pages/ProxyVote";
