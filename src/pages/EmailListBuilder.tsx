@@ -136,7 +136,7 @@ export default function EmailListBuilder() {
                 htmlFor={`aud-${a.value}`}
                 className="flex items-start gap-2.5 rounded px-2 py-1.5 cursor-pointer hover:bg-muted/40"
               >
-                <RadioGroupItem id={`aud-${a.value}`} value={a.value} className="mt-1 h-3.5 w-3.5" />
+                <RadioGroupItem id={`aud-${a.value}`} value={a.value} className="mt-1 h-3 w-3 [&_svg]:h-1.5 [&_svg]:w-1.5" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium leading-tight">{a.label}</div>
                   <div className="text-xs text-muted-foreground leading-snug">{a.description}</div>
