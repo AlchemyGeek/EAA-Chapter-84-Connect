@@ -68,6 +68,19 @@ export default function EmailListBuilder() {
     },
   });
 
+  const { data: missingCount = 0 } = useQuery({
+    queryKey: ["email-audience-missing", audience],
+    enabled: !!user && isOfficerOrAbove,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("officer_email_audience_missing_count", {
+        _audience: audience,
+      });
+      if (error) throw error;
+      return (data as number) ?? 0;
+    },
+  });
+
   const joined = useMemo(() => {
     const sep = separator === "comma" ? ", " : "; ";
     return emails.join(sep);
@@ -136,9 +149,14 @@ export default function EmailListBuilder() {
 
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 flex-wrap">
             <Users className="h-4 w-4 text-muted-foreground" />
             {isLoading ? "Loading…" : `${emails.length} recipient${emails.length === 1 ? "" : "s"}`}
+            {missingCount > 0 && (
+              <span className="text-xs font-normal text-muted-foreground">
+                ({missingCount} member{missingCount === 1 ? "" : "s"} in this cohort {missingCount === 1 ? "has" : "have"} no email on file)
+              </span>
+            )}
           </CardTitle>
           <Tabs value={separator} onValueChange={(v) => setSeparator(v as "comma" | "semicolon")}>
             <TabsList>
