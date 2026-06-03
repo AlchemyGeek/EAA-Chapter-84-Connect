@@ -242,11 +242,11 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Emails are now embedded in the template via [NewMemberEmail] / [BuddyEmail]
-    // placeholders, so no extra contact block is appended.
-    const processedBody = baseProcessedBody
+    // baseProcessedBody is already HTML-escaped for safe rendering in HTML emails.
+    // plainTextBody preserves the raw text for the text/plain part.
+    const processedBody = plainTextBody
 
-    // Convert plain text body to simple HTML, linkify mailto for known emails
+    // Convert HTML-escaped body to simple HTML, linkify mailto for known emails
     let htmlBody = baseProcessedBody.replace(/\n/g, '<br>')
     if (newMemberEmail) {
       htmlBody = htmlBody.split(htmlEscape(newMemberEmail)).join(
