@@ -17,6 +17,7 @@ type AudienceKey =
   | "active_good"
   | "active_overdue"
   | "inactive"
+  | "joined_this_year"
   | "active_good_unsigned_proxy_2026";
 
 const AUDIENCES: { value: AudienceKey; label: string; description: string }[] = [
@@ -39,6 +40,11 @@ const AUDIENCES: { value: AudienceKey; label: string; description: string }[] = 
     value: "inactive",
     label: "Inactive members",
     description: "Members whose roster standing is anything other than Active.",
+  },
+  {
+    value: "joined_this_year",
+    label: "Members who joined this year",
+    description: "Members whose roster join date falls in the current calendar year.",
   },
   {
     value: "active_good_unsigned_proxy_2026",
