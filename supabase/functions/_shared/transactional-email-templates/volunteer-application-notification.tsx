@@ -72,6 +72,7 @@ export const template = {
   subject: (data: Record<string, any>) =>
     `New Volunteer Application - ${data.opportunityTitle || 'Volunteering Opportunity'}`,
   displayName: 'Volunteer application notification',
+  allowedCallers: 'service' as const,
   previewData: {
     opportunityTitle: 'KPAE Young Eagle Rally - Ground Volunteer',
     memberName: 'Jane Doe',
