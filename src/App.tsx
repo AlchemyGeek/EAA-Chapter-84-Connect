@@ -79,6 +79,7 @@ const App = () => (
                 <Route path="/new-member-applications" element={<NewMemberApplications />} />
                 <Route path="/buddy-program" element={<BuddyProgram />} />
                 <Route path="/member-engagement" element={<MemberEngagement />} />
+                <Route path="/email-lists" element={<EmailListBuilder />} />
                 <Route path="/classifieds" element={<Classifieds />} />
                 <Route path="/classifieds/:id" element={<ClassifiedDetail />} />
                 <Route path="/classifieds/new" element={<ClassifiedNew />} />
