@@ -27,7 +27,7 @@ import MemberVolunteering from "./pages/MemberVolunteering";
 import NewMemberApplication from "./pages/NewMemberApplication";
 import NewMemberApplications from "./pages/NewMemberApplications";
 import BuddyProgram from "./pages/BuddyProgram";
-import HangarTalk from "./pages/HangarTalk";
+
 import MemberEngagement from "./pages/MemberEngagement";
 import EmailListBuilder from "./pages/EmailListBuilder";
 import Newsletters from "./pages/Newsletters";
