@@ -27,7 +27,7 @@ import MemberVolunteering from "./pages/MemberVolunteering";
 import NewMemberApplication from "./pages/NewMemberApplication";
 import NewMemberApplications from "./pages/NewMemberApplications";
 import BuddyProgram from "./pages/BuddyProgram";
-import HangarTalk from "./pages/HangarTalk";
+
 import MemberEngagement from "./pages/MemberEngagement";
 import EmailListBuilder from "./pages/EmailListBuilder";
 import Newsletters from "./pages/Newsletters";
@@ -97,7 +97,7 @@ const App = () => (
             <Route path="/newsletters-admin" element={<NewslettersAdmin />} />
             <Route path="/join" element={<NewMemberApplication />} />
             <Route path="/proxy-vote" element={<ProxyVote />} />
-            {/* <Route path="/hangar-talk" element={<HangarTalk />} /> */}
+            
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
