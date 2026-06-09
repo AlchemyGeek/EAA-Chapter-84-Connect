@@ -97,7 +97,7 @@ const App = () => (
             <Route path="/newsletters-admin" element={<NewslettersAdmin />} />
             <Route path="/join" element={<NewMemberApplication />} />
             <Route path="/proxy-vote" element={<ProxyVote />} />
-            {/* <Route path="/hangar-talk" element={<HangarTalk />} /> */}
+            
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
