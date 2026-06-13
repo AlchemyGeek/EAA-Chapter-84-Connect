@@ -1,0 +1,1 @@
+ALTER TABLE public.member_chapter_data ALTER COLUMN contact_visible_in_directory SET DEFAULT true;
