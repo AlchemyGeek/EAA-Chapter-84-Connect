@@ -244,6 +244,7 @@ export function useCreatePost() {
       title: string;
       body: string;
       images: File[];
+      tag_ids?: string[];
     }) => {
       const { data: postRow, error } = await supabase
         .from("hangar_talk_posts" as any)
@@ -277,9 +278,39 @@ export function useCreatePost() {
           .insert(uploads.map((u) => ({ ...u, post_id: postId })));
         if (imgErr) throw imgErr;
       }
+
+      if (args.tag_ids && args.tag_ids.length) {
+        const { error: tagErr } = await supabase
+          .from("hangar_talk_post_tags" as any)
+          .insert(args.tag_ids.map((tag_id) => ({ post_id: postId, tag_id })));
+        if (tagErr) throw tagErr;
+      }
       return postId;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["ht-posts"] }),
+  });
+}
+
+export function useSetPostTags() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { post_id: string; tag_ids: string[] }) => {
+      const { error: delErr } = await supabase
+        .from("hangar_talk_post_tags" as any)
+        .delete()
+        .eq("post_id", args.post_id);
+      if (delErr) throw delErr;
+      if (args.tag_ids.length) {
+        const { error: insErr } = await supabase
+          .from("hangar_talk_post_tags" as any)
+          .insert(args.tag_ids.map((tag_id) => ({ post_id: args.post_id, tag_id })));
+        if (insErr) throw insErr;
+      }
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["ht-posts"] });
+      qc.invalidateQueries({ queryKey: ["ht-post", vars.post_id] });
+    },
   });
 }
 
