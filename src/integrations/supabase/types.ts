@@ -1483,6 +1483,15 @@ export type Database = {
           zip_code: string
         }[]
       }
+      get_roster_display_names: {
+        Args: { _key_ids: number[] }
+        Returns: {
+          first_name: string
+          key_id: number
+          last_name: string
+          nickname: string
+        }[]
+      }
       get_user_emails_by_ids: {
         Args: { _user_ids: string[] }
         Returns: {
