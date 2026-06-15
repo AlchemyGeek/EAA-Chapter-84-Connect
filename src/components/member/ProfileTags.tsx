@@ -26,6 +26,7 @@ export function ProfileTags({
   const setTag = useSetMemberTag();
   const [open, setOpen] = useState(false);
 
+  const grouped = useMemo(() => {
     const byCat = new Map<string, typeof allTags>();
     for (const t of allTags) {
       if (t.archived) continue;
