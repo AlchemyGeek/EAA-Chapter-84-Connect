@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronRight, Hash, Plus, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, Hash, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useDeleteTag,
@@ -137,36 +137,28 @@ export function HangarTalkTagsAdmin() {
                   {list.length === 0 ? (
                     <p className="text-xs text-muted-foreground italic">No tags yet.</p>
                   ) : (
-                    <div className="divide-y divide-border border border-border rounded-md">
+                    <div className="flex flex-wrap gap-2">
                       {list.map((t) => (
-                        <div
-                          key={t.id}
-                          className="flex items-center gap-3 px-3 py-2 group"
-                        >
-                          <span className="text-xs text-muted-foreground w-8 shrink-0">
-                            #{t.position}
-                          </span>
-                          <span className={`text-sm flex-1 ${t.archived ? "line-through text-muted-foreground" : ""}`}>
+                        <div key={t.id} className="inline-flex items-center group">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(t)}
+                            className={`pl-3 pr-2 py-1.5 rounded-l-full text-xs border border-r-0 transition-colors min-h-[32px] bg-background border-border hover:bg-muted ${
+                              t.archived ? "line-through text-muted-foreground" : ""
+                            }`}
+                            title="Edit tag"
+                          >
                             {t.label}
-                          </span>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => openEdit(t)}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => onDelete(t)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDelete(t)}
+                            className="px-2 py-1.5 rounded-r-full text-xs border border-border bg-background text-muted-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors min-h-[32px]"
+                            title="Delete tag"
+                            aria-label={`Delete ${t.label}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
                       ))}
                     </div>
