@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronRight, Hash, Plus, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, Hash, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useDeleteTag,
