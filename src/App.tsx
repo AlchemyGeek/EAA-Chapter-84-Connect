@@ -37,6 +37,10 @@ import Classifieds from "./pages/Classifieds";
 import ClassifiedDetail from "./pages/ClassifiedDetail";
 import ClassifiedNew from "./pages/ClassifiedNew";
 import ClassifiedEdit from "./pages/ClassifiedEdit";
+import HangarTalk from "./pages/HangarTalk";
+import HangarTalkPost from "./pages/HangarTalkPost";
+import HangarTalkNew from "./pages/HangarTalkNew";
+import HangarTalkEdit from "./pages/HangarTalkEdit";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 
@@ -94,6 +98,10 @@ const App = () => (
             <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
             <Route path="/newsletters" element={<Newsletters />} />
+            <Route path="/hangar-talk" element={<HangarTalk />} />
+            <Route path="/hangar-talk/new" element={<HangarTalkNew />} />
+            <Route path="/hangar-talk/:id" element={<HangarTalkPost />} />
+            <Route path="/hangar-talk/:id/edit" element={<HangarTalkEdit />} />
             <Route path="/newsletters-admin" element={<NewslettersAdmin />} />
             <Route path="/join" element={<NewMemberApplication />} />
             <Route path="/proxy-vote" element={<ProxyVote />} />

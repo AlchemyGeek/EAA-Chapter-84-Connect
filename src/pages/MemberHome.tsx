@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
+import { ProfileTags } from "@/components/member/ProfileTags";
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
@@ -614,6 +615,7 @@ export default function MemberHome() {
               directoryToggleDisabled={toggleVisibility.isPending}
             />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating || isAdmin} />
+            <ProfileTags keyId={member.key_id} editable={!isImpersonating || isAdmin} />
           </div>
         )}
 
@@ -674,6 +676,7 @@ export default function MemberHome() {
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
                 <AdminLink to="/classifieds" icon={Tag} label="Classifieds" />
+                <AdminLink to="/hangar-talk" icon={MessageSquare} label="Hangar Talk" />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 
               </>

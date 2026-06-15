@@ -435,6 +435,225 @@ export type Database = {
         }
         Relationships: []
       }
+      hangar_talk_member_tags: {
+        Row: {
+          created_at: string
+          key_id: number
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          key_id: number
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          key_id?: number
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_member_tags_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "roster_members"
+            referencedColumns: ["key_id"]
+          },
+          {
+            foreignKeyName: "hangar_talk_member_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hangar_talk_post_images: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          post_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          post_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          post_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_post_images_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hangar_talk_posts: {
+        Row: {
+          author_key_id: number
+          body: string
+          created_at: string
+          id: string
+          last_activity_at: string
+          resolved_at: string | null
+          title: string
+          type: Database["public"]["Enums"]["hangar_talk_post_type"]
+          updated_at: string
+        }
+        Insert: {
+          author_key_id: number
+          body: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          resolved_at?: string | null
+          title: string
+          type: Database["public"]["Enums"]["hangar_talk_post_type"]
+          updated_at?: string
+        }
+        Update: {
+          author_key_id?: number
+          body?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          resolved_at?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["hangar_talk_post_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_posts_author_key_id_fkey"
+            columns: ["author_key_id"]
+            isOneToOne: false
+            referencedRelation: "roster_members"
+            referencedColumns: ["key_id"]
+          },
+        ]
+      }
+      hangar_talk_replies: {
+        Row: {
+          author_key_id: number
+          body: string
+          created_at: string
+          id: string
+          image_storage_path: string | null
+          post_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_key_id: number
+          body: string
+          created_at?: string
+          id?: string
+          image_storage_path?: string | null
+          post_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_key_id?: number
+          body?: string
+          created_at?: string
+          id?: string
+          image_storage_path?: string | null
+          post_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_replies_author_key_id_fkey"
+            columns: ["author_key_id"]
+            isOneToOne: false
+            referencedRelation: "roster_members"
+            referencedColumns: ["key_id"]
+          },
+          {
+            foreignKeyName: "hangar_talk_replies_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hangar_talk_tag_categories: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          position: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          position?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hangar_talk_tags: {
+        Row: {
+          archived: boolean
+          category_id: string
+          created_at: string
+          id: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          category_id: string
+          created_at?: string
+          id?: string
+          label: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          category_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_tags_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_tag_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_chapter_data: {
         Row: {
           application_status: string | null
@@ -1264,6 +1483,15 @@ export type Database = {
           zip_code: string
         }[]
       }
+      get_roster_display_names: {
+        Args: { _key_ids: number[] }
+        Returns: {
+          first_name: string
+          key_id: number
+          last_name: string
+          nickname: string
+        }[]
+      }
       get_user_emails_by_ids: {
         Args: { _user_ids: string[] }
         Returns: {
@@ -1287,8 +1515,10 @@ export type Database = {
           total_members: number
         }[]
       }
+      is_active_member: { Args: never; Returns: boolean }
       is_classified_author: { Args: { _key_id: number }; Returns: boolean }
       is_officer: { Args: { _user_email: string }; Returns: boolean }
+      is_roster_self: { Args: { _key_id: number }; Returns: boolean }
       member_update_own_record:
         | {
             Args: {
@@ -1414,6 +1644,7 @@ export type Database = {
         | "free-giveaway"
         | "miscellaneous"
       classified_status: "active" | "expired" | "hidden"
+      hangar_talk_post_type: "question" | "help_wanted" | "fyi"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1553,6 +1784,7 @@ export const Constants = {
         "miscellaneous",
       ],
       classified_status: ["active", "expired", "hidden"],
+      hangar_talk_post_type: ["question", "help_wanted", "fyi"],
     },
   },
 } as const

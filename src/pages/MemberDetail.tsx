@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { StatusDashboard } from "@/components/member/StatusDashboard";
 import { ReadOnlySection } from "@/components/member/ReadOnlySection";
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
+import { ProfileTags } from "@/components/member/ProfileTags";
 
 export default function MemberDetail() {
   const { keyId } = useParams();
@@ -117,6 +118,7 @@ export default function MemberDetail() {
         {aviationFields.length > 0 && <ReadOnlySection title="Aviation & Aircraft" fields={aviationFields} />}
         {volunteerFields.length > 0 && <ReadOnlySection title="EAA Volunteering" fields={volunteerFields} />}
         <ReadOnlySection title="Compliance (EAA-managed)" fields={complianceFields} />
+        <ProfileTags keyId={member.key_id} editable={false} />
         <MemberImageGallery keyId={member.key_id} />
       </div>
 
