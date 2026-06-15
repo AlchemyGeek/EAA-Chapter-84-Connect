@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { TypeBadge } from "./TypeBadge";
+import { PostTagChips } from "./PostTagChips";
 import { authorDisplayName, isStale, timeAgo, type Post } from "@/lib/hangarTalk/types";
 import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { MessageSquare, CheckCircle2 } from "lucide-react";
@@ -37,6 +38,7 @@ export function PostCard({ post }: { post: Post }) {
             <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-wrap">
               {post.body}
             </p>
+            {post.tag_ids.length > 0 && <PostTagChips tagIds={post.tag_ids} size="xs" />}
             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
               <span className="truncate">{authorDisplayName(post.author)}</span>
               <span>·</span>
