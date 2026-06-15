@@ -485,3 +485,60 @@ export function useDeleteTag() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["ht-tags"] }),
   });
 }
+
+// ─── Unread tracking (per-device, localStorage) ──────────────────────────
+export function hangarTalkLastVisitKey(userId: string | undefined) {
+  return userId ? `ht-last-visit-${userId}` : null;
+}
+
+export function getHangarTalkLastVisit(userId: string | undefined): string {
+  const key = hangarTalkLastVisitKey(userId);
+  if (!key) return new Date(0).toISOString();
+  return localStorage.getItem(key) ?? new Date(0).toISOString();
+}
+
+export function markHangarTalkVisited(userId: string | undefined) {
+  const key = hangarTalkLastVisitKey(userId);
+  if (!key) return;
+  localStorage.setItem(key, new Date().toISOString());
+}
+
+export function useHangarTalkUnreadCount() {
+  const { user } = useAuth();
+  const { data: me } = useCurrentMember();
+  return useQuery({
+    queryKey: ["ht-unread-count", user?.id, me?.key_id],
+    enabled: !!user?.id,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const since = getHangarTalkLastVisit(user?.id);
+      const myKey = me?.key_id ?? -1;
+
+      const [postsCreated, postsUpdated, repliesTouched] = await Promise.all([
+        supabase
+          .from("hangar_talk_posts" as any)
+          .select("id", { count: "exact", head: true })
+          .gt("created_at", since)
+          .neq("author_key_id", myKey),
+        supabase
+          .from("hangar_talk_posts" as any)
+          .select("id", { count: "exact", head: true })
+          .gt("updated_at", since)
+          .lte("created_at", since)
+          .neq("author_key_id", myKey),
+        supabase
+          .from("hangar_talk_replies" as any)
+          .select("id", { count: "exact", head: true })
+          .or(`created_at.gt.${since},updated_at.gt.${since}`)
+          .neq("author_key_id", myKey),
+      ]);
+
+      return (
+        (postsCreated.count ?? 0) +
+        (postsUpdated.count ?? 0) +
+        (repliesTouched.count ?? 0)
+      );
+    },
+  });
+}
+
