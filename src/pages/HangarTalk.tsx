@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Search } from "lucide-react";
 import { usePosts, useCurrentMember, markHangarTalkVisited } from "@/lib/hangarTalk/api";
+import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { useAuth } from "@/hooks/useAuth";
 import { PostCard } from "@/components/hangar-talk/PostCard";
 import { PostRow } from "@/components/hangar-talk/PostRow";
@@ -18,6 +19,7 @@ export default function HangarTalk() {
   const { data: posts = [], isLoading } = usePosts();
   const { data: me } = useCurrentMember();
   const navigate = useNavigate();
+  const withViewAs = useWithViewAs();
   const [view, setView] = useState<FeedView>(
     () => (localStorage.getItem(STORAGE_KEY) as FeedView) || "cards",
   );
@@ -98,12 +100,12 @@ export default function HangarTalk() {
     <div className="mx-auto w-full max-w-3xl px-4 py-6">
       <header className="mb-4 flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild className="min-h-[44px] min-w-[44px]">
-          <Link to="/home"><ArrowLeft className="h-5 w-5" /></Link>
+          <Link to={withViewAs("/home")}><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
         <h1 className="text-2xl font-semibold flex-1">Hangar Talk</h1>
         <Button
           disabled={!isActive}
-          onClick={() => navigate("/hangar-talk/new")}
+          onClick={() => navigate(withViewAs("/hangar-talk/new"))}
           className="min-h-[44px]"
           title={isActive ? "Create a new post" : "Active membership required to post"}
         >

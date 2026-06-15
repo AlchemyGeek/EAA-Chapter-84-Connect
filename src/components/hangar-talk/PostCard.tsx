@@ -2,14 +2,16 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { TypeBadge } from "./TypeBadge";
 import { authorDisplayName, isStale, timeAgo, type Post } from "@/lib/hangarTalk/types";
+import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { MessageSquare, CheckCircle2 } from "lucide-react";
 
 export function PostCard({ post }: { post: Post }) {
   const stale = isStale(post) && !post.resolved_at;
   const thumb = post.images[0]?.signed_url;
+  const withViewAs = useWithViewAs();
   return (
     <Link
-      to={`/hangar-talk/${post.id}`}
+      to={withViewAs(`/hangar-talk/${post.id}`)}
       className={`block transition-opacity ${stale ? "opacity-60 hover:opacity-100" : ""}`}
     >
       <Card className="p-4 hover:bg-muted/40 transition-colors">

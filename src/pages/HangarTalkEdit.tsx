@@ -11,6 +11,7 @@ import {
   usePost,
   useUpdatePost,
 } from "@/lib/hangarTalk/api";
+import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { POST_TYPE_LABEL, type PostType } from "@/lib/hangarTalk/types";
 
 const TYPES: PostType[] = ["question", "help_wanted", "fyi"];
@@ -18,6 +19,7 @@ const TYPES: PostType[] = ["question", "help_wanted", "fyi"];
 export default function HangarTalkEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const withViewAs = useWithViewAs();
   const { data: me } = useCurrentMember();
   const { data, isLoading } = usePost(id);
   const update = useUpdatePost();
@@ -37,7 +39,7 @@ export default function HangarTalkEdit() {
   if (isLoading) return <p className="p-6 text-muted-foreground">Loading…</p>;
   if (!data) return <p className="p-6">Post not found.</p>;
   if (!me || me.key_id !== data.post.author_key_id) {
-    return <Navigate to={`/hangar-talk/${id}`} replace />;
+    return <Navigate to={withViewAs(`/hangar-talk/${id}`)} replace />;
   }
 
   async function submit(e: React.FormEvent) {
@@ -54,7 +56,7 @@ export default function HangarTalkEdit() {
         body: body.trim(),
       });
       toast.success("Post updated.");
-      navigate(`/hangar-talk/${data!.post.id}`);
+      navigate(withViewAs(`/hangar-talk/${data!.post.id}`));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to update");
     }
@@ -64,7 +66,7 @@ export default function HangarTalkEdit() {
     <div className="mx-auto w-full max-w-2xl px-4 py-6 space-y-4">
       <header className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild className="min-h-[44px] min-w-[44px]">
-          <Link to={`/hangar-talk/${id}`}><ArrowLeft className="h-5 w-5" /></Link>
+          <Link to={withViewAs(`/hangar-talk/${id}`)}><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
         <h1 className="text-xl font-semibold">Edit Post</h1>
       </header>
@@ -114,7 +116,7 @@ export default function HangarTalkEdit() {
         </p>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" asChild>
-            <Link to={`/hangar-talk/${id}`}>Cancel</Link>
+            <Link to={withViewAs(`/hangar-talk/${id}`)}>Cancel</Link>
           </Button>
           <Button type="submit" disabled={update.isPending} className="min-h-[44px]">
             {update.isPending ? "Saving…" : "Save"}

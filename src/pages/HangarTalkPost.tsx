@@ -19,6 +19,7 @@ import {
   usePost,
   useToggleResolved,
 } from "@/lib/hangarTalk/api";
+import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { useAuth } from "@/hooks/useAuth";
 import { TypeBadge } from "@/components/hangar-talk/TypeBadge";
 import { ReplyList } from "@/components/hangar-talk/ReplyList";
@@ -28,6 +29,7 @@ import { authorDisplayName, timeAgo } from "@/lib/hangarTalk/types";
 export default function HangarTalkPost() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const withViewAs = useWithViewAs();
   const { isOfficerOrAbove } = useAuth();
   const { data: me } = useCurrentMember();
   const { data, isLoading } = usePost(id);
@@ -53,7 +55,7 @@ export default function HangarTalkPost() {
         imagePaths: post.images.map((i) => i.storage_path),
       });
       toast.success("Post deleted.");
-      navigate("/hangar-talk");
+      navigate(withViewAs("/hangar-talk"));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
     } finally {
@@ -74,7 +76,7 @@ export default function HangarTalkPost() {
     <div className="mx-auto w-full max-w-3xl px-4 py-6 space-y-4">
       <header className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild className="min-h-[44px] min-w-[44px]">
-          <Link to="/hangar-talk"><ArrowLeft className="h-5 w-5" /></Link>
+          <Link to={withViewAs("/hangar-talk")}><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
         <h1 className="text-lg font-semibold flex-1 truncate">Hangar Talk</h1>
       </header>
@@ -134,7 +136,7 @@ export default function HangarTalkPost() {
             )}
             {canEdit && (
               <Button asChild size="sm" variant="outline">
-                <Link to={`/hangar-talk/${post.id}/edit`}>
+                <Link to={withViewAs(`/hangar-talk/${post.id}/edit`)}>
                   <Pencil className="h-4 w-4" /> Edit
                 </Link>
               </Button>
