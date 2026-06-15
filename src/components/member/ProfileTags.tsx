@@ -1,12 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { ChevronRight } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   useMemberTags,
   useSetMemberTag,
   useTagCategories,
   useTags,
 } from "@/lib/hangarTalk/api";
-import { ReadOnlySection } from "@/components/member/ReadOnlySection";
 
 export function ProfileTags({
   keyId,
