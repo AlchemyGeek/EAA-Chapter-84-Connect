@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useCreatePost, useCurrentMember } from "@/lib/hangarTalk/api";
+import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { POST_TYPE_LABEL, type PostType } from "@/lib/hangarTalk/types";
 import { ImageUploader } from "@/components/hangar-talk/ImageUploader";
 
@@ -16,6 +17,7 @@ export default function HangarTalkNew() {
   const { data: me, isLoading } = useCurrentMember();
   const create = useCreatePost();
   const navigate = useNavigate();
+  const withViewAs = useWithViewAs();
 
   const [type, setType] = useState<PostType>("question");
   const [title, setTitle] = useState("");
@@ -32,7 +34,7 @@ export default function HangarTalkNew() {
           Only Active members can post to Hangar Talk.
         </p>
         <Button asChild variant="outline">
-          <Link to="/hangar-talk">Back to Hangar Talk</Link>
+          <Link to={withViewAs("/hangar-talk")}>Back to Hangar Talk</Link>
         </Button>
       </div>
     );
@@ -53,7 +55,7 @@ export default function HangarTalkNew() {
         images: files,
       });
       toast.success("Post created.");
-      navigate(`/hangar-talk/${id}`);
+      navigate(withViewAs(`/hangar-talk/${id}`));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to create post");
     }
@@ -63,7 +65,7 @@ export default function HangarTalkNew() {
     <div className="mx-auto w-full max-w-2xl px-4 py-6 space-y-4">
       <header className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild className="min-h-[44px] min-w-[44px]">
-          <Link to="/hangar-talk"><ArrowLeft className="h-5 w-5" /></Link>
+          <Link to={withViewAs("/hangar-talk")}><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
         <h1 className="text-xl font-semibold">New Post</h1>
       </header>
@@ -116,7 +118,7 @@ export default function HangarTalkNew() {
         </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" asChild>
-            <Link to="/hangar-talk">Cancel</Link>
+            <Link to={withViewAs("/hangar-talk")}>Cancel</Link>
           </Button>
           <Button type="submit" disabled={create.isPending} className="min-h-[44px]">
             {create.isPending ? "Posting…" : "Post"}

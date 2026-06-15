@@ -1,13 +1,15 @@
 import { Link } from "react-router-dom";
 import { TypeBadge } from "./TypeBadge";
 import { isStale, timeAgo, type Post } from "@/lib/hangarTalk/types";
+import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { MessageSquare, CheckCircle2 } from "lucide-react";
 
 export function PostRow({ post }: { post: Post }) {
   const stale = isStale(post) && !post.resolved_at;
+  const withViewAs = useWithViewAs();
   return (
     <Link
-      to={`/hangar-talk/${post.id}`}
+      to={withViewAs(`/hangar-talk/${post.id}`)}
       className={`flex items-center gap-3 px-3 py-3 min-h-[44px] border-b border-border hover:bg-muted/40 transition-colors ${
         stale ? "opacity-60 hover:opacity-100" : ""
       }`}
