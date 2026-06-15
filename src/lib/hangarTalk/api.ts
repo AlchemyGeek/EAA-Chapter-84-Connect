@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAsKeyId } from "./viewAs";
 import {
   HANGAR_TALK_BUCKET,
   type AuthorRef,
@@ -11,12 +12,26 @@ import {
 } from "./types";
 
 // ─── Current member ──────────────────────────────────────────────────────
+// Honors `?viewAs=<key_id>` for admin impersonation: when present, returns
+// the impersonated roster member so Hangar Talk renders identity, post/reply
+// authorship, and edit/delete affordances as that member.
 export function useCurrentMember() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const viewAsKeyId = useViewAsKeyId();
+  const effectiveViewAs = isAdmin ? viewAsKeyId : null;
   return useQuery({
-    queryKey: ["ht-current-member", user?.email],
+    queryKey: ["ht-current-member", user?.email, effectiveViewAs],
     enabled: !!user?.email,
     queryFn: async () => {
+      if (effectiveViewAs) {
+        const { data, error } = await supabase
+          .from("roster_members")
+          .select("key_id, first_name, last_name, nickname, current_standing, email")
+          .eq("key_id", effectiveViewAs)
+          .maybeSingle();
+        if (error) throw error;
+        return data;
+      }
       const { data, error } = await supabase
         .from("roster_members")
         .select("key_id, first_name, last_name, nickname, current_standing, email")
