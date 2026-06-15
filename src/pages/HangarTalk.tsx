@@ -23,7 +23,6 @@ export default function HangarTalk() {
   );
   const [query, setQuery] = useState("");
 
-  const [query, setQuery] = useState("");
   const { user } = useAuth();
   const qc = useQueryClient();
 
