@@ -509,6 +509,8 @@ export function useHangarTalkUnreadCount() {
   return useQuery({
     queryKey: ["ht-unread-count", user?.id, me?.key_id],
     enabled: !!user?.id,
+    staleTime: 0,
+    refetchOnMount: "always",
     refetchInterval: 60_000,
     queryFn: async () => {
       const since = getHangarTalkLastVisit(user?.id);
