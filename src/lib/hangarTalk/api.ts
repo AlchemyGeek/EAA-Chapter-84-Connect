@@ -354,6 +354,22 @@ export function useCreateReply() {
   });
 }
 
+export function useUpdateReply() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { id: string; post_id: string; body: string }) => {
+      const { error } = await supabase
+        .from("hangar_talk_replies" as any)
+        .update({ body: args.body })
+        .eq("id", args.id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["ht-post", vars.post_id] });
+    },
+  });
+}
+
 export function useDeleteReply() {
   const qc = useQueryClient();
   return useMutation({
