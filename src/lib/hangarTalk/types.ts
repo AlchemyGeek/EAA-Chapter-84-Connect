@@ -47,6 +47,7 @@ export interface Post {
   updated_at: string;
   images: PostImage[];
   reply_count: number;
+  tag_ids: string[];
 }
 
 export type FeedSection = "fresh" | "active" | "resolved";
