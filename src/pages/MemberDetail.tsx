@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { StatusDashboard } from "@/components/member/StatusDashboard";
 import { ReadOnlySection } from "@/components/member/ReadOnlySection";
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
+import { ProfileTags } from "@/components/member/ProfileTags";
 
 export default function MemberDetail() {
   const { keyId } = useParams();
