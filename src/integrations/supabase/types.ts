@@ -500,6 +500,39 @@ export type Database = {
           },
         ]
       }
+      hangar_talk_post_tags: {
+        Row: {
+          created_at: string
+          post_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_post_tags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hangar_talk_post_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hangar_talk_posts: {
         Row: {
           author_key_id: number

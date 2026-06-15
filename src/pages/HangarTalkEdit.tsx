@@ -9,10 +9,12 @@ import { toast } from "sonner";
 import {
   useCurrentMember,
   usePost,
+  useSetPostTags,
   useUpdatePost,
 } from "@/lib/hangarTalk/api";
 import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { POST_TYPE_LABEL, type PostType } from "@/lib/hangarTalk/types";
+import { PostTagSelector } from "@/components/hangar-talk/PostTagSelector";
 
 const TYPES: PostType[] = ["question", "help_wanted", "fyi"];
 
@@ -23,16 +25,19 @@ export default function HangarTalkEdit() {
   const { data: me } = useCurrentMember();
   const { data, isLoading } = usePost(id);
   const update = useUpdatePost();
+  const setTags = useSetPostTags();
 
   const [type, setType] = useState<PostType>("question");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [tagIds, setTagIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (data?.post) {
       setType(data.post.type);
       setTitle(data.post.title);
       setBody(data.post.body);
+      setTagIds(data.post.tag_ids);
     }
   }, [data]);
 
@@ -55,6 +60,7 @@ export default function HangarTalkEdit() {
         title: title.trim(),
         body: body.trim(),
       });
+      await setTags.mutateAsync({ post_id: data!.post.id, tag_ids: tagIds });
       toast.success("Post updated.");
       navigate(withViewAs(`/hangar-talk/${data!.post.id}`));
     } catch (err: unknown) {
@@ -110,6 +116,10 @@ export default function HangarTalkEdit() {
             rows={8}
             required
           />
+        </div>
+        <div className="space-y-2">
+          <Label>Tags</Label>
+          <PostTagSelector selected={tagIds} onChange={setTagIds} />
         </div>
         <p className="text-xs text-muted-foreground">
           Image edits are not supported in this release — delete and repost to change images.

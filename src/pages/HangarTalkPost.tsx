@@ -22,6 +22,7 @@ import {
 import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { useAuth } from "@/hooks/useAuth";
 import { TypeBadge } from "@/components/hangar-talk/TypeBadge";
+import { PostTagChips } from "@/components/hangar-talk/PostTagChips";
 import { ReplyList } from "@/components/hangar-talk/ReplyList";
 import { ReplyComposer } from "@/components/hangar-talk/ReplyComposer";
 import { authorDisplayName, timeAgo } from "@/lib/hangarTalk/types";
@@ -96,6 +97,7 @@ export default function HangarTalkPost() {
           {authorDisplayName(post.author)} · {timeAgo(post.created_at)}
         </p>
         <p className="whitespace-pre-wrap text-sm leading-relaxed">{post.body}</p>
+        {post.tag_ids.length > 0 && <PostTagChips tagIds={post.tag_ids} />}
         {post.images.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
             {post.images.map(

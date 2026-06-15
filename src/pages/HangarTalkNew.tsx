@@ -10,6 +10,7 @@ import { useCreatePost, useCurrentMember } from "@/lib/hangarTalk/api";
 import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
 import { POST_TYPE_LABEL, type PostType } from "@/lib/hangarTalk/types";
 import { ImageUploader } from "@/components/hangar-talk/ImageUploader";
+import { PostTagSelector } from "@/components/hangar-talk/PostTagSelector";
 
 const TYPES: PostType[] = ["question", "help_wanted", "fyi"];
 
@@ -23,6 +24,7 @@ export default function HangarTalkNew() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [tagIds, setTagIds] = useState<string[]>([]);
 
   if (isLoading) return <p className="p-6 text-muted-foreground">Loading…</p>;
   if (!me) return <Navigate to="/home" replace />;
@@ -53,6 +55,7 @@ export default function HangarTalkNew() {
         title: title.trim(),
         body: body.trim(),
         images: files,
+        tag_ids: tagIds,
       });
       toast.success("Post created.");
       navigate(withViewAs(`/hangar-talk/${id}`));
@@ -111,6 +114,10 @@ export default function HangarTalkNew() {
             placeholder="Share the details…"
             required
           />
+        </div>
+        <div className="space-y-2">
+          <Label>Tags (optional)</Label>
+          <PostTagSelector selected={tagIds} onChange={setTagIds} />
         </div>
         <div className="space-y-2">
           <Label>Images (optional)</Label>

@@ -82,24 +82,32 @@ export function usePosts() {
       const posts = (postRows ?? []) as any[];
       const postIds = posts.map((p) => p.id);
 
-      const [{ data: imgRows }, { data: replyCounts }, authors] = await Promise.all([
-        postIds.length
-          ? supabase
-              .from("hangar_talk_post_images" as any)
-              .select("*")
-              .in("post_id", postIds)
-          : Promise.resolve({ data: [] as any[] }),
-        postIds.length
-          ? supabase
-              .from("hangar_talk_replies" as any)
-              .select("post_id")
-              .in("post_id", postIds)
-          : Promise.resolve({ data: [] as any[] }),
-        fetchAuthors(posts.map((p) => p.author_key_id)),
-      ]);
+      const [{ data: imgRows }, { data: replyCounts }, { data: tagRows }, authors] =
+        await Promise.all([
+          postIds.length
+            ? supabase
+                .from("hangar_talk_post_images" as any)
+                .select("*")
+                .in("post_id", postIds)
+            : Promise.resolve({ data: [] as any[] }),
+          postIds.length
+            ? supabase
+                .from("hangar_talk_replies" as any)
+                .select("post_id")
+                .in("post_id", postIds)
+            : Promise.resolve({ data: [] as any[] }),
+          postIds.length
+            ? supabase
+                .from("hangar_talk_post_tags" as any)
+                .select("post_id, tag_id")
+                .in("post_id", postIds)
+            : Promise.resolve({ data: [] as any[] }),
+          fetchAuthors(posts.map((p) => p.author_key_id)),
+        ]);
 
       const imgs = (imgRows ?? []) as any[];
       const replies = (replyCounts ?? []) as any[];
+      const tags = (tagRows ?? []) as any[];
       const signed = await signPaths(imgs.map((i) => i.storage_path));
 
       const imgsByPost = new Map<string, PostImage[]>();
@@ -117,6 +125,12 @@ export function usePosts() {
       for (const r of replies) {
         countByPost.set(r.post_id, (countByPost.get(r.post_id) ?? 0) + 1);
       }
+      const tagsByPost = new Map<string, string[]>();
+      for (const t of tags) {
+        const arr = tagsByPost.get(t.post_id) ?? [];
+        arr.push(t.tag_id);
+        tagsByPost.set(t.post_id, arr);
+      }
 
       return posts.map((p) => ({
         id: p.id,
@@ -131,6 +145,7 @@ export function usePosts() {
         updated_at: p.updated_at,
         images: (imgsByPost.get(p.id) ?? []).sort((a, b) => a.position - b.position),
         reply_count: countByPost.get(p.id) ?? 0,
+        tag_ids: tagsByPost.get(p.id) ?? [],
       }));
     },
   });
@@ -151,16 +166,22 @@ export function usePost(id: string | undefined) {
       if (!postRow) return null;
       const p = postRow as any;
 
-      const [{ data: imgRows }, { data: replyRows }] = await Promise.all([
-        supabase.from("hangar_talk_post_images" as any).select("*").eq("post_id", p.id),
-        supabase
-          .from("hangar_talk_replies" as any)
-          .select("*")
-          .eq("post_id", p.id)
-          .order("created_at", { ascending: true }),
-      ]);
+      const [{ data: imgRows }, { data: replyRows }, { data: postTagRows }] =
+        await Promise.all([
+          supabase.from("hangar_talk_post_images" as any).select("*").eq("post_id", p.id),
+          supabase
+            .from("hangar_talk_replies" as any)
+            .select("*")
+            .eq("post_id", p.id)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("hangar_talk_post_tags" as any)
+            .select("tag_id")
+            .eq("post_id", p.id),
+        ]);
       const imgs = (imgRows ?? []) as any[];
       const replies = (replyRows ?? []) as any[];
+      const postTags = (postTagRows ?? []) as any[];
 
       const authors = await fetchAuthors([
         p.author_key_id,
@@ -193,6 +214,7 @@ export function usePost(id: string | undefined) {
           }))
           .sort((a, b) => a.position - b.position),
         reply_count: replies.length,
+        tag_ids: postTags.map((t) => t.tag_id),
       };
 
       const replyList: Reply[] = replies.map((r) => ({
@@ -222,6 +244,7 @@ export function useCreatePost() {
       title: string;
       body: string;
       images: File[];
+      tag_ids?: string[];
     }) => {
       const { data: postRow, error } = await supabase
         .from("hangar_talk_posts" as any)
@@ -255,9 +278,39 @@ export function useCreatePost() {
           .insert(uploads.map((u) => ({ ...u, post_id: postId })));
         if (imgErr) throw imgErr;
       }
+
+      if (args.tag_ids && args.tag_ids.length) {
+        const { error: tagErr } = await supabase
+          .from("hangar_talk_post_tags" as any)
+          .insert(args.tag_ids.map((tag_id) => ({ post_id: postId, tag_id })));
+        if (tagErr) throw tagErr;
+      }
       return postId;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["ht-posts"] }),
+  });
+}
+
+export function useSetPostTags() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { post_id: string; tag_ids: string[] }) => {
+      const { error: delErr } = await supabase
+        .from("hangar_talk_post_tags" as any)
+        .delete()
+        .eq("post_id", args.post_id);
+      if (delErr) throw delErr;
+      if (args.tag_ids.length) {
+        const { error: insErr } = await supabase
+          .from("hangar_talk_post_tags" as any)
+          .insert(args.tag_ids.map((tag_id) => ({ post_id: args.post_id, tag_id })));
+        if (insErr) throw insErr;
+      }
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["ht-posts"] });
+      qc.invalidateQueries({ queryKey: ["ht-post", vars.post_id] });
+    },
   });
 }
 
