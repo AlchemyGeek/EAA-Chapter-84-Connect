@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
+import { useHangarTalkUnreadCount } from "@/lib/hangarTalk/api";
 
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
