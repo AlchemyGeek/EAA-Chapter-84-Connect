@@ -37,6 +37,10 @@ import Classifieds from "./pages/Classifieds";
 import ClassifiedDetail from "./pages/ClassifiedDetail";
 import ClassifiedNew from "./pages/ClassifiedNew";
 import ClassifiedEdit from "./pages/ClassifiedEdit";
+import HangarTalk from "./pages/HangarTalk";
+import HangarTalkPost from "./pages/HangarTalkPost";
+import HangarTalkNew from "./pages/HangarTalkNew";
+import HangarTalkEdit from "./pages/HangarTalkEdit";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 
