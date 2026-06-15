@@ -32,8 +32,14 @@ export default function HangarTalk() {
 
   useEffect(() => {
     if (!user?.id) return;
-    markHangarTalkVisited(user.id);
+    const uid = user.id;
+    markHangarTalkVisited(uid);
     qc.invalidateQueries({ queryKey: ["ht-unread-count"] });
+    return () => {
+      // Mark visited again on unmount so returning to Home shows 0.
+      markHangarTalkVisited(uid);
+      qc.invalidateQueries({ queryKey: ["ht-unread-count"] });
+    };
   }, [user?.id, qc]);
 
   const isActive = me?.current_standing === "Active";
