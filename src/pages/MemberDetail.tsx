@@ -41,7 +41,7 @@ export default function MemberDetail() {
   if (isLoading) return <div className="p-6 text-muted-foreground">Loading...</div>;
   if (!member) return <div className="p-6">Member not found.</div>;
 
-  const contactVisible = chapterData?.contact_visible_in_directory ?? false;
+  const contactVisible = chapterData?.contact_visible_in_directory ?? true;
   const aviationVisible = chapterData?.aviation_visible_in_directory ?? true;
   const volunteeringVisible = chapterData?.volunteering_visible_in_directory ?? true;
 
