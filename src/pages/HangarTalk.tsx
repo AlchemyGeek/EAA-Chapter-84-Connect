@@ -1,9 +1,11 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Search } from "lucide-react";
-import { usePosts, useCurrentMember } from "@/lib/hangarTalk/api";
+import { usePosts, useCurrentMember, markHangarTalkVisited } from "@/lib/hangarTalk/api";
+import { useAuth } from "@/hooks/useAuth";
 import { PostCard } from "@/components/hangar-talk/PostCard";
 import { PostRow } from "@/components/hangar-talk/PostRow";
 import { FeedToggle, type FeedView } from "@/components/hangar-talk/FeedToggle";
