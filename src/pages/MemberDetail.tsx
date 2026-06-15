@@ -118,6 +118,7 @@ export default function MemberDetail() {
         {aviationFields.length > 0 && <ReadOnlySection title="Aviation & Aircraft" fields={aviationFields} />}
         {volunteerFields.length > 0 && <ReadOnlySection title="EAA Volunteering" fields={volunteerFields} />}
         <ReadOnlySection title="Compliance (EAA-managed)" fields={complianceFields} />
+        <ProfileTags keyId={member.key_id} editable={false} />
         <MemberImageGallery keyId={member.key_id} />
       </div>
 
