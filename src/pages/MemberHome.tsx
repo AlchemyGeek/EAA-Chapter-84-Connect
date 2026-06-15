@@ -147,6 +147,9 @@ export default function MemberHome() {
     },
   });
 
+  const { data: hangarTalkUnread = 0 } = useHangarTalkUnreadCount();
+
+
   // Fetch pending new member applications count
   const { data: pendingAppCount = 0 } = useQuery({
     queryKey: ["pending-app-count"],
