@@ -23,9 +23,19 @@ export default function HangarTalk() {
   );
   const [query, setQuery] = useState("");
 
+  const [query, setQuery] = useState("");
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, view);
   }, [view]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    markHangarTalkVisited(user.id);
+    qc.invalidateQueries({ queryKey: ["ht-unread-count"] });
+  }, [user?.id, qc]);
 
   const isActive = me?.current_standing === "Active";
 
