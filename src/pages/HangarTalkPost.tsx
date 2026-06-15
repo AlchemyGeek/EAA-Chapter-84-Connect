@@ -45,7 +45,7 @@ export default function HangarTalkPost() {
   const isMine = !!myKeyId && myKeyId === post.author_key_id;
   const isActive = me?.current_standing === "Active";
   const canEdit = isMine;
-  const canDelete = isMine || isOfficerOrAbove;
+  const canDelete = isMine;
   const canToggle = isMine;
 
   async function onDelete() {

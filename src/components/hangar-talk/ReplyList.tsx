@@ -40,7 +40,7 @@ export function ReplyList({
     <div className="space-y-3">
       {replies.map((r) => {
         const isMine = myKeyId === r.author_key_id;
-        const canDelete = isMine || isOfficerOrAbove;
+        const canDelete = isMine;
         return (
           <div
             key={r.id}
