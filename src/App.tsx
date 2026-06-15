@@ -98,6 +98,10 @@ const App = () => (
             <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
             <Route path="/newsletters" element={<Newsletters />} />
+            <Route path="/hangar-talk" element={<HangarTalk />} />
+            <Route path="/hangar-talk/new" element={<HangarTalkNew />} />
+            <Route path="/hangar-talk/:id" element={<HangarTalkPost />} />
+            <Route path="/hangar-talk/:id/edit" element={<HangarTalkEdit />} />
             <Route path="/newsletters-admin" element={<NewslettersAdmin />} />
             <Route path="/join" element={<NewMemberApplication />} />
             <Route path="/proxy-vote" element={<ProxyVote />} />
