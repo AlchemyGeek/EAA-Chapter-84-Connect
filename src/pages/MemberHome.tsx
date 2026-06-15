@@ -676,7 +676,7 @@ export default function MemberHome() {
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
                 <AdminLink to="/classifieds" icon={Tag} label="Classifieds" />
-                <AdminLink to="/hangar-talk" icon={MessageSquare} label="Hangar Talk" />
+                <AdminLink to="/hangar-talk" icon={MessageSquare} label={`Hangar Talk${hangarTalkUnread > 0 ? ` (${hangarTalkUnread})` : ""}`} />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 
               </>
