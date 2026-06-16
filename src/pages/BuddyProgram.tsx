@@ -930,29 +930,85 @@ function ActiveMembersList({
                   </span>
                 </p>
 
-                {/* Status chips: intro / check-in with timestamps */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {emailStatus?.introSent ? (
-                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                      <Mail className="h-3 w-3 mr-1" />
-                      Intro Sent · {fmtDate(emailStatus.introSentAt)}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
-                      Intro not sent
-                    </Badge>
-                  )}
-                  {emailStatus?.checkInSent ? (
-                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                      <Mail className="h-3 w-3 mr-1" />
-                      Check-In Sent · {fmtDate(emailStatus.checkInSentAt)}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
-                      Check-In not sent
-                    </Badge>
-                  )}
-                </div>
+                {/* Status chips: intro / check-in with timestamps + per-recipient delivery */}
+                {(() => {
+                  const deliveryBadge = (
+                    label: string,
+                    d: { status: string; error: string | null; at: string } | null,
+                  ) => {
+                    if (!d) {
+                      return (
+                        <span
+                          key={label}
+                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200"
+                          title="No delivery record yet — still queued or processing"
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          {label}: queued
+                        </span>
+                      );
+                    }
+                    const ok = d.status === "sent";
+                    const failed = ["dlq", "failed", "bounced", "complained", "suppressed"].includes(d.status);
+                    const cls = ok
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : failed
+                        ? "bg-red-50 text-red-700 border-red-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200";
+                    const dot = ok ? "bg-emerald-500" : failed ? "bg-red-500" : "bg-amber-500";
+                    return (
+                      <span
+                        key={label}
+                        className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${cls}`}
+                        title={d.error ? `${d.status}: ${d.error}` : `${d.status} · ${new Date(d.at).toLocaleString()}`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                        {label}: {d.status}
+                      </span>
+                    );
+                  };
+
+                  return (
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {emailStatus?.introSent ? (
+                          <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                            <Mail className="h-3 w-3 mr-1" />
+                            Intro Sent · {fmtDate(emailStatus.introSentAt)}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                            Intro not sent
+                          </Badge>
+                        )}
+                        {emailStatus?.introSent && (
+                          <>
+                            {deliveryBadge("New member", emailStatus.introMemberDelivery)}
+                            {deliveryBadge("Buddy", emailStatus.introBuddyDelivery)}
+                          </>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {emailStatus?.checkInSent ? (
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                            <Mail className="h-3 w-3 mr-1" />
+                            Check-In Sent · {fmtDate(emailStatus.checkInSentAt)}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                            Check-In not sent
+                          </Badge>
+                        )}
+                        {emailStatus?.checkInSent && (
+                          <>
+                            {deliveryBadge("New member", emailStatus.checkInMemberDelivery)}
+                            {deliveryBadge("Buddy", emailStatus.checkInBuddyDelivery)}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex flex-wrap items-center gap-1">
                   {!emailStatus?.introSent && (
