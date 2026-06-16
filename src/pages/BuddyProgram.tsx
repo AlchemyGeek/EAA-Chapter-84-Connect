@@ -102,6 +102,38 @@ export default function BuddyProgram() {
     },
   });
 
+  // Per-recipient delivery status from the central email_send_log.
+  // Refetched on mount and every 15s so officers see status update after a send.
+  const { data: emailSendLog = [] } = useQuery({
+    queryKey: ["buddy-email-send-log"],
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("email_send_log" as any)
+        .select("message_id, template_name, recipient_email, status, error_message, created_at")
+        .in("template_name", ["buddy_intro", "buddy_check_in"])
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      // Dedupe by message_id, keeping the latest status row per email.
+      const seen = new Set<string>();
+      const rows: any[] = [];
+      for (const r of (data as any[]) ?? []) {
+        if (!r.message_id || seen.has(r.message_id)) continue;
+        seen.add(r.message_id);
+        rows.push(r);
+      }
+      return rows as {
+        message_id: string;
+        template_name: string;
+        recipient_email: string;
+        status: string;
+        error_message: string | null;
+        created_at: string;
+      }[];
+    },
+  });
+
   const { data: completedApps = [] } = useQuery({
     queryKey: ["completed-applications-buddy"],
     staleTime: 0,
