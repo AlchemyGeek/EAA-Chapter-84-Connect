@@ -216,22 +216,21 @@ Deno.serve(async (req) => {
     const baseProcessedBody = applyPlaceholders(template.body, true)
     const plainTextBody = applyPlaceholders(template.body, false)
 
-    // Send ONE email with both participants in the To line so Reply / Reply All
-    // both naturally reach both. Bcc the archive mailbox. reply_to is set to
-    // both addresses for clients that strip Cc on reply.
-    //   To:       new member, buddy
-    //   Bcc:      membership@eaa84.org (silent archive)
-    //   Reply-To: new member, buddy
+    // Send one email to each participant. The email API accepts a single
+    // address for `to`; comma-joined addresses are rejected as invalid.
+    // Each participant gets the other participant as Reply-To so a normal
+    // reply starts the intended conversation.
     const archiveEmail = 'membership@eaa84.org'
-    const recipients = [app.email, buddy.email].filter((e): e is string => !!e)
+    const recipients = [
+      { to: app.email?.trim(), replyTo: buddy.email?.trim(), label: 'new-member' },
+      { to: buddy.email?.trim(), replyTo: app.email?.trim(), label: 'buddy' },
+    ].filter((r): r is { to: string; replyTo: string; label: string } => !!r.to && !!r.replyTo)
     if (recipients.length === 0) {
       return new Response(JSON.stringify({ error: 'No valid recipient emails found' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    const primaryTo = recipients.join(', ')
-    const replyTo = recipients.join(', ')
 
     // baseProcessedBody is already HTML-escaped for safe rendering in HTML emails.
     // plainTextBody preserves the raw text for the text/plain part.
@@ -250,31 +249,33 @@ Deno.serve(async (req) => {
       )
     }
 
-    const messageId = crypto.randomUUID()
-    const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipients[0])
+    for (const recipient of recipients) {
+      const messageId = crypto.randomUUID()
+      const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient.to)
 
-    const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-      queue_name: 'transactional_emails',
-      payload: {
-        to: primaryTo,
-        bcc: archiveEmail,
-        from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
-        reply_to: replyTo,
-        sender_domain: 'notify.eaa84.org',
-        subject: processedSubject,
-        html: htmlBody,
-        text: processedBody,
-        purpose: 'transactional',
-        label: `buddy_${email_type}`,
-        idempotency_key: `buddy-${assignment_id}-${email_type}`,
-        unsubscribe_token: unsubscribeToken,
-        message_id: messageId,
-        queued_at: new Date().toISOString(),
-      },
-    })
+      const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+        queue_name: 'transactional_emails',
+        payload: {
+          to: recipient.to,
+          bcc: archiveEmail,
+          from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
+          reply_to: recipient.replyTo,
+          sender_domain: 'notify.eaa84.org',
+          subject: processedSubject,
+          html: htmlBody,
+          text: processedBody,
+          purpose: 'transactional',
+          label: `buddy_${email_type}`,
+          idempotency_key: `buddy-${assignment_id}-${email_type}-${recipient.label}`,
+          unsubscribe_token: unsubscribeToken,
+          message_id: messageId,
+          queued_at: new Date().toISOString(),
+        },
+      })
 
-    if (enqueueError) {
-      throw new Error(`Failed to enqueue buddy email: ${enqueueError.message}`)
+      if (enqueueError) {
+        throw new Error(`Failed to enqueue buddy email: ${enqueueError.message}`)
+      }
     }
 
     // Log the send
