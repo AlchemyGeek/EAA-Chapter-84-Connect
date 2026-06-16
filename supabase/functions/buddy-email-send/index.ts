@@ -250,15 +250,15 @@ Deno.serve(async (req) => {
     }
 
     const messageId = crypto.randomUUID()
-    const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, primaryTo)
+    const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipients[0])
 
     const { error: enqueueError } = await supabase.rpc('enqueue_email', {
       queue_name: 'transactional_emails',
       payload: {
         to: primaryTo,
-        cc: ccEmail || undefined,
         bcc: archiveEmail,
         from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
+        reply_to: replyTo,
         sender_domain: 'notify.eaa84.org',
         subject: processedSubject,
         html: htmlBody,
