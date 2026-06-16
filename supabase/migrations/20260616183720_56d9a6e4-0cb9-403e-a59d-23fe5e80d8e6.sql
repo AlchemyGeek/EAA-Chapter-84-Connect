@@ -1,0 +1,1 @@
+DELETE FROM public.buddy_email_log WHERE assignment_id = 'dee3a679-bdb1-4225-8245-e67c4819c824';

@@ -216,21 +216,22 @@ Deno.serve(async (req) => {
     const baseProcessedBody = applyPlaceholders(template.body, true)
     const plainTextBody = applyPlaceholders(template.body, false)
 
-    // Send ONE email with both participants visible so Reply All works:
-    //   To:  new member
-    //   Cc:  buddy
-    //   Bcc: membership@eaa84.org (silent archive)
-    // No reply_to is set so Reply All naturally reaches both participants.
+    // Send ONE email with both participants in the To line so Reply / Reply All
+    // both naturally reach both. Bcc the archive mailbox. reply_to is set to
+    // both addresses for clients that strip Cc on reply.
+    //   To:       new member, buddy
+    //   Bcc:      membership@eaa84.org (silent archive)
+    //   Reply-To: new member, buddy
     const archiveEmail = 'membership@eaa84.org'
-    const primaryTo = app.email || buddy.email
-    const ccEmail = app.email && buddy.email ? buddy.email : null
-
-    if (!primaryTo) {
+    const recipients = [app.email, buddy.email].filter((e): e is string => !!e)
+    if (recipients.length === 0) {
       return new Response(JSON.stringify({ error: 'No valid recipient emails found' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    const primaryTo = recipients.join(', ')
+    const replyTo = recipients.join(', ')
 
     // baseProcessedBody is already HTML-escaped for safe rendering in HTML emails.
     // plainTextBody preserves the raw text for the text/plain part.
