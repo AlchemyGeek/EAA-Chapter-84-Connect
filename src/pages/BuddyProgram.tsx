@@ -102,6 +102,38 @@ export default function BuddyProgram() {
     },
   });
 
+  // Per-recipient delivery status from the central email_send_log.
+  // Refetched on mount and every 15s so officers see status update after a send.
+  const { data: emailSendLog = [] } = useQuery({
+    queryKey: ["buddy-email-send-log"],
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("email_send_log" as any)
+        .select("message_id, template_name, recipient_email, status, error_message, created_at")
+        .in("template_name", ["buddy_intro", "buddy_check_in"])
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      // Dedupe by message_id, keeping the latest status row per email.
+      const seen = new Set<string>();
+      const rows: any[] = [];
+      for (const r of (data as any[]) ?? []) {
+        if (!r.message_id || seen.has(r.message_id)) continue;
+        seen.add(r.message_id);
+        rows.push(r);
+      }
+      return rows as {
+        message_id: string;
+        template_name: string;
+        recipient_email: string;
+        status: string;
+        error_message: string | null;
+        created_at: string;
+      }[];
+    },
+  });
+
   const { data: completedApps = [] } = useQuery({
     queryKey: ["completed-applications-buddy"],
     staleTime: 0,
@@ -369,15 +401,36 @@ export default function BuddyProgram() {
     },
   });
 
-  const getEmailStatus = (assignmentId: string) => {
+  const getEmailStatus = (assignmentId: string, memberEmail?: string, buddyEmail?: string) => {
     const logs = emailLogs.filter((l) => l.assignment_id === assignmentId);
     const intro = logs.find((l) => l.email_type === "intro");
     const checkIn = logs.find((l) => l.email_type === "check_in");
+
+    const findDelivery = (type: "intro" | "check_in", email?: string, sentAt?: string) => {
+      if (!email || !sentAt) return null;
+      const target = email.trim().toLowerCase();
+      const tpl = `buddy_${type}`;
+      const windowStart = new Date(sentAt).getTime() - 60_000; // allow 1m clock skew
+      const match = emailSendLog.find(
+        (r) =>
+          r.template_name === tpl &&
+          (r.recipient_email ?? "").trim().toLowerCase() === target &&
+          new Date(r.created_at).getTime() >= windowStart,
+      );
+      return match
+        ? { status: match.status, error: match.error_message, at: match.created_at }
+        : null;
+    };
+
     return {
       introSent: !!intro,
       introSentAt: intro?.sent_at,
       checkInSent: !!checkIn,
       checkInSentAt: checkIn?.sent_at,
+      introMemberDelivery: findDelivery("intro", memberEmail, intro?.sent_at),
+      introBuddyDelivery: findDelivery("intro", buddyEmail, intro?.sent_at),
+      checkInMemberDelivery: findDelivery("check_in", memberEmail, checkIn?.sent_at),
+      checkInBuddyDelivery: findDelivery("check_in", buddyEmail, checkIn?.sent_at),
     };
   };
 
@@ -793,7 +846,16 @@ function ActiveMembersList({
   onGraduate: (assignmentId: string) => void;
   onRemove: (appId: string, name: string) => void;
   sendEmailPending: boolean;
-  getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; checkInSent: boolean; checkInSentAt?: string };
+  getEmailStatus: (id: string, memberEmail?: string, buddyEmail?: string) => {
+    introSent: boolean;
+    introSentAt?: string;
+    checkInSent: boolean;
+    checkInSentAt?: string;
+    introMemberDelivery: { status: string; error: string | null; at: string } | null;
+    introBuddyDelivery: { status: string; error: string | null; at: string } | null;
+    checkInMemberDelivery: { status: string; error: string | null; at: string } | null;
+    checkInBuddyDelivery: { status: string; error: string | null; at: string } | null;
+  };
 }) {
   const activeApps = completedApps.filter((app) => {
     const assignment = assignments.find((a) => a.application_id === app.id);
@@ -818,7 +880,9 @@ function ActiveMembersList({
         const assignedVolunteer = assignment
           ? volunteerMembers.find((m) => m.key_id === assignment.volunteer_key_id)
           : null;
-        const emailStatus = assignment ? getEmailStatus(assignment.id) : null;
+        const emailStatus = assignment
+          ? getEmailStatus(assignment.id, app.email, assignedVolunteer?.email)
+          : null;
 
         const daysElapsed = assignment
           ? Math.floor((now - new Date(assignment.assigned_at).getTime()) / (24 * 60 * 60 * 1000))
@@ -866,29 +930,85 @@ function ActiveMembersList({
                   </span>
                 </p>
 
-                {/* Status chips: intro / check-in with timestamps */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {emailStatus?.introSent ? (
-                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                      <Mail className="h-3 w-3 mr-1" />
-                      Intro Sent · {fmtDate(emailStatus.introSentAt)}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
-                      Intro not sent
-                    </Badge>
-                  )}
-                  {emailStatus?.checkInSent ? (
-                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                      <Mail className="h-3 w-3 mr-1" />
-                      Check-In Sent · {fmtDate(emailStatus.checkInSentAt)}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
-                      Check-In not sent
-                    </Badge>
-                  )}
-                </div>
+                {/* Status chips: intro / check-in with timestamps + per-recipient delivery */}
+                {(() => {
+                  const deliveryBadge = (
+                    label: string,
+                    d: { status: string; error: string | null; at: string } | null,
+                  ) => {
+                    if (!d) {
+                      return (
+                        <span
+                          key={label}
+                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200"
+                          title="No delivery record yet — still queued or processing"
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          {label}: queued
+                        </span>
+                      );
+                    }
+                    const ok = d.status === "sent";
+                    const failed = ["dlq", "failed", "bounced", "complained", "suppressed"].includes(d.status);
+                    const cls = ok
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : failed
+                        ? "bg-red-50 text-red-700 border-red-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200";
+                    const dot = ok ? "bg-emerald-500" : failed ? "bg-red-500" : "bg-amber-500";
+                    return (
+                      <span
+                        key={label}
+                        className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${cls}`}
+                        title={d.error ? `${d.status}: ${d.error}` : `${d.status} · ${new Date(d.at).toLocaleString()}`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                        {label}: {d.status}
+                      </span>
+                    );
+                  };
+
+                  return (
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {emailStatus?.introSent ? (
+                          <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                            <Mail className="h-3 w-3 mr-1" />
+                            Intro Sent · {fmtDate(emailStatus.introSentAt)}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                            Intro not sent
+                          </Badge>
+                        )}
+                        {emailStatus?.introSent && (
+                          <>
+                            {deliveryBadge("New member", emailStatus.introMemberDelivery)}
+                            {deliveryBadge("Buddy", emailStatus.introBuddyDelivery)}
+                          </>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {emailStatus?.checkInSent ? (
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                            <Mail className="h-3 w-3 mr-1" />
+                            Check-In Sent · {fmtDate(emailStatus.checkInSentAt)}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                            Check-In not sent
+                          </Badge>
+                        )}
+                        {emailStatus?.checkInSent && (
+                          <>
+                            {deliveryBadge("New member", emailStatus.checkInMemberDelivery)}
+                            {deliveryBadge("Buddy", emailStatus.checkInBuddyDelivery)}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex flex-wrap items-center gap-1">
                   {!emailStatus?.introSent && (
