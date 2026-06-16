@@ -846,7 +846,16 @@ function ActiveMembersList({
   onGraduate: (assignmentId: string) => void;
   onRemove: (appId: string, name: string) => void;
   sendEmailPending: boolean;
-  getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; checkInSent: boolean; checkInSentAt?: string };
+  getEmailStatus: (id: string, memberEmail?: string, buddyEmail?: string) => {
+    introSent: boolean;
+    introSentAt?: string;
+    checkInSent: boolean;
+    checkInSentAt?: string;
+    introMemberDelivery: { status: string; error: string | null; at: string } | null;
+    introBuddyDelivery: { status: string; error: string | null; at: string } | null;
+    checkInMemberDelivery: { status: string; error: string | null; at: string } | null;
+    checkInBuddyDelivery: { status: string; error: string | null; at: string } | null;
+  };
 }) {
   const activeApps = completedApps.filter((app) => {
     const assignment = assignments.find((a) => a.application_id === app.id);
