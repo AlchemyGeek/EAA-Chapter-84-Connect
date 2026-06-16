@@ -216,26 +216,16 @@ Deno.serve(async (req) => {
     const baseProcessedBody = applyPlaceholders(template.body, true)
     const plainTextBody = applyPlaceholders(template.body, false)
 
-    // Lovable Email currently sends only one direct recipient per queued item.
-    // Queue separate copies with per-recipient Reply-To so "Reply" reaches the
-    // other participant instead of notify@notify.eaa84.org.
+    // Send ONE email with both participants visible so Reply All works:
+    //   To:  new member
+    //   Cc:  buddy
+    //   Bcc: membership@eaa84.org (silent archive)
+    // No reply_to is set so Reply All naturally reaches both participants.
     const archiveEmail = 'membership@eaa84.org'
-    const recipients = [
-      app.email
-        ? { to: app.email, replyTo: buddy.email || archiveEmail, audience: 'new-member' }
-        : null,
-      buddy.email
-        ? { to: buddy.email, replyTo: app.email || archiveEmail, audience: 'buddy' }
-        : null,
-      archiveEmail
-        ? { to: archiveEmail, replyTo: app.email || buddy.email || archiveEmail, audience: 'membership' }
-        : null,
-    ].filter(
-      (recipient): recipient is { to: string; replyTo: string; audience: string } =>
-        Boolean(recipient?.to && recipient.replyTo),
-    )
+    const primaryTo = app.email || buddy.email
+    const ccEmail = app.email && buddy.email ? buddy.email : null
 
-    if (recipients.length === 0) {
+    if (!primaryTo) {
       return new Response(JSON.stringify({ error: 'No valid recipient emails found' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -259,34 +249,31 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Generate a unique message ID for idempotency
     const messageId = crypto.randomUUID()
+    const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, primaryTo)
 
-    for (const recipient of recipients) {
-      const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient.to)
+    const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+      queue_name: 'transactional_emails',
+      payload: {
+        to: primaryTo,
+        cc: ccEmail || undefined,
+        bcc: archiveEmail,
+        from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
+        sender_domain: 'notify.eaa84.org',
+        subject: processedSubject,
+        html: htmlBody,
+        text: processedBody,
+        purpose: 'transactional',
+        label: `buddy_${email_type}`,
+        idempotency_key: `buddy-${assignment_id}-${email_type}`,
+        unsubscribe_token: unsubscribeToken,
+        message_id: messageId,
+        queued_at: new Date().toISOString(),
+      },
+    })
 
-      const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-        queue_name: 'transactional_emails',
-        payload: {
-          to: recipient.to,
-          from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
-          reply_to: recipient.replyTo,
-          sender_domain: 'notify.eaa84.org',
-          subject: processedSubject,
-          html: htmlBody,
-          text: processedBody,
-          purpose: 'transactional',
-          label: `buddy_${email_type}`,
-          idempotency_key: `buddy-${assignment_id}-${email_type}-${recipient.audience}`,
-          unsubscribe_token: unsubscribeToken,
-          message_id: `${messageId}-${recipient.audience}`,
-          queued_at: new Date().toISOString(),
-        },
-      })
-
-      if (enqueueError) {
-        throw new Error(`Failed to enqueue buddy email: ${enqueueError.message}`)
-      }
+    if (enqueueError) {
+      throw new Error(`Failed to enqueue buddy email: ${enqueueError.message}`)
     }
 
     // Log the send

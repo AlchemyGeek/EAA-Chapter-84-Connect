@@ -30,7 +30,7 @@ interface BuddyEmailTemplate {
 
 const TEMPLATE_LABELS: Record<string, string> = {
   intro: "Introduction Email",
-  reminder: "3-Day Reminder Email",
+  check_in: "Check-In Email",
 };
 
 export function BuddyEmailTemplates() {
