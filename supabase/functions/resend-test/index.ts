@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'missing RESEND_API_KEY' }), { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
   }
 
-  let from = 'EAA Chapter 84 <noreply@eaa84.org>';
+  let from = 'EAA Chapter 84 <noreply@connect.eaa84.org>';
   let to: string[] = ['stathis@gmail.com', 'stathis67@hotmail.com'];
   let bcc: string[] = ['membership@eaa84.org'];
   try {
