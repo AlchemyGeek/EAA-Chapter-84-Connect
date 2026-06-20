@@ -38,12 +38,11 @@ Deno.serve(async (req) => {
     text: 'Resend test — if you see this, multi-recipient To and Bcc are working.',
   };
 
-  const res = await fetch(`${GATEWAY_URL}/emails`, {
+  const res = await fetch(RESEND_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-      'X-Connection-Api-Key': RESEND_API_KEY,
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify(payload),
   });
