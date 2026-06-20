@@ -24,3 +24,6 @@ refresh_token_expiry = 2592000
 
   [functions.handle-email-suppression]
     verify_jwt = false
+
+  [functions.resend-test]
+    verify_jwt = false
