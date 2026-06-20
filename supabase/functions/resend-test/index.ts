@@ -25,9 +25,7 @@ Deno.serve(async (req) => {
   } catch (_) { /* allow empty body */ }
 
   const payload = {
-    from,
-    to,
-    bcc,
+    from, to, bcc,
     subject: 'Chapter 84 Connect — Resend integration test',
     html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
       <h2 style="color:#1e3a5f">Resend test</h2>
@@ -40,13 +38,9 @@ Deno.serve(async (req) => {
 
   const res = await fetch(RESEND_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${RESEND_API_KEY}`,
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_API_KEY}` },
     body: JSON.stringify(payload),
   });
-
   const text = await res.text();
   return new Response(JSON.stringify({ status: res.status, response: text, sent: payload }, null, 2), {
     status: res.ok ? 200 : 500,
