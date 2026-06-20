@@ -1,6 +1,6 @@
-// Temporary diagnostic function — sends one test email via Resend gateway.
+// Temporary diagnostic function — sends one test email via Resend.
 // Safe to delete once verified.
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/resend';
+const RESEND_URL = 'https://api.resend.com/emails';
 
 Deno.serve(async (req) => {
   const cors = {
