@@ -9,10 +9,9 @@ Deno.serve(async (req) => {
   };
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
 
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-  if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
-    return new Response(JSON.stringify({ error: 'missing keys' }), { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
+  if (!RESEND_API_KEY) {
+    return new Response(JSON.stringify({ error: 'missing RESEND_API_KEY' }), { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
   }
 
   let from = 'EAA Chapter 84 <noreply@eaa84.org>';
