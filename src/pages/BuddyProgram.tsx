@@ -373,7 +373,18 @@ export default function BuddyProgram() {
     },
   });
 
-  const getEmailStatus = (assignmentId: string, memberEmail?: string, buddyEmail?: string) => {
+  const getEmailStatus = (assignmentId: string) => {
+    const logs = emailLogs.filter((l) => l.assignment_id === assignmentId);
+    const intro = logs.find((l) => l.email_type === "intro");
+    const checkIn = logs.find((l) => l.email_type === "check_in");
+    return {
+      introSent: !!intro,
+      introSentAt: intro?.sent_at,
+      checkInSent: !!checkIn,
+      checkInSentAt: checkIn?.sent_at,
+    };
+  };
+
     const logs = emailLogs.filter((l) => l.assignment_id === assignmentId);
     const intro = logs.find((l) => l.email_type === "intro");
     const checkIn = logs.find((l) => l.email_type === "check_in");
