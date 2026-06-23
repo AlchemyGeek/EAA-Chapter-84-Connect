@@ -385,37 +385,7 @@ export default function BuddyProgram() {
     };
   };
 
-    const logs = emailLogs.filter((l) => l.assignment_id === assignmentId);
-    const intro = logs.find((l) => l.email_type === "intro");
-    const checkIn = logs.find((l) => l.email_type === "check_in");
 
-    const findDelivery = (type: "intro" | "check_in", email?: string, sentAt?: string) => {
-      if (!email || !sentAt) return null;
-      const target = email.trim().toLowerCase();
-      const tpl = `buddy_${type}`;
-      const windowStart = new Date(sentAt).getTime() - 60_000; // allow 1m clock skew
-      const match = emailSendLog.find(
-        (r) =>
-          r.template_name === tpl &&
-          (r.recipient_email ?? "").trim().toLowerCase() === target &&
-          new Date(r.created_at).getTime() >= windowStart,
-      );
-      return match
-        ? { status: match.status, error: match.error_message, at: match.created_at }
-        : null;
-    };
-
-    return {
-      introSent: !!intro,
-      introSentAt: intro?.sent_at,
-      checkInSent: !!checkIn,
-      checkInSentAt: checkIn?.sent_at,
-      introMemberDelivery: findDelivery("intro", memberEmail, intro?.sent_at),
-      introBuddyDelivery: findDelivery("intro", buddyEmail, intro?.sent_at),
-      checkInMemberDelivery: findDelivery("check_in", memberEmail, checkIn?.sent_at),
-      checkInBuddyDelivery: findDelivery("check_in", buddyEmail, checkIn?.sent_at),
-    };
-  };
 
   if (authLoading) {
     return (
