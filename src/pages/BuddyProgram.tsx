@@ -830,9 +830,8 @@ function ActiveMembersList({
         const assignedVolunteer = assignment
           ? volunteerMembers.find((m) => m.key_id === assignment.volunteer_key_id)
           : null;
-        const emailStatus = assignment
-          ? getEmailStatus(assignment.id, app.email, assignedVolunteer?.email)
-          : null;
+        const emailStatus = assignment ? getEmailStatus(assignment.id) : null;
+
 
         const daysElapsed = assignment
           ? Math.floor((now - new Date(assignment.assigned_at).getTime()) / (24 * 60 * 60 * 1000))
