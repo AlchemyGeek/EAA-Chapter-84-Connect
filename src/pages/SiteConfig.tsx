@@ -388,9 +388,6 @@ export default function SiteConfig() {
 
         {/* Chapter Leadership Section */}
         <ChapterLeadership />
-
-        {/* Hangar Talk Tags Section */}
-        <HangarTalkTagsAdmin />
       </div>
 
       {/* Add/Edit Link Dialog */}
