@@ -14,49 +14,6 @@ function htmlEscape(value: string) {
     .replaceAll("'", '&#39;')
 }
 
-async function getOrCreateUnsubscribeToken(
-  supabase: ReturnType<typeof createClient>,
-  email: string,
-) {
-  const normalizedEmail = email.toLowerCase()
-  const { data: existingUnsubscribeToken } = await supabase
-    .from('email_unsubscribe_tokens')
-    .select('token')
-    .ilike('email', normalizedEmail)
-    .is('used_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (existingUnsubscribeToken?.token) {
-    return existingUnsubscribeToken.token
-  }
-
-  const token = crypto.randomUUID()
-  const { error: insertError } = await supabase
-    .from('email_unsubscribe_tokens')
-    .insert({ email: normalizedEmail, token })
-
-  if (!insertError) {
-    return token
-  }
-
-  const { data: racedToken } = await supabase
-    .from('email_unsubscribe_tokens')
-    .select('token')
-    .ilike('email', normalizedEmail)
-    .is('used_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (racedToken?.token) {
-    return racedToken.token
-  }
-
-  throw new Error('Unable to prepare unsubscribe token')
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -65,6 +22,13 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    if (!resendApiKey) {
+      return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Verify caller is authenticated
     const authHeader = req.headers.get('Authorization')
@@ -78,7 +42,6 @@ Deno.serve(async (req) => {
     const token = authHeader.replace('Bearer ', '')
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Accept service role key directly (from cron/internal calls)
     const isServiceRole = token === supabaseServiceKey
 
     if (!isServiceRole) {
@@ -94,7 +57,6 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Check officer or admin role
       const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
       const rosterLookup = await supabase.from('roster_members').select('key_id').ilike('email', user.email ?? '').limit(1).maybeSingle()
       const { data: isOfficerRow } = await supabase
@@ -127,7 +89,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Check if already sent
+    // Idempotency: already sent?
     const { data: existingLog } = await supabase
       .from('buddy_email_log')
       .select('id')
@@ -142,7 +104,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get assignment
     const { data: assignment, error: assignErr } = await supabase
       .from('buddy_assignments')
       .select('id, volunteer_key_id, application_id')
@@ -156,7 +117,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get new member info from application
     const { data: app } = await supabase
       .from('new_member_applications')
       .select('first_name, last_name, email')
@@ -170,7 +130,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get buddy info from roster
     const { data: buddy } = await supabase
       .from('roster_members')
       .select('first_name, last_name, email')
@@ -184,7 +143,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get template
     const { data: template } = await supabase
       .from('buddy_email_templates')
       .select('subject, body')
@@ -198,11 +156,18 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Replace placeholders
     const newMemberName = app.first_name || 'New Member'
     const buddyName = buddy.first_name || 'Buddy'
-    const newMemberEmail = app.email || ''
-    const buddyEmail = buddy.email || ''
+    const newMemberEmail = (app.email || '').trim()
+    const buddyEmail = (buddy.email || '').trim()
+
+    if (!newMemberEmail || !buddyEmail) {
+      return new Response(JSON.stringify({ error: 'Missing buddy or new member email' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const applyPlaceholders = (s: string, escape: boolean) => {
       const v = (x: string) => (escape ? htmlEscape(x) : x)
       return s
@@ -211,90 +176,52 @@ Deno.serve(async (req) => {
         .replace(/\[NewMemberEmail\]/g, v(newMemberEmail))
         .replace(/\[BuddyEmail\]/g, v(buddyEmail))
     }
-    // Subject is plaintext; body is rendered as HTML so escape user-controlled values.
     const processedSubject = applyPlaceholders(template.subject, false)
     const baseProcessedBody = applyPlaceholders(template.body, true)
     const plainTextBody = applyPlaceholders(template.body, false)
 
-    // Lovable Email currently sends only one direct recipient per queued item.
-    // Queue separate copies with per-recipient Reply-To so "Reply" reaches the
-    // other participant instead of notify@notify.eaa84.org.
-    const archiveEmail = 'membership@eaa84.org'
-    const recipients = [
-      app.email
-        ? { to: app.email, replyTo: buddy.email || archiveEmail, audience: 'new-member' }
-        : null,
-      buddy.email
-        ? { to: buddy.email, replyTo: app.email || archiveEmail, audience: 'buddy' }
-        : null,
-      archiveEmail
-        ? { to: archiveEmail, replyTo: app.email || buddy.email || archiveEmail, audience: 'membership' }
-        : null,
-    ].filter(
-      (recipient): recipient is { to: string; replyTo: string; audience: string } =>
-        Boolean(recipient?.to && recipient.replyTo),
+    let htmlBody = baseProcessedBody.replace(/\n/g, '<br>')
+    htmlBody = htmlBody.split(htmlEscape(newMemberEmail)).join(
+      `<a href="mailto:${htmlEscape(newMemberEmail)}">${htmlEscape(newMemberEmail)}</a>`
+    )
+    htmlBody = htmlBody.split(htmlEscape(buddyEmail)).join(
+      `<a href="mailto:${htmlEscape(buddyEmail)}">${htmlEscape(buddyEmail)}</a>`
     )
 
-    if (recipients.length === 0) {
-      return new Response(JSON.stringify({ error: 'No valid recipient emails found' }), {
-        status: 400,
+    // Send via Resend: one email To: [buddy, new member], BCC: membership@
+    const resendResp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'EAA Chapter 84 <noreply@connect.eaa84.org>',
+        to: [newMemberEmail, buddyEmail],
+        bcc: ['membership@eaa84.org'],
+        reply_to: [newMemberEmail, buddyEmail],
+        subject: processedSubject,
+        html: htmlBody,
+        text: plainTextBody,
+        headers: { 'X-Entity-Ref-ID': `buddy-${assignment_id}-${email_type}` },
+        tags: [{ name: 'category', value: `buddy_${email_type}` }],
+      }),
+    })
+
+    const resendBody = await resendResp.json().catch(() => ({}))
+    if (!resendResp.ok) {
+      console.error('Resend send failed', resendResp.status, resendBody)
+      return new Response(JSON.stringify({ error: 'Resend send failed', details: resendBody }), {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // baseProcessedBody is already HTML-escaped for safe rendering in HTML emails.
-    // plainTextBody preserves the raw text for the text/plain part.
-    const processedBody = plainTextBody
-
-    // Convert HTML-escaped body to simple HTML, linkify mailto for known emails
-    let htmlBody = baseProcessedBody.replace(/\n/g, '<br>')
-    if (newMemberEmail) {
-      htmlBody = htmlBody.split(htmlEscape(newMemberEmail)).join(
-        `<a href="mailto:${htmlEscape(newMemberEmail)}">${htmlEscape(newMemberEmail)}</a>`
-      )
-    }
-    if (buddyEmail) {
-      htmlBody = htmlBody.split(htmlEscape(buddyEmail)).join(
-        `<a href="mailto:${htmlEscape(buddyEmail)}">${htmlEscape(buddyEmail)}</a>`
-      )
-    }
-
-    // Generate a unique message ID for idempotency
-    const messageId = crypto.randomUUID()
-
-    for (const recipient of recipients) {
-      const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient.to)
-
-      const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-        queue_name: 'transactional_emails',
-        payload: {
-          to: recipient.to,
-          from: 'EAA Chapter 84 <notify@notify.eaa84.org>',
-          reply_to: recipient.replyTo,
-          sender_domain: 'notify.eaa84.org',
-          subject: processedSubject,
-          html: htmlBody,
-          text: processedBody,
-          purpose: 'transactional',
-          label: `buddy_${email_type}`,
-          idempotency_key: `buddy-${assignment_id}-${email_type}-${recipient.audience}`,
-          unsubscribe_token: unsubscribeToken,
-          message_id: `${messageId}-${recipient.audience}`,
-          queued_at: new Date().toISOString(),
-        },
-      })
-
-      if (enqueueError) {
-        throw new Error(`Failed to enqueue buddy email: ${enqueueError.message}`)
-      }
-    }
-
-    // Log the send
     await supabase
       .from('buddy_email_log')
       .insert({ assignment_id, email_type })
 
-    return new Response(JSON.stringify({ success: true, email_type }), {
+    return new Response(JSON.stringify({ success: true, email_type, message_id: resendBody?.id }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

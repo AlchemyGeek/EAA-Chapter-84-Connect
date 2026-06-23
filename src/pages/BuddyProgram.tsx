@@ -102,6 +102,10 @@ export default function BuddyProgram() {
     },
   });
 
+  // Buddy emails are sent directly via Resend; we don't track per-recipient
+  // delivery in email_send_log anymore. Success is indicated by buddy_email_log.
+
+
   const { data: completedApps = [] } = useQuery({
     queryKey: ["completed-applications-buddy"],
     staleTime: 0,
@@ -380,6 +384,8 @@ export default function BuddyProgram() {
       checkInSentAt: checkIn?.sent_at,
     };
   };
+
+
 
   if (authLoading) {
     return (
@@ -793,8 +799,14 @@ function ActiveMembersList({
   onGraduate: (assignmentId: string) => void;
   onRemove: (appId: string, name: string) => void;
   sendEmailPending: boolean;
-  getEmailStatus: (id: string) => { introSent: boolean; introSentAt?: string; checkInSent: boolean; checkInSentAt?: string };
+  getEmailStatus: (id: string) => {
+    introSent: boolean;
+    introSentAt?: string;
+    checkInSent: boolean;
+    checkInSentAt?: string;
+  };
 }) {
+
   const activeApps = completedApps.filter((app) => {
     const assignment = assignments.find((a) => a.application_id === app.id);
     return !assignment?.graduated_at;
@@ -819,6 +831,7 @@ function ActiveMembersList({
           ? volunteerMembers.find((m) => m.key_id === assignment.volunteer_key_id)
           : null;
         const emailStatus = assignment ? getEmailStatus(assignment.id) : null;
+
 
         const daysElapsed = assignment
           ? Math.floor((now - new Date(assignment.assigned_at).getTime()) / (24 * 60 * 60 * 1000))
@@ -867,28 +880,33 @@ function ActiveMembersList({
                 </p>
 
                 {/* Status chips: intro / check-in with timestamps */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {emailStatus?.introSent ? (
-                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                      <Mail className="h-3 w-3 mr-1" />
-                      Intro Sent · {fmtDate(emailStatus.introSentAt)}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
-                      Intro not sent
-                    </Badge>
-                  )}
-                  {emailStatus?.checkInSent ? (
-                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                      <Mail className="h-3 w-3 mr-1" />
-                      Check-In Sent · {fmtDate(emailStatus.checkInSentAt)}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
-                      Check-In not sent
-                    </Badge>
-                  )}
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {emailStatus?.introSent ? (
+                      <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <Mail className="h-3 w-3 mr-1" />
+                        Intro Sent · {fmtDate(emailStatus.introSentAt)}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                        Intro not sent
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {emailStatus?.checkInSent ? (
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        <Mail className="h-3 w-3 mr-1" />
+                        Check-In Sent · {fmtDate(emailStatus.checkInSentAt)}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                        Check-In not sent
+                      </Badge>
+                    )}
+                  </div>
                 </div>
+
 
                 <div className="flex flex-wrap items-center gap-1">
                   {!emailStatus?.introSent && (

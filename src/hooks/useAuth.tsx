@@ -53,9 +53,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       });
 
+    // iOS standalone PWAs aggressively suspend background JS, so the auto-refresh
+    // timer often misses the 1-hour JWT expiry. Proactively refresh whenever the
+    // app returns to the foreground so the first query after resume doesn't 401
+    // and bounce the user to /auth.
+    let refreshing = false;
+    const refreshIfStale = async () => {
+      if (refreshing) return;
+      refreshing = true;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+        // Refresh if expiring within 5 minutes (or already expired).
+        if (expiresAt - Date.now() < 5 * 60 * 1000) {
+          await supabase.auth.refreshSession();
+        }
+      } catch {
+        // Swallow — onAuthStateChange will handle a hard failure.
+      } finally {
+        refreshing = false;
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refreshIfStale();
+    };
+    const onFocus = () => refreshIfStale();
+    const onPageShow = () => refreshIfStale();
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
 
