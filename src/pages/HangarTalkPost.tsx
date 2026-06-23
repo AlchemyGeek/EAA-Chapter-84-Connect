@@ -137,10 +137,12 @@ export default function HangarTalkPost() {
               </Button>
             )}
             {canEdit && (
-              <Button asChild size="sm" variant="outline">
-                <Link to={withViewAs(`/hangar-talk/${post.id}/edit`)}>
-                  <Pencil className="h-4 w-4" /> Edit
-                </Link>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate(withViewAs(`/hangar-talk/${post.id}/edit`))}
+              >
+                <Pencil className="h-4 w-4" /> Edit
               </Button>
             )}
             {canDelete && (
