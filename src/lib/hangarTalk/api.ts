@@ -442,33 +442,10 @@ export function useDeleteReply() {
   });
 }
 
-// ─── Tags ────────────────────────────────────────────────────────────────
-export interface TagCategory {
-  id: string;
-  slug: string;
-  label: string;
-  position: number;
-}
+// ─── Tags (free-form, user-defined) ──────────────────────────────────────
 export interface TagRow {
   id: string;
-  category_id: string;
   label: string;
-  position: number;
-  archived: boolean;
-}
-
-export function useTagCategories() {
-  return useQuery({
-    queryKey: ["ht-tag-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("hangar_talk_tag_categories" as any)
-        .select("*")
-        .order("position");
-      if (error) throw error;
-      return (data ?? []) as unknown as TagCategory[];
-    },
-  });
 }
 
 export function useTags() {
@@ -477,8 +454,8 @@ export function useTags() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hangar_talk_tags" as any)
-        .select("*")
-        .order("position");
+        .select("id, label")
+        .order("label");
       if (error) throw error;
       return (data ?? []) as unknown as TagRow[];
     },
@@ -523,48 +500,17 @@ export function useSetMemberTag() {
   });
 }
 
-// Admin tag management
-export function useUpsertTag() {
+/** Get-or-create a tag by label via SECURITY DEFINER RPC. Returns the tag id. */
+export function useCreateTag() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: {
-      id?: string;
-      category_id: string;
-      label: string;
-      position: number;
-      archived?: boolean;
-    }) => {
-      if (args.id) {
-        const { error } = await supabase
-          .from("hangar_talk_tags" as any)
-          .update({
-            category_id: args.category_id,
-            label: args.label,
-            position: args.position,
-            archived: args.archived ?? false,
-          })
-          .eq("id", args.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("hangar_talk_tags" as any).insert({
-          category_id: args.category_id,
-          label: args.label,
-          position: args.position,
-          archived: args.archived ?? false,
-        });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["ht-tags"] }),
-  });
-}
-
-export function useDeleteTag() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("hangar_talk_tags" as any).delete().eq("id", id);
+    mutationFn: async (label: string): Promise<string> => {
+      const { data, error } = await supabase.rpc(
+        "get_or_create_hangar_talk_tag" as any,
+        { _label: label },
+      );
       if (error) throw error;
+      return data as unknown as string;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["ht-tags"] }),
   });

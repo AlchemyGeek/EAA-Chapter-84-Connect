@@ -9,9 +9,11 @@ import {
 import {
   useMemberTags,
   useSetMemberTag,
-  useTagCategories,
   useTags,
+  useCreateTag,
 } from "@/lib/hangarTalk/api";
+import { TagAutocomplete } from "@/components/hangar-talk/TagAutocomplete";
+import { toast } from "sonner";
 
 export function ProfileTags({
   keyId,
@@ -20,22 +22,35 @@ export function ProfileTags({
   keyId: number;
   editable: boolean;
 }) {
-  const { data: categories = [] } = useTagCategories();
   const { data: allTags = [] } = useTags();
   const { data: selected = new Set<string>() } = useMemberTags(keyId);
   const setTag = useSetMemberTag();
   const [open, setOpen] = useState(false);
 
-  const grouped = useMemo(() => {
-    const byCat = new Map<string, typeof allTags>();
-    for (const t of allTags) {
-      if (t.archived) continue;
-      const arr = byCat.get(t.category_id) ?? [];
-      arr.push(t);
-      byCat.set(t.category_id, arr);
-    }
-    return byCat;
+  const selectedIds = useMemo(() => Array.from(selected), [selected]);
+  const tagById = useMemo(() => {
+    const m = new Map<string, (typeof allTags)[number]>();
+    for (const t of allTags) m.set(t.id, t);
+    return m;
   }, [allTags]);
+
+  async function handleChange(next: string[]) {
+    const nextSet = new Set(next);
+    const adds = next.filter((id) => !selected.has(id));
+    const removes = selectedIds.filter((id) => !nextSet.has(id));
+    try {
+      await Promise.all([
+        ...adds.map((id) =>
+          setTag.mutateAsync({ key_id: keyId, tag_id: id, on: true }),
+        ),
+        ...removes.map((id) =>
+          setTag.mutateAsync({ key_id: keyId, tag_id: id, on: false }),
+        ),
+      ]);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't update tags");
+    }
+  }
 
   if (editable) {
     const selectedCount = selected.size;
@@ -59,46 +74,24 @@ export function ProfileTags({
                   <p className="text-xs text-muted-foreground">
                     {selectedCount > 0
                       ? `${selectedCount} selected — tap to manage`
-                      : "Tap to add tags that help match you with other members"}
+                      : "Add tags to help match you with other members"}
                   </p>
                 </div>
               </div>
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="p-4 space-y-4">
-              {categories.map((cat) => {
-                const tags = grouped.get(cat.id) ?? [];
-                if (!tags.length) return null;
-                return (
-                  <div key={cat.id}>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-                      {cat.label}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((t) => {
-                        const on = selected.has(t.id);
-                        return (
-                          <button
-                            key={t.id}
-                            type="button"
-                            onClick={() =>
-                              setTag.mutate({ key_id: keyId, tag_id: t.id, on: !on })
-                            }
-                            className={`px-3 py-1.5 rounded-full text-xs border transition-colors min-h-[32px] ${
-                              on
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-background border-border hover:bg-muted"
-                            }`}
-                          >
-                            {t.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="p-4 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Type to search existing tags or create your own (e.g. taildragger,
+                IFR, EAA mentor).
+              </p>
+              <TagAutocomplete
+                selected={selectedIds}
+                onChange={handleChange}
+                placeholder="Add a tag…"
+                maxTags={15}
+              />
             </div>
           </CollapsibleContent>
         </div>
@@ -106,36 +99,27 @@ export function ProfileTags({
     );
   }
 
-  // Read-only view: only categories with selections
-  const sections = categories
-    .map((cat) => {
-      const tags = (grouped.get(cat.id) ?? []).filter((t) => selected.has(t.id));
-      return { cat, tags };
-    })
-    .filter((s) => s.tags.length > 0);
+  // Read-only view
+  const tags = selectedIds
+    .map((id) => tagById.get(id))
+    .filter((t): t is NonNullable<typeof t> => !!t)
+    .sort((a, b) => a.label.localeCompare(b.label));
 
-  if (!sections.length) return null;
+  if (!tags.length) return null;
 
   return (
     <div className="rounded-lg border border-border bg-background">
       <div className="px-4 py-3 border-b border-border">
         <h3 className="font-semibold text-sm">Profile Tags</h3>
       </div>
-      <div className="p-4 space-y-3">
-        {sections.map(({ cat, tags }) => (
-          <div key={cat.id}>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1.5">
-              {cat.label}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((t) => (
-                <Badge key={t.id} variant="secondary">
-                  {t.label}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        ))}
+      <div className="p-4">
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((t) => (
+            <Badge key={t.id} variant="secondary">
+              {t.label}
+            </Badge>
+          ))}
+        </div>
       </div>
     </div>
   );
