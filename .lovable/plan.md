@@ -1,48 +1,69 @@
-# Improve Buddy Program Email Communications
-
-## Background — is this possible on Lovable's infra now?
-Yes. The shared `process-email-queue` worker already forwards `cc` and `bcc` fields from the queue payload to the email provider. We don't need to change any email infrastructure — only the buddy-specific send function.
-
 ## Goal
-Send a **single email** that both the buddy and the new member receive together, with both addresses visible in the headers, so **Reply All works** and they can converse directly. Membership keeps a silent archive copy.
 
-## Changes
+Switch Buddy emails from the Lovable Emails queue (`notify@notify.eaa84.org`) to Resend (`noreply@connect.eaa84.org`), and use a single combined email with **To: buddy + new member, BCC: membership@eaa84.org** instead of two separate sends.
 
-### 1. One message, both participants visible — `supabase/functions/buddy-email-send/index.ts`
-Replace today's "three separate single-recipient sends" with **one enqueued email per (assignment, email_type)**:
+This is a tightly-scoped, Buddy-only change. All other emails (auth, new member application notifications, queue infrastructure) stay on the existing Lovable Emails path. We'll revisit those separately.
 
-- `to`: new member's email
-- `cc`: buddy's email   *(safer than a comma-joined To: most providers and inboxes render Cc on the same message, and Reply-All still reaches both)*
-- `bcc`: `membership@eaa84.org` (silent archive)
-- `reply_to`: **unset** (so Reply-All naturally goes to both participants)
-- `from`: unchanged — `EAA Chapter 84 <notify@notify.eaa84.org>`
-- One `idempotency_key`: `buddy-<assignment_id>-<email_type>`
-- One `message_id` (no per-audience suffix)
-- One unsubscribe token, generated for the primary recipient (new member)
+## Behavior changes
 
-Result: both the new member and the buddy see each other in the message headers, can hit Reply All, and membership@ gets a hidden copy for the record.
+Today (per assignment + email_type):
+- Two separate enqueues into `transactional_emails` (one to new member, one to buddy)
+- Each has the other person as `Reply-To`, BCC: membership@eaa84.org
+- From: `EAA Chapter 84 <notify@notify.eaa84.org>`
 
-### 2. Fix the reminder template key mismatch
-Today the admin UI labels the second template **"3-Day Reminder Email"** with `template_key = 'reminder'`, but `buddy-email-send` only accepts `email_type` ∈ `{ 'intro', 'check_in' }` and looks up `template_key = 'check_in'`. The reminder template can never actually be sent.
+After:
+- **One** Resend API call per send
+- To: `[newMember, buddy]`
+- BCC: `membership@eaa84.org`
+- Reply-To: both addresses, so "Reply All" continues the 3-way thread naturally
+- From: `EAA Chapter 84 <noreply@connect.eaa84.org>`
+- Still gated by the existing `buddy_email_log` idempotency check, still requires officer/admin, still uses the existing `buddy_email_templates` and `[NewMemberName]/[BuddyName]/[NewMemberEmail]/[BuddyEmail]` placeholders.
 
-Reconcile on **`reminder`** end-to-end:
-- Edge function accepts `email_type` ∈ `{ 'intro', 'reminder' }` and looks up `template_key = email_type`.
-- DB migration: if a row with `template_key = 'check_in'` exists, rename it to `reminder`; ensure a `reminder` row exists.
-- Search for any caller (cron/trigger/UI) passing `check_in` and update to `reminder`.
+No DB schema changes. No queue/cron changes. No UI changes.
 
-### 3. Unchanged
-- `buddy_email_log` still records one row per `(assignment_id, email_type)`.
-- Placeholders (`[NewMemberName]`, `[BuddyName]`, `[NewMemberEmail]`, `[BuddyEmail]`) unchanged.
-- HTML escaping + mailto linkification unchanged.
-- Admin UI for editing templates unchanged.
-- No changes to queue worker, RLS, or auth.
+## Technical details
+
+1. **Edit `supabase/functions/buddy-email-send/index.ts`**
+   - Remove the per-recipient loop and the `enqueue_email` RPC call.
+   - Remove `getOrCreateUnsubscribeToken` and the unsubscribe-token plumbing (Buddy emails are 1-of-2 lifecycle messages between two named individuals — an unsubscribe link is not meaningful here, and Resend's account-level suppression still applies).
+   - Build one Resend payload:
+     ```ts
+     {
+       from: 'EAA Chapter 84 <noreply@connect.eaa84.org>',
+       to: [newMemberEmail, buddyEmail],
+       bcc: ['membership@eaa84.org'],
+       reply_to: [newMemberEmail, buddyEmail],
+       subject: processedSubject,
+       html: htmlBody,
+       text: plainTextBody,
+       headers: { 'X-Entity-Ref-ID': `buddy-${assignment_id}-${email_type}` },
+       tags: [{ name: 'category', value: `buddy_${email_type}` }],
+     }
+     ```
+   - POST to `https://api.resend.com/emails` with `Authorization: Bearer ${RESEND_API_KEY}` (the same secret the working `resend-test` function uses).
+   - On non-2xx Resend response: return 500 with Resend's error message; do NOT write to `buddy_email_log`.
+   - On success: insert into `buddy_email_log` (unchanged) so the duplicate-send guard keeps working.
+
+2. **Keep**:
+   - Auth check (Bearer token → officer/admin or service role).
+   - Idempotency check against `buddy_email_log` at the top.
+   - Template lookup + placeholder substitution + HTML escaping + mailto linkification.
+   - Function name and request contract (`{ assignment_id, email_type }`) — no caller changes needed.
+
+3. **Out of scope (explicitly NOT changing in this step)**:
+   - `process-email-queue`, `send-transactional-email`, `auth-email-hook`, `new-member-notify`, the `notify_new_member_application` DB trigger, `volunteer-apply`, etc.
+   - `resend-test` function (leave as-is for future ad-hoc testing).
+   - `email_send_log` / `suppressed_emails` tables — Buddy sends won't write to them after this change. That's an accepted trade-off until we migrate the rest.
 
 ## Verification
-1. Trigger an intro email on a test assignment from the officer UI.
-2. Confirm `email_send_log` shows **one** row (not three).
-3. In both inboxes: new member appears in `To:`, buddy appears in `Cc:`, Reply-All composes to the other participant. Membership@ receives a Bcc copy with no Bcc shown to participants.
-4. Trigger the reminder email and confirm it now sends.
 
-## Out of scope
-- No template copy changes (admins keep editing subject/body in Site Config).
-- No changes to who/when the reminder fires; only fixing the broken key so it can fire at all.
+After deploy:
+1. From the Buddy admin UI, trigger an `intro` send on a test assignment where membership@eaa84.org is one of the addresses you can read, OR re-fire against a known assignment and confirm:
+   - One Resend message ID returned (check function logs).
+   - One copy each arrives at the new member, buddy, and membership@ inboxes.
+   - Reply All from any of the three reaches the other two.
+2. Try sending the same `assignment_id` + `email_type` again → should return "already sent" (idempotency guard intact).
+
+## Rollback
+
+Revert `buddy-email-send/index.ts` to the previous version (single-file change).
