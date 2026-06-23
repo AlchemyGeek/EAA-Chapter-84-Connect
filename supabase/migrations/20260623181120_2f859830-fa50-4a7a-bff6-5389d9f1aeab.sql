@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.member_update_own_record(integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, boolean, boolean, boolean, boolean);
