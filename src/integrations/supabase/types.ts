@@ -622,70 +622,29 @@ export type Database = {
           },
         ]
       }
-      hangar_talk_tag_categories: {
+      hangar_talk_tags: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
           label: string
-          position: number
-          slug: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: string
           label: string
-          position?: number
-          slug: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: string
           label?: string
-          position?: number
-          slug?: string
           updated_at?: string
         }
         Relationships: []
-      }
-      hangar_talk_tags: {
-        Row: {
-          archived: boolean
-          category_id: string
-          created_at: string
-          id: string
-          label: string
-          position: number
-          updated_at: string
-        }
-        Insert: {
-          archived?: boolean
-          category_id: string
-          created_at?: string
-          id?: string
-          label: string
-          position?: number
-          updated_at?: string
-        }
-        Update: {
-          archived?: boolean
-          category_id?: string
-          created_at?: string
-          id?: string
-          label?: string
-          position?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "hangar_talk_tags_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "hangar_talk_tag_categories"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       member_chapter_data: {
         Row: {
@@ -1515,6 +1474,10 @@ export type Database = {
           young_eagle_volunteer: boolean
           zip_code: string
         }[]
+      }
+      get_or_create_hangar_talk_tag: {
+        Args: { _label: string }
+        Returns: string
       }
       get_roster_display_names: {
         Args: { _key_ids: number[] }
