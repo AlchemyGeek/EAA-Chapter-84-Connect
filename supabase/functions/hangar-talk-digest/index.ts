@@ -166,8 +166,7 @@ Deno.serve(async (req) => {
           `[${typeLabel}] ${post.title}\n` +
             `${newReplies.length} new ${newReplies.length === 1 ? "reply" : "replies"}\n` +
             `${authorName(authorRow ?? undefined)}: ${previewTrim}\n` +
-            `View: ${viewUrl}\n` +
-            `Unsubscribe from this thread: ${unsubThreadUrl}\n`,
+            `View: ${viewUrl}\n`,
         );
         subIdsToTouch.push((s as any).id);
       }
