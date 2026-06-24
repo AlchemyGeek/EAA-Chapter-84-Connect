@@ -25,6 +25,7 @@ import { TypeBadge } from "@/components/hangar-talk/TypeBadge";
 import { PostTagChips } from "@/components/hangar-talk/PostTagChips";
 import { ReplyList } from "@/components/hangar-talk/ReplyList";
 import { ReplyComposer } from "@/components/hangar-talk/ReplyComposer";
+import { SubscribeToggle } from "@/components/hangar-talk/SubscribeToggle";
 import { authorDisplayName, timeAgo } from "@/lib/hangarTalk/types";
 
 export default function HangarTalkPost() {
