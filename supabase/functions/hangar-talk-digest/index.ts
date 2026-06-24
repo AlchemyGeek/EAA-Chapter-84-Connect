@@ -161,16 +161,12 @@ Deno.serve(async (req) => {
     <span style="color:#6b7280;">${escapeHtml(authorName(authorRow ?? undefined))}:</span> ${escapeHtml(previewTrim)}
   </div>
   <a href="${viewUrl}" style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:10px 18px;border-radius:6px;">View Thread</a>
-  <div style="margin-top:12px;">
-    <a href="${unsubThreadUrl}" style="font-size:12px;color:#6b7280;text-decoration:underline;">Unsubscribe from this thread</a>
-  </div>
 </div>`);
         textSections.push(
           `[${typeLabel}] ${post.title}\n` +
             `${newReplies.length} new ${newReplies.length === 1 ? "reply" : "replies"}\n` +
             `${authorName(authorRow ?? undefined)}: ${previewTrim}\n` +
-            `View: ${viewUrl}\n` +
-            `Unsubscribe from this thread: ${unsubThreadUrl}\n`,
+            `View: ${viewUrl}\n`,
         );
         subIdsToTouch.push((s as any).id);
       }
