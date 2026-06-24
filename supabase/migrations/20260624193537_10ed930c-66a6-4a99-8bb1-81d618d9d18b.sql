@@ -1,0 +1,1 @@
+UPDATE hangar_talk_subscriptions SET last_notified_at = now() - interval '7 days' WHERE key_id = 117995;
