@@ -206,6 +206,7 @@ Deno.serve(async (req) => {
       }
 
       const messageId = crypto.randomUUID();
+      const idempotencyKey = `ht-digest-${messageId}`;
       const subject = sections.length === 1
         ? `New activity on a thread you follow`
         : `New activity on ${sections.length} threads you follow`;
@@ -241,7 +242,7 @@ Deno.serve(async (req) => {
           text,
           purpose: "transactional",
           label: "hangar_talk_digest",
-          idempotency_key: `ht-digest-${recipient}-${new Date().toISOString().slice(0, 10)}`,
+          idempotency_key: idempotencyKey,
           unsubscribe_token: globalUnsub,
           message_id: messageId,
           queued_at: new Date().toISOString(),
