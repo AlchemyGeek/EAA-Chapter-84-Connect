@@ -11,6 +11,8 @@ export function PostCard({ post }: { post: Post }) {
   const stale = isStale(post) && !post.resolved_at;
   const thumb = post.images[0]?.signed_url;
   const withViewAs = useWithViewAs();
+  const { data: subs } = useSubscribedPostIds();
+  const subscribed = subs?.has(post.id) ?? false;
   return (
     <Link
       to={withViewAs(`/hangar-talk/${post.id}`)}
