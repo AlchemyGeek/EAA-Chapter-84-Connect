@@ -10,10 +10,14 @@ type Status = "loading" | "valid" | "already_unsubscribed" | "invalid" | "succes
 const Unsubscribe = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
-  const [status, setStatus] = useState<Status>("loading");
+  const hangarTalkStatus = searchParams.get("source") === "hangar-talk" ? searchParams.get("status") : null;
+  const [status, setStatus] = useState<Status>(
+    hangarTalkStatus === "success" ? "success" : hangarTalkStatus === "invalid" ? "invalid" : "loading"
+  );
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
+    if (hangarTalkStatus) return;
     if (!token) {
       setStatus("invalid");
       return;
@@ -41,7 +45,7 @@ const Unsubscribe = () => {
       }
     };
     validate();
-  }, [token]);
+  }, [token, hangarTalkStatus]);
 
   const handleConfirm = async () => {
     if (!token) return;
@@ -99,7 +103,7 @@ const Unsubscribe = () => {
               <CheckCircle className="mx-auto h-10 w-10 text-green-600" />
               <h2 className="text-xl font-semibold text-foreground">Unsubscribed</h2>
               <p className="text-muted-foreground">
-                You have been successfully unsubscribed from Chapter 84 Connect emails.
+                You have been successfully unsubscribed from these emails.
               </p>
             </>
           )}
