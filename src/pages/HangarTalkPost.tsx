@@ -25,6 +25,7 @@ import { TypeBadge } from "@/components/hangar-talk/TypeBadge";
 import { PostTagChips } from "@/components/hangar-talk/PostTagChips";
 import { ReplyList } from "@/components/hangar-talk/ReplyList";
 import { ReplyComposer } from "@/components/hangar-talk/ReplyComposer";
+import { SubscribeToggle } from "@/components/hangar-talk/SubscribeToggle";
 import { authorDisplayName, timeAgo } from "@/lib/hangarTalk/types";
 
 export default function HangarTalkPost() {
@@ -90,6 +91,11 @@ export default function HangarTalkPost() {
               <CheckCircle2 className="h-3 w-3" />
               Resolved
             </span>
+          )}
+          {isActive && myKeyId && (
+            <div className="ml-auto">
+              <SubscribeToggle postId={post.id} />
+            </div>
           )}
         </div>
         <h2 className="text-xl font-semibold leading-snug">{post.title}</h2>
