@@ -4,12 +4,15 @@ import { TypeBadge } from "./TypeBadge";
 import { PostTagChips } from "./PostTagChips";
 import { authorDisplayName, isStale, timeAgo, type Post } from "@/lib/hangarTalk/types";
 import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
-import { MessageSquare, CheckCircle2 } from "lucide-react";
+import { useSubscribedPostIds } from "@/lib/hangarTalk/subscriptions";
+import { Bell, MessageSquare, CheckCircle2 } from "lucide-react";
 
 export function PostCard({ post }: { post: Post }) {
   const stale = isStale(post) && !post.resolved_at;
   const thumb = post.images[0]?.signed_url;
   const withViewAs = useWithViewAs();
+  const { data: subs } = useSubscribedPostIds();
+  const subscribed = subs?.has(post.id) ?? false;
   return (
     <Link
       to={withViewAs(`/hangar-talk/${post.id}`)}
@@ -31,6 +34,12 @@ export function PostCard({ post }: { post: Post }) {
                 <span className="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 font-medium">
                   <CheckCircle2 className="h-3 w-3" />
                   Resolved
+                </span>
+              )}
+              {subscribed && (
+                <span className="inline-flex items-center gap-1 text-xs text-primary font-medium" aria-label="Subscribed">
+                  <Bell className="h-3 w-3" />
+                  Subscribed
                 </span>
               )}
             </div>
