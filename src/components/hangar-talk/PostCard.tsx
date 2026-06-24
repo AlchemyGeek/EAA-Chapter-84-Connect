@@ -4,7 +4,8 @@ import { TypeBadge } from "./TypeBadge";
 import { PostTagChips } from "./PostTagChips";
 import { authorDisplayName, isStale, timeAgo, type Post } from "@/lib/hangarTalk/types";
 import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
-import { MessageSquare, CheckCircle2 } from "lucide-react";
+import { useSubscribedPostIds } from "@/lib/hangarTalk/subscriptions";
+import { Bell, MessageSquare, CheckCircle2 } from "lucide-react";
 
 export function PostCard({ post }: { post: Post }) {
   const stale = isStale(post) && !post.resolved_at;
