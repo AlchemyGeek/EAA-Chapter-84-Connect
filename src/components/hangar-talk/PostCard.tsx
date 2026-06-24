@@ -36,6 +36,12 @@ export function PostCard({ post }: { post: Post }) {
                   Resolved
                 </span>
               )}
+              {subscribed && (
+                <span className="inline-flex items-center gap-1 text-xs text-primary font-medium" aria-label="Subscribed">
+                  <Bell className="h-3 w-3" />
+                  Subscribed
+                </span>
+              )}
             </div>
             <h3 className="font-semibold leading-tight">{post.title}</h3>
             <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-wrap">
