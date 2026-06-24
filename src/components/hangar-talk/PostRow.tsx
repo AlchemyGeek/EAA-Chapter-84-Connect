@@ -2,11 +2,14 @@ import { Link } from "react-router-dom";
 import { TypeBadge } from "./TypeBadge";
 import { isStale, timeAgo, type Post } from "@/lib/hangarTalk/types";
 import { useWithViewAs } from "@/lib/hangarTalk/viewAs";
-import { MessageSquare, CheckCircle2 } from "lucide-react";
+import { useSubscribedPostIds } from "@/lib/hangarTalk/subscriptions";
+import { Bell, MessageSquare, CheckCircle2 } from "lucide-react";
 
 export function PostRow({ post }: { post: Post }) {
   const stale = isStale(post) && !post.resolved_at;
   const withViewAs = useWithViewAs();
+  const { data: subs } = useSubscribedPostIds();
+  const subscribed = subs?.has(post.id) ?? false;
   return (
     <Link
       to={withViewAs(`/hangar-talk/${post.id}`)}
@@ -16,6 +19,12 @@ export function PostRow({ post }: { post: Post }) {
     >
       <TypeBadge type={post.type} className="shrink-0" />
       <span className="flex-1 truncate text-sm font-medium">{post.title}</span>
+      {subscribed && (
+        <Bell
+          className="h-3.5 w-3.5 text-primary shrink-0"
+          aria-label="Subscribed"
+        />
+      )}
       {post.resolved_at && (
         <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
       )}
