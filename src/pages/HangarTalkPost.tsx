@@ -92,6 +92,11 @@ export default function HangarTalkPost() {
               Resolved
             </span>
           )}
+          {isActive && myKeyId && (
+            <div className="ml-auto">
+              <SubscribeToggle postId={post.id} />
+            </div>
+          )}
         </div>
         <h2 className="text-xl font-semibold leading-snug">{post.title}</h2>
         <p className="text-sm text-muted-foreground">
