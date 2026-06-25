@@ -19,6 +19,7 @@ export default function Import() {
   const [preview, setPreview] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
   const [confirmText, setConfirmText] = useState("");
+  const [allowRemovals, setAllowRemovals] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -103,6 +104,7 @@ export default function Import() {
     const formData = new FormData();
     formData.append("file", file);
     if (dryRun) formData.append("dry_run", "true");
+    if (allowRemovals) formData.append("allow_removals", "true");
     const response = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/roster-import`,
       {
@@ -224,6 +226,35 @@ export default function Import() {
             />
           </div>
 
+          <div className="rounded-lg border p-3 space-y-2">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={allowRemovals}
+                onChange={(e) => { setAllowRemovals(e.target.checked); setPreview(null); }}
+                className="mt-1 h-4 w-4"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Delete members missing from this file</p>
+                <p className="text-xs text-muted-foreground">
+                  Off (recommended): missing members are preserved — safe for partial roster imports.
+                  On: members not in the file will be permanently deleted from the database.
+                </p>
+              </div>
+            </label>
+            {allowRemovals && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Destructive mode enabled</AlertTitle>
+                <AlertDescription className="text-sm">
+                  Any member not in this file will be <strong>permanently deleted</strong>, along with their
+                  chapter-side data (directory visibility, internal notes, Hangar Talk subscriptions and tags).
+                  Only enable this when importing a complete, authoritative roster export.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
           <Button onClick={handlePreview} disabled={!canPreview} className="w-full gap-2">
             <Eye className="h-4 w-4" />
             {previewing ? "Computing preview..." : "Preview Changes"}
@@ -247,11 +278,26 @@ export default function Import() {
               <dd className="font-medium text-green-600">+{preview.counts.added}</dd>
               <dt className="text-muted-foreground">Will modify</dt>
               <dd className="font-medium text-blue-600">{preview.counts.modified}</dd>
-              <dt className="text-muted-foreground">Will remove</dt>
-              <dd className="font-medium text-destructive">{preview.counts.removed}</dd>
+              <dt className="text-muted-foreground">
+                {preview.allow_removals ? "Will remove" : "Missing from file (preserved)"}
+              </dt>
+              <dd className={`font-medium ${preview.allow_removals ? "text-destructive" : "text-muted-foreground"}`}>
+                {preview.counts.removed}
+              </dd>
               <dt className="text-muted-foreground">Prospect reconciliations</dt>
               <dd className="font-medium">{preview.counts.reconciled}</dd>
             </dl>
+
+            {preview.counts.removed > 0 && !preview.allow_removals && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  {preview.counts.removed} existing member(s) are not present in this file. They will be
+                  <strong> kept</strong> because "Delete members missing from this file" is off. Enable that
+                  toggle above and re-preview if this is a full roster export and you want them removed.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {preview.counts.reconciled > 0 && (
               <div className="text-sm border rounded p-3 space-y-1">
@@ -279,7 +325,9 @@ export default function Import() {
 
             {preview.counts.removed > 0 && (
               <details className="text-sm border rounded p-3">
-                <summary className="font-medium cursor-pointer">Removed ({preview.counts.removed})</summary>
+                <summary className="font-medium cursor-pointer">
+                  {preview.allow_removals ? "Will be removed" : "Missing from file (kept)"} ({preview.counts.removed})
+                </summary>
                 <ul className="list-disc pl-5 mt-2 text-muted-foreground">
                   {preview.removed.slice(0, 50).map((r: any, i: number) => (
                     <li key={i}>

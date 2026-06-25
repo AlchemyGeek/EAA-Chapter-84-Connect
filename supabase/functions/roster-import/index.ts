@@ -227,6 +227,7 @@ Deno.serve(async (req) => {
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const dryRun = String(formData.get("dry_run") || "") === "true";
+    const allowRemovals = String(formData.get("allow_removals") || "") === "true";
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -316,6 +317,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           dry_run: true,
+          allow_removals: allowRemovals,
           record_count: incomingRecords.length,
           counts: {
             added: previewAdded.length,
@@ -428,28 +430,33 @@ Deno.serve(async (req) => {
         .eq("roster_key_id", keyId);
     }
 
-    // Detect and delete removed members
+    // Detect removed members (present locally but missing from import file)
     const removedKeyIds: number[] = [];
     for (const [keyId, existing] of existingMap) {
       if (!incomingKeyIds.has(keyId)) {
-        removedCount++;
         removedKeyIds.push(keyId);
-        changeRecords.push({
-          import_id: importId,
-          key_id: keyId,
-          change_type: "removed",
-          field_name: null,
-          old_value: null,
-          new_value: null,
-          first_name: existing.first_name,
-          last_name: existing.last_name,
-          eaa_number: existing.eaa_number,
-        });
+        // Only record/apply deletion when explicitly allowed by the importer
+        if (allowRemovals) {
+          removedCount++;
+          changeRecords.push({
+            import_id: importId,
+            key_id: keyId,
+            change_type: "removed",
+            field_name: null,
+            old_value: null,
+            new_value: null,
+            first_name: existing.first_name,
+            last_name: existing.last_name,
+            eaa_number: existing.eaa_number,
+          });
+        }
       }
     }
 
-    // Delete removed members from roster_members
-    if (removedKeyIds.length > 0) {
+    // Delete removed members from roster_members only when explicitly allowed.
+    // When allow_removals is false, missing members are PRESERVED — this supports
+    // partial-roster imports without wiping the database.
+    if (allowRemovals && removedKeyIds.length > 0) {
       const delBatchSize = 100;
       for (let i = 0; i < removedKeyIds.length; i += delBatchSize) {
         const batch = removedKeyIds.slice(i, i + delBatchSize);
