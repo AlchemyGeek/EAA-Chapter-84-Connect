@@ -98,7 +98,7 @@ export default function HangarTalk() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-6">
-      <header className="mb-4 flex items-center gap-3">
+      <header className="mb-2 flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild className="min-h-[44px] min-w-[44px]">
           <Link to={withViewAs("/home")}><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
@@ -113,6 +113,10 @@ export default function HangarTalk() {
           New Post
         </Button>
       </header>
+
+      <p className="mb-6 text-[15px] leading-relaxed text-muted-foreground/80">
+        Hangar Talk is your chapter community feed — ask questions, request help, and share what's happening with fellow EAA Chapter 84 members. Simple to post, easy to respond, all in one place.
+      </p>
 
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1">
