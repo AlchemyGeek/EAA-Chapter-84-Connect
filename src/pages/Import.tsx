@@ -278,11 +278,26 @@ export default function Import() {
               <dd className="font-medium text-green-600">+{preview.counts.added}</dd>
               <dt className="text-muted-foreground">Will modify</dt>
               <dd className="font-medium text-blue-600">{preview.counts.modified}</dd>
-              <dt className="text-muted-foreground">Will remove</dt>
-              <dd className="font-medium text-destructive">{preview.counts.removed}</dd>
+              <dt className="text-muted-foreground">
+                {preview.allow_removals ? "Will remove" : "Missing from file (preserved)"}
+              </dt>
+              <dd className={`font-medium ${preview.allow_removals ? "text-destructive" : "text-muted-foreground"}`}>
+                {preview.counts.removed}
+              </dd>
               <dt className="text-muted-foreground">Prospect reconciliations</dt>
               <dd className="font-medium">{preview.counts.reconciled}</dd>
             </dl>
+
+            {preview.counts.removed > 0 && !preview.allow_removals && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  {preview.counts.removed} existing member(s) are not present in this file. They will be
+                  <strong> kept</strong> because "Delete members missing from this file" is off. Enable that
+                  toggle above and re-preview if this is a full roster export and you want them removed.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {preview.counts.reconciled > 0 && (
               <div className="text-sm border rounded p-3 space-y-1">
@@ -310,7 +325,9 @@ export default function Import() {
 
             {preview.counts.removed > 0 && (
               <details className="text-sm border rounded p-3">
-                <summary className="font-medium cursor-pointer">Removed ({preview.counts.removed})</summary>
+                <summary className="font-medium cursor-pointer">
+                  {preview.allow_removals ? "Will be removed" : "Missing from file (kept)"} ({preview.counts.removed})
+                </summary>
                 <ul className="list-disc pl-5 mt-2 text-muted-foreground">
                   {preview.removed.slice(0, 50).map((r: any, i: number) => (
                     <li key={i}>
