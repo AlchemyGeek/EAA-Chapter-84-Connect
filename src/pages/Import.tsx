@@ -226,6 +226,35 @@ export default function Import() {
             />
           </div>
 
+          <div className="rounded-lg border p-3 space-y-2">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={allowRemovals}
+                onChange={(e) => { setAllowRemovals(e.target.checked); setPreview(null); }}
+                className="mt-1 h-4 w-4"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Delete members missing from this file</p>
+                <p className="text-xs text-muted-foreground">
+                  Off (recommended): missing members are preserved — safe for partial roster imports.
+                  On: members not in the file will be permanently deleted from the database.
+                </p>
+              </div>
+            </label>
+            {allowRemovals && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Destructive mode enabled</AlertTitle>
+                <AlertDescription className="text-sm">
+                  Any member not in this file will be <strong>permanently deleted</strong>, along with their
+                  chapter-side data (directory visibility, internal notes, Hangar Talk subscriptions and tags).
+                  Only enable this when importing a complete, authoritative roster export.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
           <Button onClick={handlePreview} disabled={!canPreview} className="w-full gap-2">
             <Eye className="h-4 w-4" />
             {previewing ? "Computing preview..." : "Preview Changes"}
