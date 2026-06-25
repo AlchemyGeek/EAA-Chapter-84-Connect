@@ -73,6 +73,34 @@ export default function Export() {
     enabled: !!lastImport?.id,
   });
 
+  const { data: chapterBackup, isLoading: backupLoading } = useQuery({
+    queryKey: ["chapter-backup"],
+    queryFn: async () => {
+      const [cd, subs, tags] = await Promise.all([
+        supabase.from("member_chapter_data").select("*").order("key_id"),
+        supabase.from("hangar_talk_subscriptions").select("*").order("key_id"),
+        supabase
+          .from("hangar_talk_member_tags")
+          .select("key_id, tag_id, hangar_talk_tags(label)")
+          .order("key_id"),
+      ]);
+      if (cd.error) throw cd.error;
+      if (subs.error) throw subs.error;
+      if (tags.error) throw tags.error;
+      return {
+        members,
+        chapterData: cd.data ?? [],
+        hangarTalkSubscriptions: subs.data ?? [],
+        hangarTalkMemberTags: (tags.data ?? []).map((r: any) => ({
+          key_id: r.key_id,
+          tag_id: r.tag_id,
+          tag_label: r.hangar_talk_tags?.label ?? "",
+        })),
+      };
+    },
+    enabled: members.length > 0,
+  });
+
   const localChanges = useMemo(() => {
     if (snapshots.length === 0 || members.length === 0) return [];
     return diffCurrentVsSnapshots(members, snapshots);
