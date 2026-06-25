@@ -317,6 +317,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           dry_run: true,
+          allow_removals: allowRemovals,
           record_count: incomingRecords.length,
           counts: {
             added: previewAdded.length,
