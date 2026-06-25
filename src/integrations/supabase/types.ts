@@ -622,6 +622,45 @@ export type Database = {
           },
         ]
       }
+      hangar_talk_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          key_id: number
+          last_notified_at: string | null
+          post_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_id: number
+          last_notified_at?: string | null
+          post_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_id?: number
+          last_notified_at?: string | null
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hangar_talk_subscriptions_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "roster_members"
+            referencedColumns: ["key_id"]
+          },
+          {
+            foreignKeyName: "hangar_talk_subscriptions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "hangar_talk_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hangar_talk_tags: {
         Row: {
           created_at: string
