@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Download, Plus, RefreshCw, Minus, CheckCircle2 } from "lucide-react";
-import { exportMembersToExcel, exportMembersToCsv, exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
+import { exportMembersToExcel, exportMembersToCsv, exportDiffToExcel, exportDiffToCsv, exportChapterBackupToExcel, exportChapterBackupToCsv } from "@/lib/export";
 import { diffCurrentVsSnapshots } from "@/lib/diffMembers";
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
