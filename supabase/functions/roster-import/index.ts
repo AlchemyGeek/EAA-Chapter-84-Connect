@@ -227,6 +227,7 @@ Deno.serve(async (req) => {
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const dryRun = String(formData.get("dry_run") || "") === "true";
+    const allowRemovals = String(formData.get("allow_removals") || "") === "true";
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
