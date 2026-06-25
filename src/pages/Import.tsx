@@ -104,6 +104,7 @@ export default function Import() {
     const formData = new FormData();
     formData.append("file", file);
     if (dryRun) formData.append("dry_run", "true");
+    if (allowRemovals) formData.append("allow_removals", "true");
     const response = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/roster-import`,
       {
