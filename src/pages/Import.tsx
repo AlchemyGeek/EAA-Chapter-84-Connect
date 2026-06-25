@@ -19,6 +19,7 @@ export default function Import() {
   const [preview, setPreview] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
   const [confirmText, setConfirmText] = useState("");
+  const [allowRemovals, setAllowRemovals] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
