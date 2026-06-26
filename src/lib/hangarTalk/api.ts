@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import imageCompression from "browser-image-compression";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useViewAsKeyId } from "./viewAs";
@@ -10,6 +11,31 @@ import {
   type PostType,
   type Reply,
 } from "./types";
+
+// Compress/resize browser-side before upload. Large phone photos (5–15MB)
+// frequently fail to upload through the edge with a "Failed to fetch" /
+// network-abort error; shrinking to ≤1MB / ≤1600px makes uploads reliable
+// and fast without visible quality loss for feed images.
+async function prepareImageForUpload(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  // Skip if already small.
+  if (file.size <= 800 * 1024) return file;
+  try {
+    const compressed = await imageCompression(file, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1600,
+      useWebWorker: true,
+      initialQuality: 0.82,
+    });
+    // Library returns a Blob in some browsers — wrap as File so storage upload keeps the name.
+    return new File([compressed], file.name, {
+      type: compressed.type || file.type,
+      lastModified: Date.now(),
+    });
+  } catch {
+    return file;
+  }
+}
 
 // ─── Current member ──────────────────────────────────────────────────────
 // Honors `?viewAs=<key_id>` for admin impersonation: when present, returns
