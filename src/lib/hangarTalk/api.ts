@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import imageCompression from "browser-image-compression";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useViewAsKeyId } from "./viewAs";
@@ -10,6 +11,31 @@ import {
   type PostType,
   type Reply,
 } from "./types";
+
+// Compress/resize browser-side before upload. Large phone photos (5–15MB)
+// frequently fail to upload through the edge with a "Failed to fetch" /
+// network-abort error; shrinking to ≤1MB / ≤1600px makes uploads reliable
+// and fast without visible quality loss for feed images.
+async function prepareImageForUpload(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  // Skip if already small.
+  if (file.size <= 800 * 1024) return file;
+  try {
+    const compressed = await imageCompression(file, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1600,
+      useWebWorker: true,
+      initialQuality: 0.82,
+    });
+    // Library returns a Blob in some browsers — wrap as File so storage upload keeps the name.
+    return new File([compressed], file.name, {
+      type: compressed.type || file.type,
+      lastModified: Date.now(),
+    });
+  } catch {
+    return file;
+  }
+}
 
 // ─── Current member ──────────────────────────────────────────────────────
 // Honors `?viewAs=<key_id>` for admin impersonation: when present, returns
@@ -73,6 +99,8 @@ async function fetchAuthors(keyIds: number[]): Promise<Map<number, AuthorRef>> {
 export function usePosts() {
   return useQuery({
     queryKey: ["ht-posts"],
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
     queryFn: async (): Promise<Post[]> => {
       const { data: postRows, error } = await supabase
         .from("hangar_talk_posts" as any)
@@ -264,19 +292,34 @@ export function useCreatePost() {
         const uid = userRes.user?.id;
         if (!uid) throw new Error("Not signed in");
         const uploads: { storage_path: string; position: number }[] = [];
-        for (let i = 0; i < args.images.length; i++) {
-          const f = args.images[i];
-          const path = `${uid}/${postId}/${Date.now()}-${i}-${f.name.replace(/[^\w.\-]/g, "_")}`;
-          const { error: upErr } = await supabase.storage
-            .from(HANGAR_TALK_BUCKET)
-            .upload(path, f, { upsert: false });
-          if (upErr) throw upErr;
-          uploads.push({ storage_path: path, position: i });
+        try {
+          for (let i = 0; i < args.images.length; i++) {
+            const prepared = await prepareImageForUpload(args.images[i]);
+            const path = `${uid}/${postId}/${Date.now()}-${i}-${prepared.name.replace(/[^\w.\-]/g, "_")}`;
+            const { error: upErr } = await supabase.storage
+              .from(HANGAR_TALK_BUCKET)
+              .upload(path, prepared, { upsert: false, contentType: prepared.type });
+            if (upErr) throw upErr;
+            uploads.push({ storage_path: path, position: i });
+          }
+          const { error: imgErr } = await supabase
+            .from("hangar_talk_post_images" as any)
+            .insert(uploads.map((u) => ({ ...u, post_id: postId })));
+          if (imgErr) throw imgErr;
+        } catch (err) {
+          // Roll back so we don't leave an empty post in the feed.
+          if (uploads.length) {
+            await supabase.storage
+              .from(HANGAR_TALK_BUCKET)
+              .remove(uploads.map((u) => u.storage_path));
+          }
+          await supabase.from("hangar_talk_posts" as any).delete().eq("id", postId);
+          const msg =
+            err instanceof Error
+              ? err.message
+              : "Image upload failed. Please try a smaller image.";
+          throw new Error(`Image upload failed: ${msg}`);
         }
-        const { error: imgErr } = await supabase
-          .from("hangar_talk_post_images" as any)
-          .insert(uploads.map((u) => ({ ...u, post_id: postId })));
-        if (imgErr) throw imgErr;
       }
 
       if (args.tag_ids && args.tag_ids.length) {
@@ -384,11 +427,12 @@ export function useCreateReply() {
         const { data: userRes } = await supabase.auth.getUser();
         const uid = userRes.user?.id;
         if (!uid) throw new Error("Not signed in");
-        imagePath = `${uid}/${args.post_id}/reply-${Date.now()}-${args.image.name.replace(/[^\w.\-]/g, "_")}`;
+        const prepared = await prepareImageForUpload(args.image);
+        imagePath = `${uid}/${args.post_id}/reply-${Date.now()}-${prepared.name.replace(/[^\w.\-]/g, "_")}`;
         const { error: upErr } = await supabase.storage
           .from(HANGAR_TALK_BUCKET)
-          .upload(imagePath, args.image, { upsert: false });
-        if (upErr) throw upErr;
+          .upload(imagePath, prepared, { upsert: false, contentType: prepared.type });
+        if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
       }
       const { error } = await supabase
         .from("hangar_talk_replies" as any)
