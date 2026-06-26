@@ -12,12 +12,27 @@ import {
   type Reply,
 } from "./types";
 
+// Hard caps to protect the edge upload from oversized phone photos.
+// Original input is capped before compression; output is double-checked
+// after compression as a safety net.
+const MAX_INPUT_IMAGE_BYTES = 25 * 1024 * 1024; // 25 MB original
+const MAX_UPLOAD_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB after compression
+
+function formatMB(bytes: number) {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 // Compress/resize browser-side before upload. Large phone photos (5–15MB)
 // frequently fail to upload through the edge with a "Failed to fetch" /
 // network-abort error; shrinking to ≤1MB / ≤1600px makes uploads reliable
 // and fast without visible quality loss for feed images.
 async function prepareImageForUpload(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
+  if (file.size > MAX_INPUT_IMAGE_BYTES) {
+    throw new Error(
+      `Image "${file.name}" is ${formatMB(file.size)}. Please choose an image under ${formatMB(MAX_INPUT_IMAGE_BYTES)}.`,
+    );
+  }
   // Skip if already small.
   if (file.size <= 800 * 1024) return file;
   try {
@@ -27,12 +42,24 @@ async function prepareImageForUpload(file: File): Promise<File> {
       useWebWorker: true,
       initialQuality: 0.82,
     });
-    // Library returns a Blob in some browsers — wrap as File so storage upload keeps the name.
-    return new File([compressed], file.name, {
+    const out = new File([compressed], file.name, {
       type: compressed.type || file.type,
       lastModified: Date.now(),
     });
-  } catch {
+    if (out.size > MAX_UPLOAD_IMAGE_BYTES) {
+      throw new Error(
+        `Image "${file.name}" is still ${formatMB(out.size)} after compression. Please choose a smaller image.`,
+      );
+    }
+    return out;
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith('Image "')) throw err;
+    // Compression library failed — only accept original if it's already small.
+    if (file.size > MAX_UPLOAD_IMAGE_BYTES) {
+      throw new Error(
+        `Image "${file.name}" is ${formatMB(file.size)} and could not be compressed. Please choose a smaller image.`,
+      );
+    }
     return file;
   }
 }
