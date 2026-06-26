@@ -18,7 +18,7 @@ import {
 import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
-  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, MessageSquare, Activity, Newspaper,
+  UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, Activity, Newspaper,
   ClipboardList, Vote, Tag,
 } from "lucide-react";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
+
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
@@ -614,6 +615,7 @@ export default function MemberHome() {
               directoryToggleDisabled={toggleVisibility.isPending}
             />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating || isAdmin} />
+            
           </div>
         )}
 

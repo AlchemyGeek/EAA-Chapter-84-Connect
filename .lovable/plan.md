@@ -1,69 +1,106 @@
-## Goal
+# Hangar Talk — Subscriptions & Daily Digest
 
-Switch Buddy emails from the Lovable Emails queue (`notify@notify.eaa84.org`) to Resend (`noreply@connect.eaa84.org`), and use a single combined email with **To: buddy + new member, BCC: membership@eaa84.org** instead of two separate sends.
+Adds per-thread subscriptions to Hangar Talk, with a once-a-day digest email summarizing new activity. Email infra reuses the existing Lovable Emails pipeline (`notify.eaa84.org` + `enqueue_email` + `process-email-queue`). Auto-login on "View Thread" via a short-lived signed token. Subscription management lives in-thread (no separate page).
 
-This is a tightly-scoped, Buddy-only change. All other emails (auth, new member application notifications, queue infrastructure) stay on the existing Lovable Emails path. We'll revisit those separately.
+---
 
-## Behavior changes
+## 1. Subscribe Toggle (in-thread)
 
-Today (per assignment + email_type):
-- Two separate enqueues into `transactional_emails` (one to new member, one to buddy)
-- Each has the other person as `Reply-To`, BCC: membership@eaa84.org
-- From: `EAA Chapter 84 <notify@notify.eaa84.org>`
+- Add a Subscribe control on the full post view (`HangarTalkPost.tsx`) — bell icon + "Subscribe"/"Subscribed" label, secondary styling, near the post header.
+- Single tap toggles state with optimistic UI + toast on failure.
+- Auto-subscribe rules:
+  - When a member creates a post → toggle subscription to on.
+  - For everybody else default subscription toggle is off
+- On the Hangar Talk list page (`HangarTalk.tsx`), show a small bell badge on rows the current member is subscribed to (per user's directive — no separate "manage subscriptions" page).
 
-After:
-- **One** Resend API call per send
-- To: `[newMember, buddy]`
-- BCC: `membership@eaa84.org`
-- Reply-To: both addresses, so "Reply All" continues the 3-way thread naturally
-- From: `EAA Chapter 84 <noreply@connect.eaa84.org>`
-- Still gated by the existing `buddy_email_log` idempotency check, still requires officer/admin, still uses the existing `buddy_email_templates` and `[NewMemberName]/[BuddyName]/[NewMemberEmail]/[BuddyEmail]` placeholders.
+## 2. Daily Digest Email
 
-No DB schema changes. No queue/cron changes. No UI changes.
+- Runs once per day (early morning, chapter local time) via pg_cron calling a new edge function `hangar-talk-digest`.
+- For each subscriber, gather subscribed threads with replies created after `last_notified_at` (or subscription creation if never notified). Skip the recipient entirely if there's no new activity.
+- One email per recipient per day, max. Update `last_notified_at` after enqueue.
+- Enqueue via existing `enqueue_email('transactional_emails', ...)` so suppression list, retries, and unsubscribe footer all reuse the existing pipeline.
+- Email content per thread section: type badge, title, new-reply count, latest reply preview (author + truncated text), **View Thread** button (signed auto-login link), and a small "Unsubscribe from this thread" link (signed token, one-click GET).
+- Footer: standard Connect branding + "Unsubscribe from all Hangar Talk emails" (bulk action, signed token).
 
-## Technical details
+## 3. Auto-Login "View Thread" Link
 
-1. **Edit `supabase/functions/buddy-email-send/index.ts`**
-   - Remove the per-recipient loop and the `enqueue_email` RPC call.
-   - Remove `getOrCreateUnsubscribeToken` and the unsubscribe-token plumbing (Buddy emails are 1-of-2 lifecycle messages between two named individuals — an unsubscribe link is not meaningful here, and Resend's account-level suppression still applies).
-   - Build one Resend payload:
-     ```ts
-     {
-       from: 'EAA Chapter 84 <noreply@connect.eaa84.org>',
-       to: [newMemberEmail, buddyEmail],
-       bcc: ['membership@eaa84.org'],
-       reply_to: [newMemberEmail, buddyEmail],
-       subject: processedSubject,
-       html: htmlBody,
-       text: plainTextBody,
-       headers: { 'X-Entity-Ref-ID': `buddy-${assignment_id}-${email_type}` },
-       tags: [{ name: 'category', value: `buddy_${email_type}` }],
-     }
-     ```
-   - POST to `https://api.resend.com/emails` with `Authorization: Bearer ${RESEND_API_KEY}` (the same secret the working `resend-test` function uses).
-   - On non-2xx Resend response: return 500 with Resend's error message; do NOT write to `buddy_email_log`.
-   - On success: insert into `buddy_email_log` (unchanged) so the duplicate-send guard keeps working.
+- Signed short-lived token (HMAC over `{key_id, post_id, exp}` with 7-day expiry) baked into the link.
+- New edge function `hangar-talk-auth-redirect` validates the token, creates a Supabase session for the matching roster email via `admin.generateLink` / `setSession`, sets cookies, then 302 → `/hangar-talk/<post_id>`.
+- If token expired/invalid → redirect to `/auth` with a friendly message; user signs in via normal OTP.
 
-2. **Keep**:
-   - Auth check (Bearer token → officer/admin or service role).
-   - Idempotency check against `buddy_email_log` at the top.
-   - Template lookup + placeholder substitution + HTML escaping + mailto linkification.
-   - Function name and request contract (`{ assignment_id, email_type }`) — no caller changes needed.
+## 4. Per-Thread / Bulk Unsubscribe from Email
 
-3. **Out of scope (explicitly NOT changing in this step)**:
-   - `process-email-queue`, `send-transactional-email`, `auth-email-hook`, `new-member-notify`, the `notify_new_member_application` DB trigger, `volunteer-apply`, etc.
-   - `resend-test` function (leave as-is for future ad-hoc testing).
-   - `email_send_log` / `suppressed_emails` tables — Buddy sends won't write to them after this change. That's an accepted trade-off until we migrate the rest.
+- Per-thread unsubscribe link uses a signed token; GET endpoint deletes that one subscription, shows a branded confirmation page.
+- "Unsubscribe from all" uses a signed token; deletes all the recipient's Hangar Talk subscriptions and shows confirmation.
+- Both are no-auth-required (token is the proof) and are separate from the global email suppression list — they only touch Hangar Talk subscriptions, so future manual subscribes still work.
 
-## Verification
+## 5. Privacy
 
-After deploy:
-1. From the Buddy admin UI, trigger an `intro` send on a test assignment where membership@eaa84.org is one of the addresses you can read, OR re-fire against a known assignment and confirm:
-   - One Resend message ID returned (check function logs).
-   - One copy each arrives at the new member, buddy, and membership@ inboxes.
-   - Reply All from any of the three reaches the other two.
-2. Try sending the same `assignment_id` + `email_type` again → should return "already sent" (idempotency guard intact).
+- Subscriptions are private. RLS restricts SELECT/INSERT/DELETE to `auth.uid()` of the owning member. Officers/admins do NOT get visibility.
+- Service role (used by the digest function) bypasses RLS as usual.
 
-## Rollback
+---
 
-Revert `buddy-email-send/index.ts` to the previous version (single-file change).
+## Technical Details
+
+### New table
+
+```sql
+create table public.hangar_talk_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references hangar_talk_posts(id) on delete cascade,
+  key_id integer not null references roster_members(key_id) on delete cascade,
+  created_at timestamptz not null default now(),
+  last_notified_at timestamptz,                 -- last time included in a digest
+  unique (post_id, key_id)
+);
+
+grant select, insert, delete on public.hangar_talk_subscriptions to authenticated;
+grant all on public.hangar_talk_subscriptions to service_role;
+alter table public.hangar_talk_subscriptions enable row level security;
+
+-- Owner-only RLS scoped by roster email
+create policy "own subs select" on public.hangar_talk_subscriptions
+  for select to authenticated using (public.is_roster_self(key_id));
+create policy "own subs insert" on public.hangar_talk_subscriptions
+  for insert to authenticated with check (public.is_roster_self(key_id));
+create policy "own subs delete" on public.hangar_talk_subscriptions
+  for delete to authenticated using (public.is_roster_self(key_id));
+
+create index on public.hangar_talk_subscriptions(key_id);
+create index on public.hangar_talk_subscriptions(post_id);
+```
+
+### Auto-subscribe triggers
+
+- `after insert on hangar_talk_posts` → insert subscription for author's `key_id`.
+- `after insert on hangar_talk_replies` → upsert subscription for reply author's `key_id` (on conflict do nothing).
+
+### New secret
+
+- `HANGAR_TALK_LINK_SECRET` — HMAC signing key for both auto-login and unsubscribe tokens. Generated via `generate_secret` (64 chars).
+
+### New edge functions
+
+- `hangar-talk-digest` (cron, service role) — assembles per-recipient digests and calls `enqueue_email`. Renders raw HTML inline (same pattern as `notify_new_member_application`) so it works with the existing queue without a React Email template.
+- `hangar-talk-auth-redirect` — verifies signed login token, mints session, 302 to thread.
+- `hangar-talk-unsubscribe` — verifies signed unsub token; supports `scope=thread|all`; deletes rows; returns a small HTML confirmation page.
+
+### Cron
+
+- pg_cron job `hangar_talk_digest_daily` at e.g. 12:00 UTC (≈ 06:00 Central) invoking the digest function. Created via migration alongside infra.
+
+### Frontend
+
+- `src/lib/hangarTalk/subscriptions.ts` — `subscribe(postId)`, `unsubscribe(postId)`, `isSubscribed(postId)`, `useSubscribedPostIds()` hook.
+- `HangarTalkPost.tsx` — add SubscribeToggle component.
+- `HangarTalk.tsx` / `PostRow.tsx` — render bell badge when the row's `post.id` is in the subscribed set.
+- `HangarTalkNew.tsx` / `ReplyComposer.tsx` — no client changes needed; triggers handle auto-subscribe.
+
+### Out of scope (per spec)
+
+- Real-time / immediate notifications
+- Push notifications
+- Per-post frequency settings
+- Officer visibility into subscription data
+- Dedicated subscriptions management page (intentionally replaced by in-thread toggle + bell badges)
