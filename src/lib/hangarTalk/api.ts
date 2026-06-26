@@ -99,6 +99,8 @@ async function fetchAuthors(keyIds: number[]): Promise<Map<number, AuthorRef>> {
 export function usePosts() {
   return useQuery({
     queryKey: ["ht-posts"],
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
     queryFn: async (): Promise<Post[]> => {
       const { data: postRows, error } = await supabase
         .from("hangar_talk_posts" as any)
