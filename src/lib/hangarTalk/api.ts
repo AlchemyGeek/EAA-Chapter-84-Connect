@@ -425,11 +425,12 @@ export function useCreateReply() {
         const { data: userRes } = await supabase.auth.getUser();
         const uid = userRes.user?.id;
         if (!uid) throw new Error("Not signed in");
-        imagePath = `${uid}/${args.post_id}/reply-${Date.now()}-${args.image.name.replace(/[^\w.\-]/g, "_")}`;
+        const prepared = await prepareImageForUpload(args.image);
+        imagePath = `${uid}/${args.post_id}/reply-${Date.now()}-${prepared.name.replace(/[^\w.\-]/g, "_")}`;
         const { error: upErr } = await supabase.storage
           .from(HANGAR_TALK_BUCKET)
-          .upload(imagePath, args.image, { upsert: false });
-        if (upErr) throw upErr;
+          .upload(imagePath, prepared, { upsert: false, contentType: prepared.type });
+        if (upErr) throw new Error(`Image upload failed: ${upErr.message}`);
       }
       const { error } = await supabase
         .from("hangar_talk_replies" as any)
