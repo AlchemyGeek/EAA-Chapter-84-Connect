@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Download, Plus, RefreshCw, Minus, CheckCircle2 } from "lucide-react";
-import { exportMembersToExcel, exportMembersToCsv, exportDiffToExcel, exportDiffToCsv } from "@/lib/export";
+import { exportMembersToExcel, exportMembersToCsv, exportDiffToExcel, exportDiffToCsv, exportChapterBackupToExcel, exportChapterBackupToCsv } from "@/lib/export";
 import { diffCurrentVsSnapshots } from "@/lib/diffMembers";
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
@@ -71,6 +71,34 @@ export default function Export() {
       return all;
     },
     enabled: !!lastImport?.id,
+  });
+
+  const { data: chapterBackup, isLoading: backupLoading } = useQuery({
+    queryKey: ["chapter-backup"],
+    queryFn: async () => {
+      const [cd, subs, tags] = await Promise.all([
+        supabase.from("member_chapter_data").select("*").order("key_id"),
+        supabase.from("hangar_talk_subscriptions").select("*").order("key_id"),
+        supabase
+          .from("hangar_talk_member_tags")
+          .select("key_id, tag_id, hangar_talk_tags(label)")
+          .order("key_id"),
+      ]);
+      if (cd.error) throw cd.error;
+      if (subs.error) throw subs.error;
+      if (tags.error) throw tags.error;
+      return {
+        members,
+        chapterData: cd.data ?? [],
+        hangarTalkSubscriptions: subs.data ?? [],
+        hangarTalkMemberTags: (tags.data ?? []).map((r: any) => ({
+          key_id: r.key_id,
+          tag_id: r.tag_id,
+          tag_label: r.hangar_talk_tags?.label ?? "",
+        })),
+      };
+    },
+    enabled: members.length > 0,
   });
 
   const localChanges = useMemo(() => {
@@ -172,6 +200,42 @@ export default function Export() {
           </Button>
           <Button variant="outline" className="gap-2 w-full sm:w-auto min-h-[44px]" onClick={() => exportMembersToExcel(members)} disabled={membersLoading}>
             <Download className="h-4 w-4" /> Excel
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Chapter Data Backup</CardTitle>
+          <CardDescription>
+            Download chapter-side data that is not part of the EAA roster: directory visibility, internal/volunteer notes,
+            application status, payment notes, and Hangar Talk subscriptions and profile tags. Keep this as a safety net —
+            roster reimports can wipe these tables.
+            {chapterBackup && (
+              <span className="block mt-1 text-xs">
+                {chapterBackup.chapterData.length} chapter records ·{" "}
+                {chapterBackup.hangarTalkSubscriptions.length} subscriptions ·{" "}
+                {chapterBackup.hangarTalkMemberTags.length} profile tags
+              </span>
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col sm:flex-row gap-3">
+          <Button
+            variant="outline"
+            className="gap-2 w-full sm:w-auto min-h-[44px]"
+            onClick={() => chapterBackup && exportChapterBackupToCsv(chapterBackup)}
+            disabled={backupLoading || !chapterBackup}
+          >
+            <Download className="h-4 w-4" /> CSV (4 files)
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2 w-full sm:w-auto min-h-[44px]"
+            onClick={() => chapterBackup && exportChapterBackupToExcel(chapterBackup)}
+            disabled={backupLoading || !chapterBackup}
+          >
+            <Download className="h-4 w-4" /> Excel (multi-sheet)
           </Button>
         </CardContent>
       </Card>
