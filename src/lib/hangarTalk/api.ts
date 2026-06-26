@@ -290,19 +290,34 @@ export function useCreatePost() {
         const uid = userRes.user?.id;
         if (!uid) throw new Error("Not signed in");
         const uploads: { storage_path: string; position: number }[] = [];
-        for (let i = 0; i < args.images.length; i++) {
-          const f = args.images[i];
-          const path = `${uid}/${postId}/${Date.now()}-${i}-${f.name.replace(/[^\w.\-]/g, "_")}`;
-          const { error: upErr } = await supabase.storage
-            .from(HANGAR_TALK_BUCKET)
-            .upload(path, f, { upsert: false });
-          if (upErr) throw upErr;
-          uploads.push({ storage_path: path, position: i });
+        try {
+          for (let i = 0; i < args.images.length; i++) {
+            const prepared = await prepareImageForUpload(args.images[i]);
+            const path = `${uid}/${postId}/${Date.now()}-${i}-${prepared.name.replace(/[^\w.\-]/g, "_")}`;
+            const { error: upErr } = await supabase.storage
+              .from(HANGAR_TALK_BUCKET)
+              .upload(path, prepared, { upsert: false, contentType: prepared.type });
+            if (upErr) throw upErr;
+            uploads.push({ storage_path: path, position: i });
+          }
+          const { error: imgErr } = await supabase
+            .from("hangar_talk_post_images" as any)
+            .insert(uploads.map((u) => ({ ...u, post_id: postId })));
+          if (imgErr) throw imgErr;
+        } catch (err) {
+          // Roll back so we don't leave an empty post in the feed.
+          if (uploads.length) {
+            await supabase.storage
+              .from(HANGAR_TALK_BUCKET)
+              .remove(uploads.map((u) => u.storage_path));
+          }
+          await supabase.from("hangar_talk_posts" as any).delete().eq("id", postId);
+          const msg =
+            err instanceof Error
+              ? err.message
+              : "Image upload failed. Please try a smaller image.";
+          throw new Error(`Image upload failed: ${msg}`);
         }
-        const { error: imgErr } = await supabase
-          .from("hangar_talk_post_images" as any)
-          .insert(uploads.map((u) => ({ ...u, post_id: postId })));
-        if (imgErr) throw imgErr;
       }
 
       if (args.tag_ids && args.tag_ids.length) {
