@@ -30,7 +30,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
-import { useHangarTalkUnreadCount } from "@/lib/hangarTalk/api";
 
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
@@ -147,9 +146,6 @@ export default function MemberHome() {
       return count ?? 0;
     },
   });
-
-  const { data: hangarTalkUnread = 0 } = useHangarTalkUnreadCount();
-
 
   // Fetch pending new member applications count
   const { data: pendingAppCount = 0 } = useQuery({
@@ -680,7 +676,6 @@ export default function MemberHome() {
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
                 <AdminLink to="/classifieds" icon={Tag} label="Classifieds" />
-                <AdminLink to={impersonateKeyId ? `/hangar-talk?viewAs=${impersonateKeyId}` : "/hangar-talk"} icon={MessageSquare} label={`Hangar Talk${hangarTalkUnread > 0 ? ` (${hangarTalkUnread})` : ""}`} />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 
               </>
