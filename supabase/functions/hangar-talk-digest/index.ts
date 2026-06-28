@@ -226,7 +226,6 @@ Deno.serve(async (req) => {
           purpose: "transactional",
           label: "hangar_talk_digest",
           idempotency_key: idempotencyKey,
-          unsubscribe_token: globalUnsub,
           message_id: messageId,
           queued_at: new Date().toISOString(),
         },
