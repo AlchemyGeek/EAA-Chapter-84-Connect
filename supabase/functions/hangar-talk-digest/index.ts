@@ -184,22 +184,9 @@ Deno.serve(async (req) => {
       );
       const unsubAllUrl = `${supabaseUrl}/functions/v1/hangar-talk-link?token=${encodeURIComponent(unsubAllToken)}`;
 
-      // Standard email-pipeline unsubscribe token (global), reused if present.
-      const { data: existingToken } = await supabase
-        .from("email_unsubscribe_tokens")
-        .select("token")
-        .eq("email", recipient)
-        .is("used_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      let globalUnsub = existingToken?.token;
-      if (!globalUnsub) {
-        globalUnsub = crypto.randomUUID();
-        await supabase
-          .from("email_unsubscribe_tokens")
-          .insert({ email: recipient, token: globalUnsub });
-      }
+      // No global unsubscribe token here — the Hangar Talk digest renders its
+      // own "Unsubscribe from all Hangar Talk emails" link, so we skip the
+      // standard email-pipeline footer to avoid a duplicate unsubscribe block.
 
       const messageId = crypto.randomUUID();
       const idempotencyKey = `ht-digest-${messageId}`;
@@ -239,7 +226,6 @@ Deno.serve(async (req) => {
           purpose: "transactional",
           label: "hangar_talk_digest",
           idempotency_key: idempotencyKey,
-          unsubscribe_token: globalUnsub,
           message_id: messageId,
           queued_at: new Date().toISOString(),
         },
