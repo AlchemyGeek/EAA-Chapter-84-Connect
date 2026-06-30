@@ -228,14 +228,13 @@ Deno.serve(async (req) => {
       ${sections.join("\n")}
     </div>
     <div style="margin-top:18px;font-size:12px;color:#6b7280;text-align:center;line-height:1.6;">
-      You're receiving this because you subscribed to one or more Hangar Talk threads.<br/>
-      <a href="${unsubAllUrl}" style="color:#6b7280;text-decoration:underline;">Unsubscribe from all Hangar Talk emails</a>
+      You're receiving this because you subscribed to one or more Hangar Talk threads.
     </div>
   </div>
 </div>`.trim();
 
       const text = textSections.join("\n---\n") +
-        `\n\nUnsubscribe from all Hangar Talk emails: ${unsubAllUrl}\n`;
+        `\n\nYou're receiving this because you subscribed to one or more Hangar Talk threads.\n`;
 
       const { error: enqueueError } = await supabase.rpc("enqueue_email", {
         queue_name: "transactional_emails",
