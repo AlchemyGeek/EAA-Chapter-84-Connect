@@ -184,9 +184,32 @@ Deno.serve(async (req) => {
       );
       const unsubAllUrl = `${supabaseUrl}/functions/v1/hangar-talk-link?token=${encodeURIComponent(unsubAllToken)}`;
 
-      // No global unsubscribe token here — the Hangar Talk digest renders its
-      // own "Unsubscribe from all Hangar Talk emails" link, so we skip the
-      // standard email-pipeline footer to avoid a duplicate unsubscribe block.
+      // The Lovable email API requires an unsubscribe_token on every
+      // transactional send. Fetch or create the recipient's global token so
+      // the pipeline appends its standard unsubscribe footer (single footer,
+      // no duplicate Hangar Talk one above).
+      let globalUnsubToken: string | null = null;
+      const { data: existingTok } = await supabase
+        .from("email_unsubscribe_tokens")
+        .select("token")
+        .eq("email", recipient)
+        .is("used_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existingTok?.token) {
+        globalUnsubToken = existingTok.token as string;
+      } else {
+        const newTok = crypto.randomUUID();
+        const { error: tokErr } = await supabase
+          .from("email_unsubscribe_tokens")
+          .insert({ email: recipient, token: newTok });
+        if (!tokErr) globalUnsubToken = newTok;
+      }
+      if (!globalUnsubToken) {
+        console.error(`Could not obtain unsubscribe token for ${recipient}; skipping.`);
+        continue;
+      }
 
       const messageId = crypto.randomUUID();
       const idempotencyKey = `ht-digest-${messageId}`;
@@ -226,6 +249,7 @@ Deno.serve(async (req) => {
           purpose: "transactional",
           label: "hangar_talk_digest",
           idempotency_key: idempotencyKey,
+          unsubscribe_token: globalUnsubToken,
           message_id: messageId,
           queued_at: new Date().toISOString(),
         },
