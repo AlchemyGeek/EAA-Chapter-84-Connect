@@ -19,8 +19,9 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
   UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, Activity, Newspaper,
-  ClipboardList, Vote, Tag,
+  ClipboardList, Vote, Tag, MessageSquare,
 } from "lucide-react";
+
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import {
