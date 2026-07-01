@@ -8,6 +8,7 @@ import { EditableSection } from "@/components/member/EditableSection";
 import type { EditableFieldDef } from "@/components/member/EditableSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -19,8 +20,9 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
   UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, Activity, Newspaper,
-  ClipboardList, Vote, Tag,
+  ClipboardList, Vote, Tag, MessageSquare,
 } from "lucide-react";
+
 import { useIsOfficer } from "@/hooks/useIsOfficer";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import {
@@ -676,6 +678,7 @@ export default function MemberHome() {
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
                 <AdminLink to="/classifieds" icon={Tag} label="Classifieds" />
+                <AdminLink to="/hangar-talk" icon={MessageSquare} label="Hangar Talk" badge="New" />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 
               </>
@@ -801,7 +804,7 @@ export default function MemberHome() {
 }
 
 
-function AdminLink({ to, icon: Icon, label }: { to: string; icon: typeof Users; label: string }) {
+function AdminLink({ to, icon: Icon, label, badge }: { to: string; icon: typeof Users; label: string; badge?: string }) {
   return (
     <Link
       to={to}
@@ -810,6 +813,11 @@ function AdminLink({ to, icon: Icon, label }: { to: string; icon: typeof Users; 
       <span className="flex items-center gap-2.5">
         <Icon className="h-4 w-4 text-muted-foreground" />
         {label}
+        {badge && (
+          <Badge className="ml-1.5 h-5 px-1.5 text-[10px] font-semibold uppercase tracking-wide bg-accent text-accent-foreground hover:bg-accent">
+            {badge}
+          </Badge>
+        )}
       </span>
       <ChevronRight className="h-4 w-4 text-muted-foreground" />
     </Link>
