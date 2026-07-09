@@ -1,106 +1,94 @@
-# Hangar Talk — Subscriptions & Daily Digest
+# Squawk — Homepage Rotating Content Strip
 
-Adds per-thread subscriptions to Hangar Talk, with a once-a-day digest email summarizing new activity. Email infra reuses the existing Lovable Emails pipeline (`notify.eaa84.org` + `enqueue_email` + `process-email-queue`). Auto-login on "View Thread" via a short-lived signed token. Subscription management lives in-thread (no separate page).
+A full-width single-slot carousel at the top of the Member Home page. Auto-advances every 6s, swipeable, refreshes on every load. Manual admin-authored content takes priority; auto-generated slides fill the rest.
 
----
+## User-facing behavior
 
-## 1. Subscribe Toggle (in-thread)
+- Placement: top of `/home`, above the Status Dashboard, full-width single card.
+- Carousel: 3–5 slides per session, one visible at a time, auto-advances every 6s, swipeable on touch, left/right arrow dots for keyboard/mouse. Pause on hover.
+- Fresh on every homepage load — no read/unread, no dismiss.
+- Subtle type distinction: same card, small uppercase label at the top of each card (e.g. "Announcement", "New Member", "Classifieds", "Hangar Talk", "Quote"). No accent colors.
+- Interactions:
+  - Announcement / What's New → clickable only if admin provided a link
+  - Classifieds highlight → routes to `/classifieds/:id`
+  - Hangar Talk highlight → routes to `/hangar-talk/:id`
+  - Welcome new member → `mailto:<roster_email>?subject=Welcome to EAA Chapter 84!`
+  - Quote → not clickable
 
-- Add a Subscribe control on the full post view (`HangarTalkPost.tsx`) — bell icon + "Subscribe"/"Subscribed" label, secondary styling, near the post header.
-- Single tap toggles state with optimistic UI + toast on failure.
-- Auto-subscribe rules:
-  - When a member creates a post → toggle subscription to on.
-  - For everybody else default subscription toggle is off
-- On the Hangar Talk list page (`HangarTalk.tsx`), show a small bell badge on rows the current member is subscribed to (per user's directive — no separate "manage subscriptions" page).
+## Priority / selection logic (client-side, on each load)
 
-## 2. Daily Digest Email
+1. If any active manual entries exist (not expired), 1 takes the first slot. If 2+ active, up to 2 may appear.
+2. Remaining slots filled from auto pool with weighting:
+   - Welcome (any roster member joined in last 30 days) — high
+   - Classifieds highlight (newest active listing OR one nearing expiration) — medium
+   - Hangar Talk highlight (recent-reply thread OR open "Help Wanted") — medium
+   - Quote — filler, always available
+3. Within each type, random pick among eligible items so repeat visits feel varied.
+4. Always render at least 3 slots — quotes repeat if pool is thin.
 
-- Runs once per day (early morning, chapter local time) via pg_cron calling a new edge function `hangar-talk-digest`.
-- For each subscriber, gather subscribed threads with replies created after `last_notified_at` (or subscription creation if never notified). Skip the recipient entirely if there's no new activity.
-- One email per recipient per day, max. Update `last_notified_at` after enqueue.
-- Enqueue via existing `enqueue_email('transactional_emails', ...)` so suppression list, retries, and unsubscribe footer all reuse the existing pipeline.
-- Email content per thread section: type badge, title, new-reply count, latest reply preview (author + truncated text), **View Thread** button (signed auto-login link), and a small "Unsubscribe from this thread" link (signed token, one-click GET).
-- Footer: standard Connect branding + "Unsubscribe from all Hangar Talk emails" (bulk action, signed token).
+## Admin UI
 
-## 3. Auto-Login "View Thread" Link
+New admin section on Site Config page: "Squawk announcements".
 
-- Signed short-lived token (HMAC over `{key_id, post_id, exp}` with 7-day expiry) baked into the link.
-- New edge function `hangar-talk-auth-redirect` validates the token, creates a Supabase session for the matching roster email via `admin.generateLink` / `setSession`, sets cookies, then 302 → `/hangar-talk/<post_id>`.
-- If token expired/invalid → redirect to `/auth` with a friendly message; user signs in via normal OTP.
+- List of active + expired entries, newest first
+- Create form: Title (required, ≤80 chars), Short message (required, ≤200 chars), Link (optional URL), Type (Announcement / What's New), Expires in (weeks or months from now, dropdown: 1/2/4 weeks, 2/3/6 months)
+- Edit / delete existing entries
+- Expired entries shown greyed with "Expired" label; auto-hidden from carousel
 
-## 4. Per-Thread / Bulk Unsubscribe from Email
+Admin-only access, gated by existing `isAdmin` check.
 
-- Per-thread unsubscribe link uses a signed token; GET endpoint deletes that one subscription, shows a branded confirmation page.
-- "Unsubscribe from all" uses a signed token; deletes all the recipient's Hangar Talk subscriptions and shows confirmation.
-- Both are no-auth-required (token is the proof) and are separate from the global email suppression list — they only touch Hangar Talk subscriptions, so future manual subscribes still work.
+## Data model
 
-## 5. Privacy
+New public table `squawk_entries`:
 
-- Subscriptions are private. RLS restricts SELECT/INSERT/DELETE to `auth.uid()` of the owning member. Officers/admins do NOT get visibility.
-- Service role (used by the digest function) bypasses RLS as usual.
-
----
-
-## Technical Details
-
-### New table
-
-```sql
-create table public.hangar_talk_subscriptions (
-  id uuid primary key default gen_random_uuid(),
-  post_id uuid not null references hangar_talk_posts(id) on delete cascade,
-  key_id integer not null references roster_members(key_id) on delete cascade,
-  created_at timestamptz not null default now(),
-  last_notified_at timestamptz,                 -- last time included in a digest
-  unique (post_id, key_id)
-);
-
-grant select, insert, delete on public.hangar_talk_subscriptions to authenticated;
-grant all on public.hangar_talk_subscriptions to service_role;
-alter table public.hangar_talk_subscriptions enable row level security;
-
--- Owner-only RLS scoped by roster email
-create policy "own subs select" on public.hangar_talk_subscriptions
-  for select to authenticated using (public.is_roster_self(key_id));
-create policy "own subs insert" on public.hangar_talk_subscriptions
-  for insert to authenticated with check (public.is_roster_self(key_id));
-create policy "own subs delete" on public.hangar_talk_subscriptions
-  for delete to authenticated using (public.is_roster_self(key_id));
-
-create index on public.hangar_talk_subscriptions(key_id);
-create index on public.hangar_talk_subscriptions(post_id);
+```
+id uuid pk default gen_random_uuid()
+type text check in ('announcement','whats_new')
+title text not null
+message text not null
+link text
+created_by uuid references auth.users(id) on delete set null
+created_at timestamptz default now()
+expires_at timestamptz not null
 ```
 
-### Auto-subscribe triggers
+Grants + RLS:
+- `GRANT SELECT ON public.squawk_entries TO authenticated` (any signed-in member can read active entries for the carousel)
+- `GRANT INSERT, UPDATE, DELETE ON public.squawk_entries TO authenticated` (guarded by policy)
+- `GRANT ALL ON public.squawk_entries TO service_role`
+- RLS enabled
+- Policies:
+  - `SELECT` for authenticated (all rows — needed so admin UI sees expired too; carousel filters client-side by `expires_at > now()`)
+  - `INSERT/UPDATE/DELETE` only if `has_role(auth.uid(), 'admin')`
 
-- `after insert on hangar_talk_posts` → insert subscription for author's `key_id`.
-- `after insert on hangar_talk_replies` → upsert subscription for reply author's `key_id` (on conflict do nothing).
+New static quote list `src/lib/squawk/quotes.ts` — seeded with placeholder aviation quotes now, user will provide the final list to paste in.
 
-### New secret
+## Auto content queries
 
-- `HANGAR_TALK_LINK_SECRET` — HMAC signing key for both auto-login and unsubscribe tokens. Generated via `generate_secret` (64 chars).
+Consolidated fetch in `src/lib/squawk/build.ts` (React Query, 5-minute cache):
 
-### New edge functions
+- Manual: `squawk_entries` where `expires_at > now()`
+- Welcome: `roster_members` where `date_joined >= now() - 30 days` and `current_standing = 'Active'`, respecting `email_privacy` (skip if email hidden)
+- Classifieds: `classifieds` where `status = 'active'`, prefer newest OR nearest to expiration
+- Hangar Talk: `hangar_talk_posts` where `type = 'help_wanted' and resolved_at is null`, OR newest `last_activity_at`
 
-- `hangar-talk-digest` (cron, service role) — assembles per-recipient digests and calls `enqueue_email`. Renders raw HTML inline (same pattern as `notify_new_member_application`) so it works with the existing queue without a React Email template.
-- `hangar-talk-auth-redirect` — verifies signed login token, mints session, 302 to thread.
-- `hangar-talk-unsubscribe` — verifies signed unsub token; supports `scope=thread|all`; deletes rows; returns a small HTML confirmation page.
+## Files
 
-### Cron
+New:
+- `supabase/migrations/<ts>_squawk_entries.sql` — table + grants + RLS
+- `src/lib/squawk/types.ts`, `src/lib/squawk/quotes.ts`, `src/lib/squawk/build.ts` (selection + weighting)
+- `src/components/squawk/Squawk.tsx` — carousel container (uses embla-carousel, already in deps via shadcn)
+- `src/components/squawk/SquawkSlide.tsx` — single card renderer per type
+- `src/components/admin/SquawkAdmin.tsx` — admin CRUD panel
 
-- pg_cron job `hangar_talk_digest_daily` at e.g. 12:00 UTC (≈ 06:00 Central) invoking the digest function. Created via migration alongside infra.
+Edited:
+- `src/pages/MemberHome.tsx` — mount `<Squawk />` at top, above status card
+- `src/pages/SiteConfig.tsx` — add collapsible "Squawk announcements" section for admins
+- `src/integrations/supabase/types.ts` — regenerated after migration
 
-### Frontend
+## Out of scope (per spec)
 
-- `src/lib/hangarTalk/subscriptions.ts` — `subscribe(postId)`, `unsubscribe(postId)`, `isSubscribed(postId)`, `useSubscribedPostIds()` hook.
-- `HangarTalkPost.tsx` — add SubscribeToggle component.
-- `HangarTalk.tsx` / `PostRow.tsx` — render bell badge when the row's `post.id` is in the subscribed set.
-- `HangarTalkNew.tsx` / `ReplyComposer.tsx` — no client changes needed; triggers handle auto-subscribe.
-
-### Out of scope (per spec)
-
-- Real-time / immediate notifications
-- Push notifications
-- Per-post frequency settings
-- Officer visibility into subscription data
-- Dedicated subscriptions management page (intentionally replaced by in-thread toggle + bell badges)
+- Dismiss / read state
+- Personalization / targeting
+- Admin-editable quote pool (user provides static list)
+- Distinct accent colors per type (using subtle label only)

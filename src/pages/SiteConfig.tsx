@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChapterLeadership } from "@/components/admin/ChapterLeadership";
 import { BuddyEmailTemplates } from "@/components/admin/BuddyEmailTemplates";
+import { SquawkAdmin } from "@/components/admin/SquawkAdmin";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -383,12 +384,16 @@ export default function SiteConfig() {
           </Card>
         </Collapsible>
 
+        {/* Squawk Announcements Section */}
+        <SquawkAdmin />
+
         {/* Buddy Program Emails Section */}
         <BuddyEmailTemplates />
 
         {/* Chapter Leadership Section */}
         <ChapterLeadership />
       </div>
+
 
       {/* Add/Edit Link Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
