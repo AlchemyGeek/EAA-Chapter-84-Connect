@@ -6,8 +6,17 @@ import { SquawkSlide, SQUAWK_KIND_PROGRESS } from "./SquawkSlide";
 import { cn } from "@/lib/utils";
 
 
-const AUTO_ADVANCE_MS = 6000;
+const MIN_MS = 7000;
+const MAX_MS = 10000;
 const TICK_MS = 50;
+
+function durationFor(slide: { title: string; body?: string } | undefined): number {
+  if (!slide) return MIN_MS;
+  const chars = (slide.title?.length ?? 0) + (slide.body?.length ?? 0);
+  // ~180 wpm reading ≈ 15 chars/sec. Add a small buffer per char above 60.
+  const extra = Math.min(MAX_MS - MIN_MS, Math.max(0, (chars - 60) * 20));
+  return Math.round(MIN_MS + extra);
+}
 
 export function Squawk() {
   const [seed] = useState(() => Date.now());
@@ -21,6 +30,9 @@ export function Squawk() {
   const [selected, setSelected] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const pausedRef = useRef(false);
+
+  const activeSlide = slides[selected];
+  const activeDuration = durationFor(activeSlide);
 
   useEffect(() => {
     if (!embla) return;
@@ -41,7 +53,7 @@ export function Squawk() {
       if (pausedRef.current || document.visibilityState !== "visible") return;
       setElapsed((prev) => {
         const next = prev + TICK_MS;
-        if (next >= AUTO_ADVANCE_MS) {
+        if (next >= activeDuration) {
           embla.scrollNext();
           return 0;
         }
@@ -49,13 +61,13 @@ export function Squawk() {
       });
     }, TICK_MS);
     return () => clearInterval(id);
-  }, [embla, slides.length]);
+  }, [embla, slides.length, activeDuration]);
 
   if (!slides.length) return null;
 
-  const progress = slides.length > 1 ? Math.min(100, (elapsed / AUTO_ADVANCE_MS) * 100) : 0;
-  const activeSlide = slides[selected];
+  const progress = slides.length > 1 ? Math.min(100, (elapsed / activeDuration) * 100) : 0;
   const progressColor = activeSlide ? SQUAWK_KIND_PROGRESS[activeSlide.kind] : "bg-primary";
+
 
   return (
     <div
