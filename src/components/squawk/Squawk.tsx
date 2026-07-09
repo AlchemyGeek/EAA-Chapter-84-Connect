@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { useQuery } from "@tanstack/react-query";
 import { buildSquawkSlides } from "@/lib/squawk/build";
-import { SquawkSlide } from "./SquawkSlide";
+import { SquawkSlide, SQUAWK_KIND_PROGRESS } from "./SquawkSlide";
 import { cn } from "@/lib/utils";
+
 
 const AUTO_ADVANCE_MS = 6000;
 const TICK_MS = 50;
