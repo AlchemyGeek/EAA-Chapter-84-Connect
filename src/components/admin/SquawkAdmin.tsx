@@ -233,8 +233,9 @@ export function SquawkAdmin() {
               <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} />
             </div>
             <div>
-              <Label className="text-xs">Message <span className="text-muted-foreground">({message.length}/200)</span></Label>
+              <Label className="text-xs">Message (optional) <span className="text-muted-foreground">({message.length}/200)</span></Label>
               <Textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={200} rows={3} />
+
             </div>
             <div>
               <Label className="text-xs">Link (optional)</Label>
