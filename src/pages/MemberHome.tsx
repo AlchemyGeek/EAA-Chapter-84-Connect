@@ -483,8 +483,6 @@ export default function MemberHome() {
           </Card>
         )}
 
-        {/* Squawk carousel — below status, above contact info */}
-        <Squawk />
 
 
         {/* Prospect (application pending) CTA */}
