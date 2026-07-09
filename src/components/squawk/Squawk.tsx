@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { useQuery } from "@tanstack/react-query";
 import { buildSquawkSlides } from "@/lib/squawk/build";
-import { SquawkSlide } from "./SquawkSlide";
+import { SquawkSlide, SQUAWK_KIND_PROGRESS } from "./SquawkSlide";
 import { cn } from "@/lib/utils";
+
 
 const AUTO_ADVANCE_MS = 6000;
 const TICK_MS = 50;
@@ -53,6 +54,8 @@ export function Squawk() {
   if (!slides.length) return null;
 
   const progress = slides.length > 1 ? Math.min(100, (elapsed / AUTO_ADVANCE_MS) * 100) : 0;
+  const activeSlide = slides[selected];
+  const progressColor = activeSlide ? SQUAWK_KIND_PROGRESS[activeSlide.kind] : "bg-primary";
 
   return (
     <div
@@ -69,16 +72,16 @@ export function Squawk() {
           ))}
         </div>
         {slides.length > 1 && (
-          <div className="h-0.5 w-full bg-muted/50">
+          <div className="h-1 w-full bg-muted/40">
             <div
-              className="h-full bg-primary transition-[width] ease-linear"
+              className={cn("h-full transition-[width] ease-linear", progressColor)}
               style={{ width: `${progress}%`, transitionDuration: `${TICK_MS}ms` }}
             />
           </div>
         )}
       </div>
       {slides.length > 1 && (
-        <div className="mt-1.5 flex justify-center gap-1">
+        <div className="mt-2 flex items-center justify-center gap-1.5">
           {slides.map((s, i) => (
             <button
               key={s.key}
@@ -86,8 +89,10 @@ export function Squawk() {
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => embla?.scrollTo(i)}
               className={cn(
-                "h-1 rounded-full transition-all",
-                selected === i ? "w-3 bg-primary" : "w-1 bg-muted-foreground/30",
+                "h-1.5 rounded-full transition-all",
+                selected === i
+                  ? "w-4 bg-foreground/70"
+                  : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50",
               )}
             />
           ))}
@@ -96,3 +101,4 @@ export function Squawk() {
     </div>
   );
 }
+

@@ -9,6 +9,19 @@ type KindStyle = {
   iconWrap: string;
 };
 
+
+
+export const SQUAWK_KIND_PROGRESS: Record<SquawkSlideKind, string> = {
+  announcement: "bg-amber-500",
+  whats_new: "bg-violet-500",
+  welcome: "bg-emerald-500",
+  classifieds: "bg-blue-500",
+  hangar_talk: "bg-sky-500",
+  quote: "bg-slate-400",
+};
+
+
+
 const KIND_STYLES: Record<SquawkSlideKind, KindStyle> = {
   announcement: {
     icon: Megaphone,
