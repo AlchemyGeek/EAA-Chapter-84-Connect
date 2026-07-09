@@ -81,23 +81,29 @@ export function Squawk() {
         )}
       </div>
       {slides.length > 1 && (
-        <div className="mt-3 flex items-center justify-center gap-2">
+        <div className="mt-3 flex items-center justify-center gap-1">
           {slides.map((s, i) => (
             <button
               key={s.key}
               type="button"
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => embla?.scrollTo(i)}
-              className={cn(
-                "h-2 rounded-full transition-all",
-                selected === i
-                  ? "w-5 bg-slate-700 dark:bg-slate-200"
-                  : "w-2 bg-slate-300 hover:bg-slate-400 dark:bg-slate-600 dark:hover:bg-slate-500",
-              )}
-            />
+              className="flex h-6 min-h-0 w-6 items-center justify-center p-0"
+              style={{ minWidth: 0, minHeight: 0 }}
+            >
+              <span
+                className={cn(
+                  "block rounded-full transition-all",
+                  selected === i
+                    ? "h-2 w-5 bg-slate-700 dark:bg-slate-200"
+                    : "h-2 w-2 bg-slate-300 dark:bg-slate-600",
+                )}
+              />
+            </button>
           ))}
         </div>
       )}
+
 
     </div>
   );
