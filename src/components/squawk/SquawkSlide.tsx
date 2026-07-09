@@ -61,26 +61,27 @@ function Body({ slide }: { slide: Slide }) {
   return (
     <div
       className={cn(
-        "flex min-h-[110px] items-start gap-3 border-l-4 p-4 sm:p-5",
+        "flex h-[130px] items-start gap-3 border-l-4 p-4 sm:p-5",
         style.border,
       )}
     >
       <div className={cn("shrink-0 rounded-full p-2", style.iconWrap)}>
         <Icon className="h-4 w-4" />
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-hidden">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
           {slide.label}
         </p>
-        <h3 className="text-base sm:text-lg font-semibold text-foreground leading-snug">
+        <h3 className="text-sm sm:text-base font-semibold text-foreground leading-snug line-clamp-2">
           {slide.title}
         </h3>
         {slide.body && (
-          <p className="mt-1 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2">
             {slide.body}
           </p>
         )}
       </div>
+
       {(slide.href || slide.mailto) && (
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground mt-1" />
       )}
