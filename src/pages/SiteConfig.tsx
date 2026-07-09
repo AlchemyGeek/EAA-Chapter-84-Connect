@@ -384,12 +384,16 @@ export default function SiteConfig() {
           </Card>
         </Collapsible>
 
+        {/* Squawk Announcements Section */}
+        <SquawkAdmin />
+
         {/* Buddy Program Emails Section */}
         <BuddyEmailTemplates />
 
         {/* Chapter Leadership Section */}
         <ChapterLeadership />
       </div>
+
 
       {/* Add/Edit Link Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
