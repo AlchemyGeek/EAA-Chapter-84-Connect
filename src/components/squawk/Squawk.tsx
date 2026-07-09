@@ -6,9 +6,9 @@ import { SquawkSlide } from "./SquawkSlide";
 import { cn } from "@/lib/utils";
 
 const AUTO_ADVANCE_MS = 6000;
+const TICK_MS = 50;
 
 export function Squawk() {
-  // Fresh selection on every mount (per spec: refreshes on every homepage load).
   const [seed] = useState(() => Date.now());
   const { data: slides = [] } = useQuery({
     queryKey: ["squawk", seed],
@@ -18,11 +18,15 @@ export function Squawk() {
 
   const [emblaRef, embla] = useEmblaCarousel({ loop: true, align: "start" });
   const [selected, setSelected] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const pausedRef = useRef(false);
 
   useEffect(() => {
     if (!embla) return;
-    const onSelect = () => setSelected(embla.selectedScrollSnap());
+    const onSelect = () => {
+      setSelected(embla.selectedScrollSnap());
+      setElapsed(0);
+    };
     embla.on("select", onSelect);
     onSelect();
     return () => {
@@ -33,14 +37,22 @@ export function Squawk() {
   useEffect(() => {
     if (!embla || slides.length < 2) return;
     const id = setInterval(() => {
-      if (!pausedRef.current && document.visibilityState === "visible") {
-        embla.scrollNext();
-      }
-    }, AUTO_ADVANCE_MS);
+      if (pausedRef.current || document.visibilityState !== "visible") return;
+      setElapsed((prev) => {
+        const next = prev + TICK_MS;
+        if (next >= AUTO_ADVANCE_MS) {
+          embla.scrollNext();
+          return 0;
+        }
+        return next;
+      });
+    }, TICK_MS);
     return () => clearInterval(id);
   }, [embla, slides.length]);
 
   if (!slides.length) return null;
+
+  const progress = slides.length > 1 ? Math.min(100, (elapsed / AUTO_ADVANCE_MS) * 100) : 0;
 
   return (
     <div
@@ -56,9 +68,17 @@ export function Squawk() {
             </div>
           ))}
         </div>
+        {slides.length > 1 && (
+          <div className="h-0.5 w-full bg-muted/50">
+            <div
+              className="h-full bg-primary transition-[width] ease-linear"
+              style={{ width: `${progress}%`, transitionDuration: `${TICK_MS}ms` }}
+            />
+          </div>
+        )}
       </div>
       {slides.length > 1 && (
-        <div className="mt-2 flex justify-center gap-1.5">
+        <div className="mt-1.5 flex justify-center gap-1">
           {slides.map((s, i) => (
             <button
               key={s.key}
@@ -66,8 +86,8 @@ export function Squawk() {
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => embla?.scrollTo(i)}
               className={cn(
-                "h-1.5 rounded-full transition-all",
-                selected === i ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30",
+                "h-1 rounded-full transition-all",
+                selected === i ? "w-3 bg-primary" : "w-1 bg-muted-foreground/30",
               )}
             />
           ))}
