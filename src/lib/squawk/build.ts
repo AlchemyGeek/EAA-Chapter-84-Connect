@@ -46,7 +46,8 @@ async function fetchWelcome(): Promise<SquawkSlide[]> {
   if (error || !data) return [];
   const eligible = data.filter((m) => m.email && !m.email_private);
   return eligible.map((m) => {
-    const display = m.nickname?.trim() ? `${m.first_name} (${m.nickname.trim()})` : m.first_name;
+    const first = m.nickname?.trim() ? `${m.first_name} (${m.nickname.trim()})` : m.first_name;
+    const display = `${first} ${m.last_name}`.trim();
     return {
       key: `welcome-${m.key_id}`,
       kind: "welcome",
