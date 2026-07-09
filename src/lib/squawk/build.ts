@@ -2,9 +2,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { AVIATION_QUOTES } from "./quotes";
 import type { SquawkEntry, SquawkSlide } from "./types";
 
-const MIN_SLOTS = 3;
+const MIN_SLOTS = 5;
 const MAX_SLOTS = 5;
 const MAX_MANUAL = 2;
+
 
 function pickRandom<T>(arr: T[]): T | undefined {
   if (!arr.length) return undefined;
