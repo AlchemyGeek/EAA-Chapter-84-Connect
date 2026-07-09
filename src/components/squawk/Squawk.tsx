@@ -83,15 +83,8 @@ export function Squawk() {
             </div>
           ))}
         </div>
-        {slides.length > 1 && (
-          <div className="h-1 w-full bg-muted/40">
-            <div
-              className={cn("h-full transition-[width] ease-linear", progressColor)}
-              style={{ width: `${progress}%`, transitionDuration: `${TICK_MS}ms` }}
-            />
-          </div>
-        )}
       </div>
+
       {slides.length > 1 && (
         <div className="mt-3 flex items-center justify-center gap-1">
           {slides.map((s, i) => (
