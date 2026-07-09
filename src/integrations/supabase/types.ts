@@ -1292,7 +1292,7 @@ export type Database = {
           expires_at: string
           id: string
           link: string | null
-          message: string
+          message: string | null
           title: string
           type: string
           updated_at: string
@@ -1303,7 +1303,7 @@ export type Database = {
           expires_at: string
           id?: string
           link?: string | null
-          message: string
+          message?: string | null
           title: string
           type: string
           updated_at?: string
@@ -1314,7 +1314,7 @@ export type Database = {
           expires_at?: string
           id?: string
           link?: string | null
-          message?: string
+          message?: string | null
           title?: string
           type?: string
           updated_at?: string
