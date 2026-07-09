@@ -78,10 +78,12 @@ async function fetchClassifieds(): Promise<SquawkSlide[]> {
 }
 
 async function fetchHangarTalk(): Promise<SquawkSlide[]> {
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("hangar_talk_posts" as any)
     .select("id, title, type, resolved_at, last_activity_at")
     .is("resolved_at", null)
+    .gte("last_activity_at", since)
     .order("last_activity_at", { ascending: false })
     .limit(10);
   if (error || !data) return [];
