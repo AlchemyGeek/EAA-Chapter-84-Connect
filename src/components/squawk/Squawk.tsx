@@ -81,7 +81,7 @@ export function Squawk() {
         )}
       </div>
       {slides.length > 1 && (
-        <div className="mt-2 flex items-center justify-center gap-1.5">
+        <div className="mt-3 flex items-center justify-center gap-2">
           {slides.map((s, i) => (
             <button
               key={s.key}
@@ -89,15 +89,16 @@ export function Squawk() {
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => embla?.scrollTo(i)}
               className={cn(
-                "h-1.5 rounded-full transition-all",
+                "h-2 rounded-full transition-all",
                 selected === i
-                  ? "w-4 bg-foreground/70"
-                  : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50",
+                  ? "w-5 bg-slate-700 dark:bg-slate-200"
+                  : "w-2 bg-slate-300 hover:bg-slate-400 dark:bg-slate-600 dark:hover:bg-slate-500",
               )}
             />
           ))}
         </div>
       )}
+
     </div>
   );
 }
