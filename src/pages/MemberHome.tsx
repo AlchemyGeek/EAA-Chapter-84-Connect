@@ -462,6 +462,9 @@ export default function MemberHome() {
           </div>
         )}
 
+        {/* Squawk carousel */}
+        <Squawk />
+
         {/* Status Dashboard */}
         {member ? (
           <StatusDashboard
