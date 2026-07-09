@@ -483,8 +483,6 @@ export default function MemberHome() {
           </Card>
         )}
 
-        {/* Squawk carousel — below status, above contact info */}
-        <Squawk />
 
 
         {/* Prospect (application pending) CTA */}
@@ -622,6 +620,12 @@ export default function MemberHome() {
               directoryToggleDisabled={toggleVisibility.isPending}
             />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating || isAdmin} />
+
+
+            {/* Squawk carousel — below member photos */}
+            <Squawk />
+
+
             
           </div>
         )}
