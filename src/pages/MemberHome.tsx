@@ -37,6 +37,7 @@ import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
 import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
+import { Squawk } from "@/components/squawk/Squawk";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, isOfficerOrAbove, signOut } = useAuth();
