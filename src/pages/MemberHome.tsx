@@ -462,9 +462,6 @@ export default function MemberHome() {
           </div>
         )}
 
-        {/* Squawk carousel */}
-        <Squawk />
-
         {/* Status Dashboard */}
         {member ? (
           <StatusDashboard
@@ -485,6 +482,10 @@ export default function MemberHome() {
             </CardContent>
           </Card>
         )}
+
+        {/* Squawk carousel — below status, above contact info */}
+        <Squawk />
+
 
         {/* Prospect (application pending) CTA */}
         {member && isProspect && (
