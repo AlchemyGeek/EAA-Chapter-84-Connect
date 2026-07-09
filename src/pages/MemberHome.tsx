@@ -618,8 +618,12 @@ export default function MemberHome() {
                 toggleVisibility.mutate({ field: "volunteering_visible_in_directory", visible: checked })
               }
               directoryToggleDisabled={toggleVisibility.isPending}
-            />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating || isAdmin} />
+
+            {/* Squawk carousel — below member photos */}
+            <Squawk />
+
+
             
           </div>
         )}
