@@ -7,8 +7,9 @@ type KindStyle = {
   icon: typeof Megaphone;
   border: string;
   iconWrap: string;
-  progress: string;
 };
+
+
 
 export const SQUAWK_KIND_PROGRESS: Record<SquawkSlideKind, string> = {
   announcement: "bg-amber-500",
