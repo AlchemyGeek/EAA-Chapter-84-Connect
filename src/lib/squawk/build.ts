@@ -3,8 +3,10 @@ import { AVIATION_QUOTES } from "./quotes";
 import type { SquawkEntry, SquawkSlide } from "./types";
 
 const MIN_SLOTS = 5;
-const MAX_SLOTS = 5;
+const MAX_SLOTS = 10;
 const MAX_MANUAL = 2;
+const MAX_WELCOME = 1;
+const MAX_PER_MEDIUM = 3; // classifieds, hangar talk, volunteering
 
 
 function pickRandom<T>(arr: T[]): T | undefined {
@@ -19,6 +21,10 @@ function shuffle<T>(arr: T[]): T[] {
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+function pickUpTo<T>(arr: T[], n: number): T[] {
+  return shuffle(arr).slice(0, n);
 }
 
 function truncate(s: string, n: number): string {
@@ -151,31 +157,37 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     fetchVolunteering(),
   ]);
 
+  // Decide how many slots to show this session based on how many real cards are available.
+  const eligibleCount =
+    Math.min(manual.length, MAX_MANUAL) +
+    Math.min(welcome.length, MAX_WELCOME) +
+    Math.min(classifieds.length, MAX_PER_MEDIUM) +
+    Math.min(hangar.length, MAX_PER_MEDIUM) +
+    Math.min(volunteer.length, MAX_PER_MEDIUM);
+  const targetSlots = Math.min(MAX_SLOTS, Math.max(MIN_SLOTS, eligibleCount));
+
   const slides: SquawkSlide[] = [];
 
   // 1. Manual takes priority — up to 2.
-  const manualPick = shuffle(manual).slice(0, MAX_MANUAL).map(manualToSlide);
+  const manualPick = pickUpTo(manual, MAX_MANUAL).map(manualToSlide);
   slides.push(...manualPick);
 
-  // 2. Auto pool by priority.
-  const targetSlots = Math.min(MAX_SLOTS, Math.max(MIN_SLOTS, slides.length + 3));
-
+  // 2. Welcome — high priority.
   const w = pickRandom(welcome);
   if (w && slides.length < targetSlots) slides.push(w);
 
-  // Medium-priority categories share equal weight; shuffle so order varies.
-  const mediumChoices = shuffle(
-    [
-      pickRandom(classifieds),
-      pickRandom(hangar),
-      pickRandom(volunteer),
-    ].filter(Boolean) as SquawkSlide[]
-  );
-  for (const s of mediumChoices) {
-    if (slides.length < targetSlots) slides.push(s);
+  // 3. Medium-priority categories share equal weight; include up to MAX_PER_MEDIUM from each.
+  const mediumPool: SquawkSlide[] = shuffle([
+    ...pickUpTo(classifieds, MAX_PER_MEDIUM),
+    ...pickUpTo(hangar, MAX_PER_MEDIUM),
+    ...pickUpTo(volunteer, MAX_PER_MEDIUM),
+  ]);
+  for (const s of mediumPool) {
+    if (slides.length >= targetSlots) break;
+    slides.push(s);
   }
 
-  // 3. Fill remaining with quotes (allowed to repeat as filler).
+  // 4. Fill remaining with quotes (allowed to repeat as filler).
   const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
   let qi = 0;
   while (slides.length < targetSlots) {
