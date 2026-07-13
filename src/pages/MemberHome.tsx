@@ -711,8 +711,8 @@ export default function MemberHome() {
                   icon={HandHelping} 
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
-                <AdminLink to="/classifieds" icon={Tag} label="Classifieds" />
-                <AdminLink to="/hangar-talk" icon={MessageSquare} label="Hangar Talk" badge="New" />
+                <AdminLink to="/classifieds" icon={Tag} label={`Classifieds${activeClassifiedsCount > 0 ? ` (${activeClassifiedsCount})` : ""}`} />
+                <AdminLink to="/hangar-talk" icon={MessageSquare} label={`Hangar Talk${activeHangarTalkCount > 0 ? ` (${activeHangarTalkCount})` : ""}`} />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 
               </>
