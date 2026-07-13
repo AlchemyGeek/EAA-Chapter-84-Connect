@@ -594,34 +594,66 @@ export default function NewMemberApplications() {
               )}
               {detailApp.reminder_sent_at && (
                 <div className="col-span-2">
-                  <span className="text-muted-foreground">Dues Reminder Sent</span>
+                  <span className="text-muted-foreground">Payment Reminder Sent</span>
                   <p className="font-medium">
                     {format(new Date(detailApp.reminder_sent_at), "MMMM d, yyyy h:mm a")}
                   </p>
                 </div>
               )}
+              {detailApp.welcome_sent_at && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Welcome Email Sent</span>
+                  <p className="font-medium">
+                    {format(new Date(detailApp.welcome_sent_at), "MMMM d, yyyy h:mm a")}
+                  </p>
+                </div>
+              )}
               </div>
 
-              {!detailApp.processed && !detailApp.fees_verified && (
-                <div className="pt-2 border-t border-border">
+              <div className="pt-2 border-t border-border space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Emails are sent to <strong>{detailApp.email}</strong> with a copy to <strong>membership@eaa84.org</strong>.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
                   {detailApp.reminder_sent_at ? (
-                    <p className="text-xs text-muted-foreground">
-                      A dues reminder has already been sent. Only one reminder per applicant is allowed.
-                    </p>
+                    <Button variant="outline" size="sm" disabled className="w-full sm:w-auto">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Reminder sent · {format(new Date(detailApp.reminder_sent_at), "MMM d")}
+                    </Button>
                   ) : (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full sm:w-auto"
-                      disabled={sendReminder.isPending}
+                      disabled={sendReminder.isPending || detailApp.fees_verified}
+                      title={detailApp.fees_verified ? "Dues already verified" : undefined}
                       onClick={() => sendReminder.mutate(detailApp)}
                     >
                       <Mail className="h-4 w-4 mr-2" />
-                      {sendReminder.isPending ? "Sending..." : "Send Dues Reminder Email"}
+                      {sendReminder.isPending ? "Sending..." : "Payment Reminder"}
+                    </Button>
+                  )}
+
+                  {detailApp.welcome_sent_at ? (
+                    <Button variant="outline" size="sm" disabled className="w-full sm:w-auto">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Welcome sent · {format(new Date(detailApp.welcome_sent_at), "MMM d")}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={sendWelcome.isPending || !detailApp.fees_verified}
+                      title={!detailApp.fees_verified ? "Mark dues verified first" : undefined}
+                      onClick={() => sendWelcome.mutate(detailApp)}
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      {sendWelcome.isPending ? "Sending..." : "Application Completed"}
                     </Button>
                   )}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </DialogContent>
