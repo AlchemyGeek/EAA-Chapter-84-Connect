@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { useQuery } from "@tanstack/react-query";
 import { buildSquawkSlides } from "@/lib/squawk/build";
+import { TEST_SQUAWK_SLIDES } from "@/lib/squawk/testSlides";
 import { SquawkSlide, SQUAWK_KIND_PROGRESS } from "./SquawkSlide";
 import { cn } from "@/lib/utils";
 
@@ -19,10 +20,15 @@ function durationFor(slide: { title: string; body?: string } | undefined): numbe
 }
 
 export function Squawk() {
+  const testMode = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("squawkTest") === "1";
+  }, []);
+
   const [seed] = useState(() => Date.now());
   const { data: slides = [] } = useQuery({
-    queryKey: ["squawk", seed],
-    queryFn: buildSquawkSlides,
+    queryKey: ["squawk", seed, testMode],
+    queryFn: () => (testMode ? Promise.resolve(TEST_SQUAWK_SLIDES) : buildSquawkSlides()),
     staleTime: Infinity,
   });
 
