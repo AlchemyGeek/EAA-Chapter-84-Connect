@@ -190,6 +190,21 @@ export default function MemberHome() {
     },
   });
 
+  // Fetch unexported dues payments count
+  const { data: unexportedDuesCount = 0 } = useQuery({
+    queryKey: ["unexported-dues-count"],
+    enabled: isOfficerOrAbove || isAdmin,
+    staleTime: 0,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("dues_payments")
+        .select("*", { count: "exact", head: true })
+        .eq("exported", false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   // Fetch member chapter data (for directory visibility)
   const activeKeyId = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
   const { data: chapterData } = useQuery({
@@ -732,7 +747,7 @@ export default function MemberHome() {
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Chapter Operations</p>
-                <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Dues" />
+                <AdminLink to="/dues-payment" icon={CircleDollarSign} label={`Membership Dues${unexportedDuesCount > 0 ? ` (${unexportedDuesCount})` : ""}`} />
                 <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
                 <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
                 <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
