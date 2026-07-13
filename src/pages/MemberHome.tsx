@@ -190,6 +190,21 @@ export default function MemberHome() {
     },
   });
 
+  // Fetch unexported dues payments count
+  const { data: unexportedDuesCount = 0 } = useQuery({
+    queryKey: ["unexported-dues-count"],
+    enabled: isOfficerOrAbove || isAdmin,
+    staleTime: 0,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("dues_payments")
+        .select("*", { count: "exact", head: true })
+        .eq("exported", false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   // Fetch member chapter data (for directory visibility)
   const activeKeyId = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
   const { data: chapterData } = useQuery({
