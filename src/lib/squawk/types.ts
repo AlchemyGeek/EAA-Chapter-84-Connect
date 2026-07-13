@@ -18,6 +18,7 @@ export type SquawkSlideKind =
   | "welcome"
   | "classifieds"
   | "hangar_talk"
+  | "volunteering"
   | "quote";
 
 export interface SquawkSlide {
