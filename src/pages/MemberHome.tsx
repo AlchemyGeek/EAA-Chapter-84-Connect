@@ -150,6 +150,31 @@ export default function MemberHome() {
     },
   });
 
+  const { data: activeClassifiedsCount = 0 } = useQuery({
+    queryKey: ["active-classifieds-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("classifieds")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString());
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const { data: activeHangarTalkCount = 0 } = useQuery({
+    queryKey: ["active-hangar-talk-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("hangar_talk_posts")
+        .select("*", { count: "exact", head: true })
+        .is("resolved_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   // Fetch pending new member applications count
   const { data: pendingAppCount = 0 } = useQuery({
     queryKey: ["pending-app-count"],
@@ -686,8 +711,8 @@ export default function MemberHome() {
                   icon={HandHelping} 
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
-                <AdminLink to="/classifieds" icon={Tag} label="Classifieds" />
-                <AdminLink to="/hangar-talk" icon={MessageSquare} label="Hangar Talk" badge="New" />
+                <AdminLink to="/classifieds" icon={Tag} label={`Classifieds${activeClassifiedsCount > 0 ? ` (${activeClassifiedsCount})` : ""}`} />
+                <AdminLink to="/hangar-talk" icon={MessageSquare} label={`Hangar Talk${activeHangarTalkCount > 0 ? ` (${activeHangarTalkCount})` : ""}`} />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 
               </>
