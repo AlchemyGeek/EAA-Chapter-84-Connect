@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { COMPLETE_MEMBERSHIP_HTML } from "../_shared/new-member-emails/complete-membership.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,10 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#39;");
 }
 
+function escapeHtmlAttr(str: string): string {
+  return escapeHtml(str);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,7 +30,6 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller is an authenticated officer/admin
     const authHeader = req.headers.get("authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
     if (!token) {
@@ -50,7 +54,6 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check role: admin or officer
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
@@ -74,7 +77,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Load the application
     const { data: app, error: appError } = await supabase
       .from("new_member_applications")
       .select("*")
@@ -101,22 +103,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Resolve payment URL by quarter — prefer pro-rated / new-member fees,
-    // never fall back to the full Annual fee for a new applicant.
+    // Resolve pro-rated fee (URL + amount) by quarter.
     const { data: fees } = await supabase
       .from("chapter_fees")
-      .select("name, payment_url")
+      .select("name, amount, payment_url")
       .order("sort_order");
 
-    // Extract just the Q1/Q2/Q3/Q4 token from values like "Q2 2026"
     const quarterMatch = String(app.quarter_applied || "")
       .toUpperCase()
       .match(/Q[1-4]/);
     const quarter = quarterMatch ? quarterMatch[0] : "";
 
     let paymentUrl: string | null = null;
+    let feeAmount: number | null = null;
     if (quarter && fees) {
-      // Match the fee whose name starts with the quarter token (e.g. "Q2 Pro-Rated...")
       const match = fees.find((f: any) => {
         const upper = String(f.name || "").toUpperCase();
         return (
@@ -125,11 +125,12 @@ Deno.serve(async (req) => {
         );
       });
       paymentUrl = match?.payment_url ?? null;
+      feeAmount = match?.amount != null ? Number(match.amount) : null;
     }
-    // Do NOT fall back to the Annual Membership Fee — new applicants must
-    // receive a pro-rated link. If no pro-rated fee is configured for the
-    // quarter, leave paymentUrl null so the email shows the contact fallback.
-
+    // Fallback to the amount stored on the application if no chapter fee matched.
+    if (feeAmount == null && app.fee_amount != null) {
+      feeAmount = Number(app.fee_amount);
+    }
 
     const recipient = String(app.email || "").trim();
     if (!recipient) {
@@ -139,32 +140,29 @@ Deno.serve(async (req) => {
       });
     }
 
-    const subject = "Complete Your Chapter 84 Membership";
-    const safePaymentUrl = paymentUrl ? escapeHtml(paymentUrl) : null;
+    const subject = "Complete Your EAA Chapter 84 Membership";
+    const firstName = escapeHtml(String(app.first_name || "").trim() || "there");
+    const duesAmount = feeAmount && feeAmount > 0
+      ? `$${feeAmount % 1 === 0 ? feeAmount.toFixed(0) : feeAmount.toFixed(2)}`
+      : "your dues";
 
-    const paymentBlock = safePaymentUrl
-      ? `<p>When you’re ready, you can complete your membership by submitting your dues here:</p>
-         <p><a href="${safePaymentUrl}" style="display:inline-block;background-color:#1e3a5f;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;">Pay Membership Dues</a></p>
-         <p style="font-size:12px;color:#666;">Or copy this link: ${safePaymentUrl}</p>`
-      : `<p>When you’re ready, please reach out to membership@eaa84.org and we’ll provide a payment link.</p>`;
+    // Personalize template
+    let htmlBody = COMPLETE_MEMBERSHIP_HTML
+      .replace(/\{\{first_name\}\}/g, firstName)
+      .replace(/\{\{dues_amount\}\}/g, escapeHtml(duesAmount));
 
-    const htmlBody = `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color:#222; line-height:1.5;">
-  <p>Hi,</p>
-  <p>Thank you for submitting your application to join EAA Chapter 84. We’re glad to see your interest in becoming part of the chapter.</p>
-  <p>It looks like your membership application is still pending, as we have not yet received your dues payment. Once dues are completed, your membership will be activated and you’ll be able to fully participate in chapter activities and benefits.</p>
-  <p>As a member, you’ll be part of an active aviation community with access to our monthly meetings (second Tuesday of each month at Harvey Field) featuring guest speakers on aircraft building, safety, and flying adventures. You’ll also have access to the chapter hangar and tool crib to support aircraft construction and maintenance, receive the chapter newsletter with updates and opportunities, and be able to participate in events and volunteer activities. In addition, our Member Portal helps you stay connected—manage your information, browse the member directory, and explore ways to get involved.</p>
-  ${paymentBlock}
-  <p>If you have any questions or need assistance, feel free to reply to this email or reach out to membership@eaa84.org.</p>
-  <p>We hope to welcome you soon.</p>
-  <p>Best regards,<br/>EAA Chapter 84 Membership</p>
-</div>`.trim();
+    // Rewrite the CTA link to the resolved payment URL when available.
+    if (paymentUrl) {
+      htmlBody = htmlBody.replace(
+        /href="https:\/\/eaa84connect\.lovable\.app\/join"/g,
+        `href="${escapeHtmlAttr(paymentUrl)}"`,
+      );
+    }
 
-    const textBody = htmlBody.replace(/<[^>]+>/g, "").replace(/\n\s*\n/g, "\n\n");
+    const textBody = htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
     const messageId = crypto.randomUUID();
 
-    // Get or create unsubscribe token
     const { data: existingToken } = await supabase
       .from("email_unsubscribe_tokens")
       .select("token")
@@ -185,6 +183,7 @@ Deno.serve(async (req) => {
       queue_name: "transactional_emails",
       payload: {
         to: recipient,
+        cc: ["membership@eaa84.org"],
         from: "Membership <notify@notify.eaa84.org>",
         reply_to: "membership@eaa84.org",
         sender_domain: "notify.eaa84.org",
@@ -208,62 +207,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Send a copy notification to membership@eaa84.org so the team has
-    // a record of the reminder. (The email queue dispatcher does not
-    // forward cc/bcc fields, so we enqueue a separate email.)
-    const copyMessageId = crypto.randomUUID();
-    const copySubject = `[Copy] Reminder sent to ${recipient}: ${subject}`;
-    const copyHtml = `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color:#222; line-height:1.5;">
-  <p style="background:#f4f6f8;padding:10px 14px;border-radius:6px;font-size:13px;color:#555;">
-    This is a copy of the dues reminder sent to <strong>${escapeHtml(recipient)}</strong>.
-  </p>
-  ${htmlBody}
-</div>`.trim();
-
-    const { data: existingCopyToken } = await supabase
-      .from("email_unsubscribe_tokens")
-      .select("token")
-      .eq("email", "membership@eaa84.org")
-      .is("used_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const copyUnsubscribeToken = existingCopyToken?.token ?? crypto.randomUUID();
-    if (!existingCopyToken) {
-      await supabase
-        .from("email_unsubscribe_tokens")
-        .insert({ email: "membership@eaa84.org", token: copyUnsubscribeToken });
-    }
-
-    await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
-        to: "membership@eaa84.org",
-        from: "Membership <notify@notify.eaa84.org>",
-        reply_to: recipient,
-        sender_domain: "notify.eaa84.org",
-        subject: copySubject,
-        html: copyHtml,
-        text: copyHtml.replace(/<[^>]+>/g, "").replace(/\n\s*\n/g, "\n\n"),
-        purpose: "transactional",
-        label: "new_member_dues_reminder_copy",
-        idempotency_key: `new-member-reminder-copy-${application_id}-${Date.now()}`,
-        unsubscribe_token: copyUnsubscribeToken,
-        message_id: copyMessageId,
-        queued_at: new Date().toISOString(),
-      },
-    });
-
-    // Mark reminder as sent
     await supabase
       .from("new_member_applications")
       .update({ reminder_sent_at: new Date().toISOString() })
       .eq("id", application_id);
 
     return new Response(
-      JSON.stringify({ success: true, paymentUrl }),
+      JSON.stringify({ success: true, paymentUrl, duesAmount }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
