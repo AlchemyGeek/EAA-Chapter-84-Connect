@@ -20,7 +20,7 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
   UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, Activity, Newspaper,
-  ClipboardList, Vote, Tag, MessageSquare,
+  ClipboardList, Vote, Tag, MessageSquare, Archive,
 } from "lucide-react";
 
 import { useIsOfficer } from "@/hooks/useIsOfficer";
