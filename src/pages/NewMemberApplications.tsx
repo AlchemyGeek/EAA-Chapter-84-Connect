@@ -290,12 +290,35 @@ export default function NewMemberApplications() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
-      toast({ title: "Reminder email queued" });
+      toast({ title: "Payment reminder queued" });
       setDetailApp(null);
     },
     onError: (err: any) => {
       toast({
         title: "Could not send reminder",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendWelcome = useMutation({
+    mutationFn: async (app: any) => {
+      const { data, error } = await supabase.functions.invoke("new-member-welcome", {
+        body: { application_id: app.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+      toast({ title: "Welcome email queued" });
+      setDetailApp(null);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Could not send welcome",
         description: err.message,
         variant: "destructive",
       });
@@ -433,12 +456,12 @@ export default function NewMemberApplications() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
-                      {!app.processed && (() => {
+                      {(() => {
                         const days = differenceInCalendarDays(new Date(), new Date(app.created_at));
                         return ` · ${days} day${days === 1 ? "" : "s"} ago`;
                       })()}
                     </p>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       {existingEaaSet.has(app.eaa_number?.trim()) && (
                         <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
                           <AlertTriangle className="h-3 w-3" />
@@ -459,10 +482,16 @@ export default function NewMemberApplications() {
                       ) : (
                         <Badge variant="secondary" className="text-xs">Pending</Badge>
                       )}
-                      {!app.processed && app.reminder_sent_at && (
+                      {app.reminder_sent_at && (
                         <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 gap-1">
                           <Mail className="h-3 w-3" />
                           Reminder Sent
+                        </Badge>
+                      )}
+                      {app.welcome_sent_at && (
+                        <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                          <Mail className="h-3 w-3" />
+                          Welcome Sent
                         </Badge>
                       )}
                     </div>
@@ -565,34 +594,66 @@ export default function NewMemberApplications() {
               )}
               {detailApp.reminder_sent_at && (
                 <div className="col-span-2">
-                  <span className="text-muted-foreground">Dues Reminder Sent</span>
+                  <span className="text-muted-foreground">Payment Reminder Sent</span>
                   <p className="font-medium">
                     {format(new Date(detailApp.reminder_sent_at), "MMMM d, yyyy h:mm a")}
                   </p>
                 </div>
               )}
+              {detailApp.welcome_sent_at && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Welcome Email Sent</span>
+                  <p className="font-medium">
+                    {format(new Date(detailApp.welcome_sent_at), "MMMM d, yyyy h:mm a")}
+                  </p>
+                </div>
+              )}
               </div>
 
-              {!detailApp.processed && !detailApp.fees_verified && (
-                <div className="pt-2 border-t border-border">
+              <div className="pt-2 border-t border-border space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Emails are sent to <strong>{detailApp.email}</strong> with a copy to <strong>membership@eaa84.org</strong>.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
                   {detailApp.reminder_sent_at ? (
-                    <p className="text-xs text-muted-foreground">
-                      A dues reminder has already been sent. Only one reminder per applicant is allowed.
-                    </p>
+                    <Button variant="outline" size="sm" disabled className="w-full sm:w-auto">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Reminder sent · {format(new Date(detailApp.reminder_sent_at), "MMM d")}
+                    </Button>
                   ) : (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full sm:w-auto"
-                      disabled={sendReminder.isPending}
+                      disabled={sendReminder.isPending || detailApp.fees_verified}
+                      title={detailApp.fees_verified ? "Dues already verified" : undefined}
                       onClick={() => sendReminder.mutate(detailApp)}
                     >
                       <Mail className="h-4 w-4 mr-2" />
-                      {sendReminder.isPending ? "Sending..." : "Send Dues Reminder Email"}
+                      {sendReminder.isPending ? "Sending..." : "Payment Reminder"}
+                    </Button>
+                  )}
+
+                  {detailApp.welcome_sent_at ? (
+                    <Button variant="outline" size="sm" disabled className="w-full sm:w-auto">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Welcome sent · {format(new Date(detailApp.welcome_sent_at), "MMM d")}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={sendWelcome.isPending || !detailApp.fees_verified}
+                      title={!detailApp.fees_verified ? "Mark dues verified first" : undefined}
+                      onClick={() => sendWelcome.mutate(detailApp)}
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      {sendWelcome.isPending ? "Sending..." : "Application Completed"}
                     </Button>
                   )}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </DialogContent>

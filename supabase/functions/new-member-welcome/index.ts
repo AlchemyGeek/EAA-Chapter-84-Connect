@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { COMPLETE_MEMBERSHIP_HTML } from "../_shared/new-member-emails/complete-membership.ts";
+import { WELCOME_HTML } from "../_shared/new-member-emails/welcome.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,10 +14,6 @@ function escapeHtml(str: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function escapeHtmlAttr(str: string): string {
-  return escapeHtml(str);
 }
 
 Deno.serve(async (req) => {
@@ -89,47 +85,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (app.fees_verified) {
-      return new Response(JSON.stringify({ error: "Dues already paid for this applicant" }), {
+    if (!app.fees_verified) {
+      return new Response(JSON.stringify({ error: "Dues have not been verified yet" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (app.reminder_sent_at) {
-      return new Response(JSON.stringify({ error: "A reminder has already been sent" }), {
+    if (app.welcome_sent_at) {
+      return new Response(JSON.stringify({ error: "A welcome email has already been sent" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
-
-    // Resolve pro-rated fee (URL + amount) by quarter.
-    const { data: fees } = await supabase
-      .from("chapter_fees")
-      .select("name, amount, payment_url")
-      .order("sort_order");
-
-    const quarterMatch = String(app.quarter_applied || "")
-      .toUpperCase()
-      .match(/Q[1-4]/);
-    const quarter = quarterMatch ? quarterMatch[0] : "";
-
-    let paymentUrl: string | null = null;
-    let feeAmount: number | null = null;
-    if (quarter && fees) {
-      const match = fees.find((f: any) => {
-        const upper = String(f.name || "").toUpperCase();
-        return (
-          upper.startsWith(quarter + " ") &&
-          /(PRO-?RATED|NEW MEMBERSHIP)/.test(upper)
-        );
-      });
-      paymentUrl = match?.payment_url ?? null;
-      feeAmount = match?.amount != null ? Number(match.amount) : null;
-    }
-    // Fallback to the amount stored on the application if no chapter fee matched.
-    if (feeAmount == null && app.fee_amount != null) {
-      feeAmount = Number(app.fee_amount);
     }
 
     const recipient = String(app.email || "").trim();
@@ -140,25 +107,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const subject = "Complete Your EAA Chapter 84 Membership";
+    const subject = "Welcome to EAA Chapter 84";
     const firstName = escapeHtml(String(app.first_name || "").trim() || "there");
-    const duesAmount = feeAmount && feeAmount > 0
-      ? `$${feeAmount % 1 === 0 ? feeAmount.toFixed(0) : feeAmount.toFixed(2)}`
-      : "your dues";
 
-    // Personalize template
-    let htmlBody = COMPLETE_MEMBERSHIP_HTML
-      .replace(/\{\{first_name\}\}/g, firstName)
-      .replace(/\{\{dues_amount\}\}/g, escapeHtml(duesAmount));
-
-    // Rewrite the CTA link to the resolved payment URL when available.
-    if (paymentUrl) {
-      htmlBody = htmlBody.replace(
-        /href="https:\/\/eaa84connect\.lovable\.app\/join"/g,
-        `href="${escapeHtmlAttr(paymentUrl)}"`,
-      );
-    }
-
+    const htmlBody = WELCOME_HTML.replace(/\{\{first_name\}\}/g, firstName);
     const textBody = htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
     const messageId = crypto.randomUUID();
@@ -191,8 +143,8 @@ Deno.serve(async (req) => {
         html: htmlBody,
         text: textBody,
         purpose: "transactional",
-        label: "new_member_dues_reminder",
-        idempotency_key: `new-member-reminder-${application_id}`,
+        label: "new_member_welcome",
+        idempotency_key: `new-member-welcome-${application_id}`,
         unsubscribe_token: unsubscribeToken,
         message_id: messageId,
         queued_at: new Date().toISOString(),
@@ -200,8 +152,8 @@ Deno.serve(async (req) => {
     });
 
     if (enqueueError) {
-      console.error("Failed to enqueue reminder:", enqueueError.message);
-      return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
+      console.error("Failed to enqueue welcome:", enqueueError.message);
+      return new Response(JSON.stringify({ error: "Failed to enqueue welcome" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -209,15 +161,15 @@ Deno.serve(async (req) => {
 
     await supabase
       .from("new_member_applications")
-      .update({ reminder_sent_at: new Date().toISOString() })
+      .update({ welcome_sent_at: new Date().toISOString() })
       .eq("id", application_id);
 
     return new Response(
-      JSON.stringify({ success: true, paymentUrl, duesAmount }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in new-member-reminder:", error);
+    console.error("Error in new-member-welcome:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
