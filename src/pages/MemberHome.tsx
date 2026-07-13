@@ -737,15 +737,6 @@ export default function MemberHome() {
                 <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
                 <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
                 <AdminLink to="/email-lists" icon={Mail} label="Email List Builder" />
-                <button
-                  type="button"
-                  onClick={() => exportProxyVoteResults().catch(() => {})}
-                  className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md hover:bg-muted/60 transition-colors min-h-[44px] text-sm"
-                >
-                  <ClipboardList className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="flex-1">2026 Bylaws Proxy Vote Results{proxyVoteSignCount > 0 ? ` (${proxyVoteSignCount})` : ""}</span>
-                  <Download className="h-4 w-4 text-muted-foreground" />
-                </button>
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">New Members</p>
@@ -756,6 +747,18 @@ export default function MemberHome() {
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Insights</p>
                 <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
                 <AdminLink to="/member-engagement" icon={Activity} label="Member Engagement" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Archive</p>
+                <button
+                  type="button"
+                  onClick={() => exportProxyVoteResults().catch(() => {})}
+                  className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md hover:bg-muted/60 transition-colors min-h-[44px] text-sm"
+                >
+                  <ClipboardList className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="flex-1">2026 Bylaws Proxy Vote Results{proxyVoteSignCount > 0 ? ` (${proxyVoteSignCount})` : ""}</span>
+                  <Download className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
             </CardContent>
           </Card>
