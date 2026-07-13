@@ -78,6 +78,24 @@ async function fetchClassifieds(): Promise<SquawkSlide[]> {
   }));
 }
 
+async function fetchVolunteering(): Promise<SquawkSlide[]> {
+  const { data, error } = await supabase
+    .from("volunteering_opportunities" as any)
+    .select("id, title, status, description, created_at")
+    .eq("status", "Active")
+    .order("created_at", { ascending: false })
+    .limit(10);
+  if (error || !data) return [];
+  return (data as any[]).map((o) => ({
+    key: `volunteer-${o.id}`,
+    kind: "volunteering",
+    label: "Volunteering",
+    title: truncate(o.title, 80),
+    body: o.description ? truncate(o.description, 120) : "New chapter volunteering opportunity.",
+    href: `/member-volunteering`,
+  }));
+}
+
 async function fetchHangarTalk(): Promise<SquawkSlide[]> {
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
@@ -125,11 +143,12 @@ function quoteSlide(idx: number): SquawkSlide {
 }
 
 export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
-  const [manual, welcome, classifieds, hangar] = await Promise.all([
+  const [manual, welcome, classifieds, hangar, volunteer] = await Promise.all([
     fetchManual(),
     fetchWelcome(),
     fetchClassifieds(),
     fetchHangarTalk(),
+    fetchVolunteering(),
   ]);
 
   const slides: SquawkSlide[] = [];
@@ -144,11 +163,17 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
   const w = pickRandom(welcome);
   if (w && slides.length < targetSlots) slides.push(w);
 
-  const c = pickRandom(classifieds);
-  if (c && slides.length < targetSlots) slides.push(c);
-
-  const h = pickRandom(hangar);
-  if (h && slides.length < targetSlots) slides.push(h);
+  // Medium-priority categories share equal weight; shuffle so order varies.
+  const mediumChoices = shuffle(
+    [
+      pickRandom(classifieds),
+      pickRandom(hangar),
+      pickRandom(volunteer),
+    ].filter(Boolean) as SquawkSlide[]
+  );
+  for (const s of mediumChoices) {
+    if (slides.length < targetSlots) slides.push(s);
+  }
 
   // 3. Fill remaining with quotes (allowed to repeat as filler).
   const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
