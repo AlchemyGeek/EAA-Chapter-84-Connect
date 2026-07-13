@@ -25,7 +25,6 @@ export function Squawk() {
     queryFn: buildSquawkSlides,
     staleTime: Infinity,
   });
-  console.log("SQUAWK_COUNT", slides.length, slides.map((s) => s.kind));
 
   const [emblaRef, embla] = useEmblaCarousel({ loop: true, align: "start" });
   const [selected, setSelected] = useState(0);
