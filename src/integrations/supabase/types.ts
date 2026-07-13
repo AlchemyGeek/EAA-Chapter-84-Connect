@@ -814,6 +814,7 @@ export type Database = {
           reminder_sent_at: string | null
           roster_key_id: number | null
           state: string
+          welcome_sent_at: string | null
           zip_code: string
         }
         Insert: {
@@ -834,6 +835,7 @@ export type Database = {
           reminder_sent_at?: string | null
           roster_key_id?: number | null
           state: string
+          welcome_sent_at?: string | null
           zip_code: string
         }
         Update: {
@@ -854,6 +856,7 @@ export type Database = {
           reminder_sent_at?: string | null
           roster_key_id?: number | null
           state?: string
+          welcome_sent_at?: string | null
           zip_code?: string
         }
         Relationships: []
