@@ -23,6 +23,10 @@ function shuffle<T>(arr: T[]): T[] {
   return out;
 }
 
+function pickUpTo<T>(arr: T[], n: number): T[] {
+  return shuffle(arr).slice(0, n);
+}
+
 function truncate(s: string, n: number): string {
   const clean = s.replace(/\s+/g, " ").trim();
   return clean.length > n ? clean.slice(0, n - 1) + "…" : clean;
