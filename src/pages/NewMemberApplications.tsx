@@ -456,12 +456,12 @@ export default function NewMemberApplications() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
-                      {!app.processed && (() => {
+                      {(() => {
                         const days = differenceInCalendarDays(new Date(), new Date(app.created_at));
                         return ` · ${days} day${days === 1 ? "" : "s"} ago`;
                       })()}
                     </p>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       {existingEaaSet.has(app.eaa_number?.trim()) && (
                         <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
                           <AlertTriangle className="h-3 w-3" />
@@ -482,10 +482,16 @@ export default function NewMemberApplications() {
                       ) : (
                         <Badge variant="secondary" className="text-xs">Pending</Badge>
                       )}
-                      {!app.processed && app.reminder_sent_at && (
+                      {app.reminder_sent_at && (
                         <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 gap-1">
                           <Mail className="h-3 w-3" />
                           Reminder Sent
+                        </Badge>
+                      )}
+                      {app.welcome_sent_at && (
+                        <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                          <Mail className="h-3 w-3" />
+                          Welcome Sent
                         </Badge>
                       )}
                     </div>
