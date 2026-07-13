@@ -747,7 +747,7 @@ export default function MemberHome() {
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Chapter Operations</p>
-                <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Dues" />
+                <AdminLink to="/dues-payment" icon={CircleDollarSign} label={`Membership Dues${unexportedDuesCount > 0 ? ` (${unexportedDuesCount})` : ""}`} />
                 <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
                 <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
                 <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
