@@ -235,6 +235,7 @@ export default function MemberVolunteering() {
                     applying={applyingOpportunityId === opp.id && applyMutation.isPending}
                     canApply={!!displayMember && !isPendingImpersonation}
                     isImpersonating={isImpersonating}
+                    highlighted={opportunityId === opp.id}
                   />
                 ))}
               </>
