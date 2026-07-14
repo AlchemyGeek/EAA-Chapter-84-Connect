@@ -98,7 +98,7 @@ async function fetchVolunteering(): Promise<SquawkSlide[]> {
     label: "Volunteering",
     title: truncate(o.title, 80),
     body: o.description ? truncate(o.description, 120) : "New chapter volunteering opportunity.",
-    href: `/member-volunteering`,
+    href: `/member-volunteering/${o.id}`,
   }));
 }
 

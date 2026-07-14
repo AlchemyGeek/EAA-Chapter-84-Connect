@@ -48,7 +48,7 @@ export const TEST_SQUAWK_SLIDES: SquawkSlide[] = [
     label: "Volunteering",
     title: "Young Eagles rally — ground crew needed",
     body: "Help make the June rally a success. A couple of hours on Saturday morning.",
-    href: "/member-volunteering",
+    href: "/member-volunteering/00000000-0000-0000-0000-000000000000",
   },
   {
     key: "test-quote",
