@@ -6,7 +6,9 @@ const MAX_SLOTS = 10;
 const MAX_MANUAL = 2;
 const MAX_WELCOME = 1;
 const MAX_PER_MEDIUM = 3; // classifieds, hangar talk, volunteering
+const MAX_QUOTES_WITH_CONTENT = 2; // quotes mixed in when real content exists
 const QUOTE_FALLBACK_SLOTS = 3; // only used when there is no real content at all
+
 
 
 function pickRandom<T>(arr: T[]): T | undefined {
@@ -157,14 +159,15 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     fetchVolunteering(),
   ]);
 
-  // Show only as many slots as we have real content for.
+  // Reserve up to two slots for quotes whenever real content exists, otherwise fill with quotes.
   const eligibleCount =
     Math.min(manual.length, MAX_MANUAL) +
     Math.min(welcome.length, MAX_WELCOME) +
     Math.min(classifieds.length, MAX_PER_MEDIUM) +
     Math.min(hangar.length, MAX_PER_MEDIUM) +
     Math.min(volunteer.length, MAX_PER_MEDIUM);
-  const targetSlots = Math.min(MAX_SLOTS, eligibleCount);
+  const targetSlots = Math.min(MAX_SLOTS - MAX_QUOTES_WITH_CONTENT, eligibleCount);
+
 
   const slides: SquawkSlide[] = [];
 
@@ -187,13 +190,24 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     slides.push(s);
   }
 
-  // 4. Quotes are a last-resort fallback: only when there is no real content at all.
+  // 4. Quotes: fallback when there is no real content, otherwise mix a couple in.
   if (slides.length === 0) {
     const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
     for (let i = 0; i < QUOTE_FALLBACK_SLOTS && i < shuffledQuotes.length; i++) {
       slides.push(quoteSlide(shuffledQuotes[i]));
     }
+  } else {
+    // Mix in a couple of quotes with real content.
+    const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
+    let added = 0;
+    for (const idx of shuffledQuotes) {
+      if (slides.length >= MAX_SLOTS) break;
+      if (added >= MAX_QUOTES_WITH_CONTENT) break;
+      slides.push(quoteSlide(idx));
+      added++;
+    }
   }
 
   return slides.slice(0, MAX_SLOTS);
+
 }
