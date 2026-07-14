@@ -2,11 +2,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { AVIATION_QUOTES } from "./quotes";
 import type { SquawkEntry, SquawkSlide } from "./types";
 
-const MIN_SLOTS = 5;
 const MAX_SLOTS = 10;
 const MAX_MANUAL = 2;
 const MAX_WELCOME = 1;
 const MAX_PER_MEDIUM = 3; // classifieds, hangar talk, volunteering
+const QUOTE_FALLBACK_SLOTS = 3; // only used when there is no real content at all
 
 
 function pickRandom<T>(arr: T[]): T | undefined {
