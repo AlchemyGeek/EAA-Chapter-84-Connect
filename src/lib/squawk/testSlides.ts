@@ -31,7 +31,7 @@ export const TEST_SQUAWK_SLIDES: SquawkSlide[] = [
     kind: "classifieds",
     label: "Classifieds",
     title: "Garmin G5 for sale — like new",
-    body: "New listing in the chapter classifieds.",
+    body: "Includes HSI kit, mounting hardware, and current software. Only 200 hours total time. Seller is motivated and open to reasonable offers.",
     href: "/classifieds",
   },
   {
@@ -39,7 +39,7 @@ export const TEST_SQUAWK_SLIDES: SquawkSlide[] = [
     kind: "hangar_talk",
     label: "Question",
     title: "Anyone flown into KJYO recently?",
-    body: "Active in Hangar Talk — join the conversation.",
+    body: "Looking for current tips on the runway condition, parking, and whether they are still waiving the ramp fee for light sport aircraft on weekends.",
     href: "/hangar-talk",
   },
   {
