@@ -159,14 +159,15 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     fetchVolunteering(),
   ]);
 
-  // Show only as many slots as we have real content for.
+  // Reserve up to two slots for quotes whenever real content exists, otherwise fill with quotes.
   const eligibleCount =
     Math.min(manual.length, MAX_MANUAL) +
     Math.min(welcome.length, MAX_WELCOME) +
     Math.min(classifieds.length, MAX_PER_MEDIUM) +
     Math.min(hangar.length, MAX_PER_MEDIUM) +
     Math.min(volunteer.length, MAX_PER_MEDIUM);
-  const targetSlots = Math.min(MAX_SLOTS, eligibleCount);
+  const targetSlots = Math.min(MAX_SLOTS - MAX_QUOTES_WITH_CONTENT, eligibleCount);
+
 
   const slides: SquawkSlide[] = [];
 
