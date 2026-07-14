@@ -120,6 +120,15 @@ export default function MemberVolunteering() {
 
   const appliedIds = new Set((displayedApplications ?? []).map((a) => a.opportunity_id));
 
+  // Scroll to and highlight the opportunity referenced by /member-volunteering/:id
+  useEffect(() => {
+    if (!opportunityId || isLoading) return;
+    const el = document.getElementById(`vol-opp-${opportunityId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [opportunityId, isLoading]);
+
   // Apply mutation
   const applyMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
