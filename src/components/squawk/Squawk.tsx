@@ -54,7 +54,7 @@ export function Squawk() {
   }, [embla]);
 
   useEffect(() => {
-    if (!embla || slides.length < 2) return;
+    if (!embla || slides.length < 2 || testMode) return;
     const id = setInterval(() => {
       if (pausedRef.current || document.visibilityState !== "visible") return;
       setElapsed((prev) => {
@@ -67,7 +67,7 @@ export function Squawk() {
       });
     }, TICK_MS);
     return () => clearInterval(id);
-  }, [embla, slides.length, activeDuration]);
+  }, [embla, slides.length, activeDuration, testMode]);
 
   if (!slides.length) return null;
 
