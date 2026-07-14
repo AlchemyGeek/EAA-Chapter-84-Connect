@@ -190,7 +190,7 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     slides.push(s);
   }
 
-  // 4. Quotes are a last-resort fallback: only when there is no real content at all.
+  // 4. Quotes: fallback when there is no real content, otherwise mix a couple in.
   if (slides.length === 0) {
     const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
     for (let i = 0; i < QUOTE_FALLBACK_SLOTS && i < shuffledQuotes.length; i++) {
