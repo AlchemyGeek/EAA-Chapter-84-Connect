@@ -287,7 +287,10 @@ function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, a
   const isActive = opp.status === "Active";
 
   return (
-    <Card className={!isActive ? "opacity-70" : ""}>
+    <Card
+      id={`vol-opp-${opp.id}`}
+      className={`${!isActive ? "opacity-70" : ""} ${highlighted ? "ring-2 ring-accent ring-offset-2" : ""}`}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
