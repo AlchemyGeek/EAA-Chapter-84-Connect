@@ -279,9 +279,10 @@ type OpportunityCardProps = {
   applying: boolean;
   canApply: boolean;
   isImpersonating: boolean;
+  highlighted?: boolean;
 };
 
-function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, applying, canApply, isImpersonating }: OpportunityCardProps) {
+function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, applying, canApply, isImpersonating, highlighted }: OpportunityCardProps) {
   const oppContacts = contacts.filter((c) => c.opportunity_id === opp.id);
   const isActive = opp.status === "Active";
 
