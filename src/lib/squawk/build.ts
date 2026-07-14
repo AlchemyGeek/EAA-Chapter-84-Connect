@@ -68,7 +68,7 @@ async function fetchWelcome(): Promise<SquawkSlide[]> {
 async function fetchClassifieds(): Promise<SquawkSlide[]> {
   const { data, error } = await supabase
     .from("classifieds")
-    .select("id, title, category, status, created_at, expires_at")
+    .select("id, title, description, category, status, created_at, expires_at")
     .eq("status", "active")
     .gt("expires_at", new Date().toISOString())
     .order("created_at", { ascending: false })
@@ -79,7 +79,7 @@ async function fetchClassifieds(): Promise<SquawkSlide[]> {
     kind: "classifieds",
     label: "Classifieds",
     title: truncate(c.title, 80),
-    body: "New listing in the chapter classifieds.",
+    body: c.description ? truncate(c.description, 120) : "New listing in the chapter classifieds.",
     href: `/classifieds/${c.id}`,
   }));
 }
@@ -106,7 +106,7 @@ async function fetchHangarTalk(): Promise<SquawkSlide[]> {
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("hangar_talk_posts" as any)
-    .select("id, title, type, resolved_at, last_activity_at")
+    .select("id, title, body, type, resolved_at, last_activity_at")
     .is("resolved_at", null)
     .gte("last_activity_at", since)
     .order("last_activity_at", { ascending: false })
@@ -120,7 +120,7 @@ async function fetchHangarTalk(): Promise<SquawkSlide[]> {
       kind: "hangar_talk",
       label,
       title: truncate(p.title, 80),
-      body: "Active in Hangar Talk — join the conversation.",
+      body: p.body ? truncate(p.body, 120) : "Active in Hangar Talk — join the conversation.",
       href: `/hangar-talk/${p.id}`,
     } satisfies SquawkSlide;
   });
