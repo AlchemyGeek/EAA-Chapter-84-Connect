@@ -195,7 +195,18 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     for (let i = 0; i < QUOTE_FALLBACK_SLOTS && i < shuffledQuotes.length; i++) {
       slides.push(quoteSlide(shuffledQuotes[i]));
     }
+  } else {
+    // Mix in a couple of quotes with real content.
+    const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
+    let added = 0;
+    for (const idx of shuffledQuotes) {
+      if (slides.length >= MAX_SLOTS) break;
+      if (added >= MAX_QUOTES_WITH_CONTENT) break;
+      slides.push(quoteSlide(idx));
+      added++;
+    }
   }
 
   return slides.slice(0, MAX_SLOTS);
+
 }
