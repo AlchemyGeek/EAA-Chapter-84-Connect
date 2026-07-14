@@ -2,11 +2,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { AVIATION_QUOTES } from "./quotes";
 import type { SquawkEntry, SquawkSlide } from "./types";
 
-const MIN_SLOTS = 5;
 const MAX_SLOTS = 10;
 const MAX_MANUAL = 2;
 const MAX_WELCOME = 1;
 const MAX_PER_MEDIUM = 3; // classifieds, hangar talk, volunteering
+const QUOTE_FALLBACK_SLOTS = 3; // only used when there is no real content at all
 
 
 function pickRandom<T>(arr: T[]): T | undefined {
@@ -157,14 +157,14 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     fetchVolunteering(),
   ]);
 
-  // Decide how many slots to show this session based on how many real cards are available.
+  // Show only as many slots as we have real content for.
   const eligibleCount =
     Math.min(manual.length, MAX_MANUAL) +
     Math.min(welcome.length, MAX_WELCOME) +
     Math.min(classifieds.length, MAX_PER_MEDIUM) +
     Math.min(hangar.length, MAX_PER_MEDIUM) +
     Math.min(volunteer.length, MAX_PER_MEDIUM);
-  const targetSlots = Math.min(MAX_SLOTS, Math.max(MIN_SLOTS, eligibleCount));
+  const targetSlots = Math.min(MAX_SLOTS, eligibleCount);
 
   const slides: SquawkSlide[] = [];
 
@@ -187,13 +187,12 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     slides.push(s);
   }
 
-  // 4. Fill remaining with quotes (allowed to repeat as filler).
-  const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
-  let qi = 0;
-  while (slides.length < targetSlots) {
-    slides.push(quoteSlide(shuffledQuotes[qi % shuffledQuotes.length]));
-    qi++;
-    if (qi > MAX_SLOTS * 2) break; // safety
+  // 4. Quotes are a last-resort fallback: only when there is no real content at all.
+  if (slides.length === 0) {
+    const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
+    for (let i = 0; i < QUOTE_FALLBACK_SLOTS && i < shuffledQuotes.length; i++) {
+      slides.push(quoteSlide(shuffledQuotes[i]));
+    }
   }
 
   return slides.slice(0, MAX_SLOTS);
