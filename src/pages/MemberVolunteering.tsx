@@ -258,6 +258,7 @@ export default function MemberVolunteering() {
                     applying={false}
                     canApply={false}
                     isImpersonating={isImpersonating}
+                    highlighted={opportunityId === opp.id}
                   />
                 ))}
               </>
