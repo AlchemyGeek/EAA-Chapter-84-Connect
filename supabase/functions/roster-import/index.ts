@@ -252,6 +252,39 @@ Deno.serve(async (req) => {
     const existingMap = new Map<number, Record<string, any>>();
     (existingMembers || []).forEach((m: any) => existingMap.set(m.key_id, m));
 
+    // Build EAA# -> local Prospect lookup for reconciliation.
+    // When the EAA Roster Tool re-imports a prospect we exported, it comes
+    // back with a NEW key_id. Match on normalized EAA# so we can treat it as
+    // "same person, modified" instead of Added + Removed.
+    const normEaa = (v: any): string => String(v ?? "").trim().toLowerCase();
+    const localProspectsByEaa = new Map<string, Record<string, any>>();
+    for (const m of existingMembers || []) {
+      const isProspect = m.member_type && String(m.member_type).toLowerCase() === "prospect";
+      if (!isProspect) continue;
+      const eaa = normEaa(m.eaa_number);
+      if (!eaa) continue;
+      // Skip if this prospect's own key_id is also in the incoming file
+      // (already handled by direct key_id match)
+      if (incomingKeyIds.has(m.key_id)) continue;
+      if (!localProspectsByEaa.has(eaa)) localProspectsByEaa.set(eaa, m);
+    }
+
+    // For each incoming record, resolve which local row (if any) it corresponds to.
+    // Returns { existing, isReconciledProspect } — isReconciledProspect means matched
+    // by EAA# to a local Prospect with a different key_id.
+    const resolveExisting = (incoming: Record<string, any>) => {
+      const byKey = existingMap.get(incoming.key_id);
+      if (byKey) return { existing: byKey, isReconciledProspect: false };
+      const eaa = normEaa(incoming.eaa_number);
+      if (!eaa) return { existing: null, isReconciledProspect: false };
+      const prospect = localProspectsByEaa.get(eaa);
+      if (!prospect) return { existing: null, isReconciledProspect: false };
+      return { existing: prospect, isReconciledProspect: true };
+    };
+
+    // key_ids of local rows that are "consumed" by an incoming record via EAA reconciliation
+    const reconciledOldKeyIds = new Set<number>();
+
     // ===== DRY RUN: compute preview without writing =====
     if (dryRun) {
       const previewAdded: any[] = [];
@@ -260,7 +293,7 @@ Deno.serve(async (req) => {
       const previewReconciled: any[] = [];
 
       for (const incoming of incomingRecords) {
-        const existing = existingMap.get(incoming.key_id);
+        const { existing, isReconciledProspect } = resolveExisting(incoming);
         if (!existing) {
           previewAdded.push({
             key_id: incoming.key_id,
@@ -270,10 +303,21 @@ Deno.serve(async (req) => {
             member_type: incoming.member_type,
           });
         } else {
+          if (isReconciledProspect) {
+            reconciledOldKeyIds.add(existing.key_id);
+            previewReconciled.push({
+              old_key_id: existing.key_id,
+              new_key_id: incoming.key_id,
+              first_name: incoming.first_name,
+              last_name: incoming.last_name,
+              eaa_number: incoming.eaa_number,
+            });
+          }
           const diffs = diffRecord(existing, incoming);
           if (diffs.length > 0) {
             previewModified.push({
-              key_id: incoming.key_id,
+              key_id: isReconciledProspect ? existing.key_id : incoming.key_id,
+              new_key_id: isReconciledProspect ? incoming.key_id : undefined,
               first_name: incoming.first_name,
               last_name: incoming.last_name,
               eaa_number: incoming.eaa_number,
@@ -283,34 +327,15 @@ Deno.serve(async (req) => {
         }
       }
 
-      const incomingByEaaPreview = new Map<string, any>();
-      for (const r of incomingRecords) {
-        const eaa = (r.eaa_number || "").toString().trim();
-        if (!eaa) continue;
-        if (r.member_type && String(r.member_type).toLowerCase() === "prospect") continue;
-        if (!incomingByEaaPreview.has(eaa)) incomingByEaaPreview.set(eaa, r);
-      }
       for (const [keyId, existing] of existingMap) {
         if (incomingKeyIds.has(keyId)) continue;
-        const isProspect = existing.member_type && String(existing.member_type).toLowerCase() === "prospect";
-        const eaa = (existing.eaa_number || "").toString().trim();
-        const replacement = isProspect && eaa ? incomingByEaaPreview.get(eaa) : null;
-        if (replacement) {
-          previewReconciled.push({
-            old_key_id: keyId,
-            new_key_id: replacement.key_id,
-            first_name: existing.first_name,
-            last_name: existing.last_name,
-            eaa_number: existing.eaa_number,
-          });
-        }
+        if (reconciledOldKeyIds.has(keyId)) continue; // matched via EAA reconciliation
         previewRemoved.push({
           key_id: keyId,
           first_name: existing.first_name,
           last_name: existing.last_name,
           eaa_number: existing.eaa_number,
           member_type: existing.member_type,
-          reconciled_to_key_id: replacement ? replacement.key_id : null,
         });
       }
 
@@ -333,6 +358,7 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
 
     // Create import record
     const { data: importRecord, error: importError } = await adminClient
