@@ -37,6 +37,7 @@ import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
 import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
+import { version as appVersion } from "../../package.json";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, isOfficerOrAbove, signOut } = useAuth();
@@ -746,7 +747,7 @@ export default function MemberHome() {
           </Card>
         )}
 
-        <p className="text-center text-xs text-muted-foreground pt-4">v26.07.02</p>
+        <p className="text-center text-xs text-muted-foreground pt-4">v{appVersion}</p>
       </div>
 
       {/* Floating debug button */}
