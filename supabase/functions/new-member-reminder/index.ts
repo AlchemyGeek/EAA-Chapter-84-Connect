@@ -185,34 +185,53 @@ Deno.serve(async (req) => {
 
     const membershipEmail = "membership@eaa84.org";
     const applicantUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient);
+    const membershipUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, membershipEmail);
+    const sharedMessageId = crypto.randomUUID();
+    const queuedAt = new Date().toISOString();
 
-    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    const basePayload = {
+      from: "Membership <notify@notify.eaa84.org>",
+      reply_to: membershipEmail,
+      sender_domain: "notify.eaa84.org",
+      subject,
+      html: htmlBody,
+      text: textBody,
+      purpose: "transactional",
+      label: "new_member_dues_reminder",
+      queued_at: queuedAt,
+    };
+
+    const sends = [
+      {
+        ...basePayload,
         to: recipient,
-        cc: [membershipEmail],
-        from: "Membership <notify@notify.eaa84.org>",
-        reply_to: membershipEmail,
-        sender_domain: "notify.eaa84.org",
-        subject,
-        html: htmlBody,
-        text: textBody,
-        purpose: "transactional",
-        label: "new_member_dues_reminder",
         idempotency_key: `new-member-reminder-${application_id}`,
         unsubscribe_token: applicantUnsubscribeToken,
-        message_id: crypto.randomUUID(),
-        queued_at: new Date().toISOString(),
+        message_id: sharedMessageId,
       },
-    });
+      {
+        ...basePayload,
+        to: membershipEmail,
+        idempotency_key: `new-member-reminder-${application_id}-membership`,
+        unsubscribe_token: membershipUnsubscribeToken,
+        message_id: `${sharedMessageId}-membership`,
+      },
+    ];
 
-    if (enqueueError) {
-      console.error("Failed to enqueue reminder:", enqueueError.message);
-      return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    for (const payload of sends) {
+      const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+        queue_name: "transactional_emails",
+        payload,
       });
+      if (enqueueError) {
+        console.error("Failed to enqueue reminder:", enqueueError.message, "to:", payload.to);
+        return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
+
 
     await supabase
       .from("new_member_applications")
