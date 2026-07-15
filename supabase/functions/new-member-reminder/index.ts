@@ -232,15 +232,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    const membershipCopied = true;
-
-    if (!membershipCopied) {
-      return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     await supabase
       .from("new_member_applications")
       .update({ reminder_sent_at: new Date().toISOString() })
