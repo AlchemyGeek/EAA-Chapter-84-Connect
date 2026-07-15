@@ -20,6 +20,28 @@ function escapeHtmlAttr(str: string): string {
   return escapeHtml(str);
 }
 
+async function getOrCreateUnsubscribeToken(supabase: ReturnType<typeof createClient>, email: string): Promise<string> {
+  const { data: existingToken } = await supabase
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", email)
+    .is("used_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingToken?.token) {
+    return existingToken.token;
+  }
+
+  const unsubscribeToken = crypto.randomUUID();
+  await supabase
+    .from("email_unsubscribe_tokens")
+    .insert({ email, token: unsubscribeToken });
+
+  return unsubscribeToken;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -161,50 +183,53 @@ Deno.serve(async (req) => {
 
     const textBody = htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-    const messageId = crypto.randomUUID();
+    const applicantUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient);
+    const membershipEmail = "membership@eaa84.org";
+    const membershipUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, membershipEmail);
 
-    const { data: existingToken } = await supabase
-      .from("email_unsubscribe_tokens")
-      .select("token")
-      .eq("email", recipient)
-      .is("used_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const basePayload = {
+      from: "Membership <notify@notify.eaa84.org>",
+      reply_to: membershipEmail,
+      sender_domain: "notify.eaa84.org",
+      subject,
+      html: htmlBody,
+      text: textBody,
+      purpose: "transactional",
+      label: "new_member_dues_reminder",
+      queued_at: new Date().toISOString(),
+    };
 
-    const unsubscribeToken = existingToken?.token ?? crypto.randomUUID();
-    if (!existingToken) {
-      await supabase
-        .from("email_unsubscribe_tokens")
-        .insert({ email: recipient, token: unsubscribeToken });
-    }
-
-    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    const sends = [
+      {
         to: recipient,
-        cc: ["membership@eaa84.org"],
-        from: "Membership <notify@notify.eaa84.org>",
-        reply_to: "membership@eaa84.org",
-        sender_domain: "notify.eaa84.org",
-        subject,
-        html: htmlBody,
-        text: textBody,
-        purpose: "transactional",
-        label: "new_member_dues_reminder",
         idempotency_key: `new-member-reminder-${application_id}`,
-        unsubscribe_token: unsubscribeToken,
-        message_id: messageId,
-        queued_at: new Date().toISOString(),
+        unsubscribe_token: applicantUnsubscribeToken,
+        message_id: crypto.randomUUID(),
       },
-    });
+      {
+        to: membershipEmail,
+        idempotency_key: `new-member-reminder-membership-copy-${application_id}`,
+        unsubscribe_token: membershipUnsubscribeToken,
+        message_id: crypto.randomUUID(),
+      },
+    ];
 
-    if (enqueueError) {
-      console.error("Failed to enqueue reminder:", enqueueError.message);
-      return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    for (const send of sends) {
+      const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+        queue_name: "transactional_emails",
+        payload: {
+          ...basePayload,
+          ...send,
+        },
       });
+
+      if (enqueueError) {
+        console.error("Failed to enqueue reminder:", enqueueError.message);
+        return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     await supabase
