@@ -183,53 +183,35 @@ Deno.serve(async (req) => {
 
     const textBody = htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-    const applicantUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient);
     const membershipEmail = "membership@eaa84.org";
-    const membershipUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, membershipEmail);
+    const applicantUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient);
 
-    const basePayload = {
-      from: "Membership <notify@notify.eaa84.org>",
-      reply_to: membershipEmail,
-      sender_domain: "notify.eaa84.org",
-      subject,
-      html: htmlBody,
-      text: textBody,
-      purpose: "transactional",
-      label: "new_member_dues_reminder",
-      queued_at: new Date().toISOString(),
-    };
-
-    const sends = [
-      {
+    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
         to: recipient,
+        cc: [membershipEmail],
+        from: "Membership <notify@notify.eaa84.org>",
+        reply_to: membershipEmail,
+        sender_domain: "notify.eaa84.org",
+        subject,
+        html: htmlBody,
+        text: textBody,
+        purpose: "transactional",
+        label: "new_member_dues_reminder",
         idempotency_key: `new-member-reminder-${application_id}`,
         unsubscribe_token: applicantUnsubscribeToken,
         message_id: crypto.randomUUID(),
+        queued_at: new Date().toISOString(),
       },
-      {
-        to: membershipEmail,
-        idempotency_key: `new-member-reminder-membership-copy-${application_id}`,
-        unsubscribe_token: membershipUnsubscribeToken,
-        message_id: crypto.randomUUID(),
-      },
-    ];
+    });
 
-    for (const send of sends) {
-      const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
-          ...basePayload,
-          ...send,
-        },
+    if (enqueueError) {
+      console.error("Failed to enqueue reminder:", enqueueError.message);
+      return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-
-      if (enqueueError) {
-        console.error("Failed to enqueue reminder:", enqueueError.message);
-        return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
     }
 
     await supabase
