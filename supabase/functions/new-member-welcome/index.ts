@@ -131,13 +131,14 @@ Deno.serve(async (req) => {
         .insert({ email: recipient, token: unsubscribeToken });
     }
 
+    const membershipEmail = "membership@eaa84.org";
+
     const { error: enqueueError } = await supabase.rpc("enqueue_email", {
       queue_name: "transactional_emails",
       payload: {
         to: recipient,
-        cc: ["membership@eaa84.org"],
         from: "Membership <notify@notify.eaa84.org>",
-        reply_to: "membership@eaa84.org",
+        reply_to: membershipEmail,
         sender_domain: "notify.eaa84.org",
         subject,
         html: htmlBody,
@@ -158,6 +159,43 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Separate copy to membership mailbox (cc on enqueue payload is dropped by processor)
+    const { data: membershipToken } = await supabase
+      .from("email_unsubscribe_tokens")
+      .select("token")
+      .eq("email", membershipEmail)
+      .is("used_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    let membershipUnsub = membershipToken?.token;
+    if (!membershipUnsub) {
+      membershipUnsub = crypto.randomUUID();
+      await supabase
+        .from("email_unsubscribe_tokens")
+        .insert({ email: membershipEmail, token: membershipUnsub });
+    }
+
+    await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
+        to: membershipEmail,
+        from: "Membership <notify@notify.eaa84.org>",
+        reply_to: membershipEmail,
+        sender_domain: "notify.eaa84.org",
+        subject: `[Copy] ${subject} — ${app.first_name} ${app.last_name}`,
+        html: htmlBody,
+        text: textBody,
+        purpose: "transactional",
+        label: "new_member_welcome_copy",
+        idempotency_key: `new-member-welcome-copy-${application_id}`,
+        unsubscribe_token: membershipUnsub,
+        message_id: `${messageId}-copy`,
+        queued_at: new Date().toISOString(),
+      },
+    });
+
 
     await supabase
       .from("new_member_applications")
