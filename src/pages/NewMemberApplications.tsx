@@ -69,6 +69,13 @@ function getSecondTuesdayOfMarchNextYear(): string {
   return `${nextYear}-03-${String(secondTuesday).padStart(2, "0")}`;
 }
 
+type ApplicationRosterMatch = {
+  key_id: number;
+  member_type: string | null;
+  current_standing: string | null;
+  expiration_date: string | null;
+};
+
 export default function NewMemberApplications() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const queryClient = useQueryClient();
@@ -329,27 +336,74 @@ export default function NewMemberApplications() {
     mutationFn: async () => {
       const app = feeDialogApp;
       if (!app) throw new Error("No application selected");
-      if (!app.roster_key_id) throw new Error("No linked roster record found");
       const methodObj = PAYMENT_METHODS.find((m) => m.label === payMethod);
       if (!methodObj) throw new Error("Invalid method");
       const amountNum = parseFloat(payAmount);
       if (isNaN(amountNum) || amountNum <= 0) throw new Error("Invalid amount");
 
+      const rosterMatches: ApplicationRosterMatch[] = [];
+
+      if (app.roster_key_id) {
+        const { data, error } = await supabase
+          .from("roster_members")
+          .select("key_id, member_type, current_standing, expiration_date")
+          .eq("key_id", app.roster_key_id)
+          .maybeSingle();
+        if (error) throw error;
+        if (data) rosterMatches.push(data);
+      }
+
+      if (app.eaa_number) {
+        const { data, error } = await supabase
+          .from("roster_members")
+          .select("key_id, member_type, current_standing, expiration_date")
+          .eq("eaa_number", app.eaa_number)
+          .order("key_id", { ascending: false })
+          .limit(1);
+        if (error) throw error;
+        if (data?.[0] && !rosterMatches.some((m) => m.key_id === data[0].key_id)) {
+          rosterMatches.push(data[0]);
+        }
+      }
+
+      const rosterMatch = rosterMatches[0];
+      if (!rosterMatch) throw new Error("No linked roster record found");
+
       const udf1Value = `${format(payDate, "MM/dd/yyyy")} $${amountNum}/${methodObj.code}`;
+      const recorderName = currentUserMember
+        ? `${currentUserMember.first_name} ${currentUserMember.last_name}`
+        : user?.email ?? "Unknown";
+      const newExpiration = getSecondTuesdayOfMarchNextYear();
+
+      const { error: payErr } = await supabase
+        .from("dues_payments" as any)
+        .insert({
+          key_id: rosterMatch.key_id,
+          payment_date: format(payDate, "yyyy-MM-dd"),
+          amount: amountNum,
+          method: payMethod,
+          method_code: methodObj.code,
+          new_expiration_date: newExpiration,
+          old_expiration_date: rosterMatch.expiration_date,
+          old_standing: rosterMatch.current_standing,
+          recorded_by: user?.id,
+          recorded_by_name: recorderName,
+        } as any);
+      if (payErr) throw payErr;
 
       const { error: rosterErr } = await supabase
         .from("roster_members")
         .update({ udf1_text: udf1Value } as any)
-        .eq("key_id", app.roster_key_id);
+        .eq("key_id", rosterMatch.key_id);
       if (rosterErr) throw rosterErr;
 
       const { error: appErr } = await supabase
         .from("new_member_applications")
-        .update({ fees_verified: true } as any)
+        .update({ fees_verified: true, roster_key_id: rosterMatch.key_id } as any)
         .eq("id", app.id);
       if (appErr) throw appErr;
 
-      return app;
+      return { ...app, roster_key_id: rosterMatch.key_id };
     },
     onSuccess: (app) => {
       queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
