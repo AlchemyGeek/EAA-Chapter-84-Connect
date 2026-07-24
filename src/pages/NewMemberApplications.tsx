@@ -370,9 +370,7 @@ export default function NewMemberApplications() {
       if (!rosterMatch) throw new Error("No linked roster record found");
 
       const udf1Value = `${format(payDate, "MM/dd/yyyy")} $${amountNum}/${methodObj.code}`;
-      const recorderName = currentUserMember
-        ? `${currentUserMember.first_name} ${currentUserMember.last_name}`
-        : user?.email ?? "Unknown";
+      const recorderName = user?.email ?? "Unknown";
       const newExpiration = getSecondTuesdayOfMarchNextYear();
 
       const { error: payErr } = await supabase
