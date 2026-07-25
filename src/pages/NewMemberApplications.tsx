@@ -451,8 +451,9 @@ export default function NewMemberApplications() {
   if (!isOfficerOrAbove) return <Navigate to="/home" replace />;
 
   const isSynced = (app: any) => {
-    if (!app.roster_key_id) return false;
-    const rosterImportTime = lastImportByKeyId.get(app.roster_key_id);
+    const eaa = (app.eaa_number ?? "").trim();
+    if (!eaa) return false;
+    const rosterImportTime = lastImportByEaa.get(eaa);
     if (!rosterImportTime) return false;
     const reference = app.processed_at ? new Date(app.processed_at) : new Date(app.created_at);
     return rosterImportTime >= reference;
