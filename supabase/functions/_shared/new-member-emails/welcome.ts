@@ -92,7 +92,7 @@ export const WELCOME_HTML = String.raw`
                     <span style="display:inline-block; width:24px; height:24px; background-color:#0B1F3A; color:#ffffff; font-size:13px; font-weight:bold; text-align:center; line-height:24px; border-radius:50%;">4</span>
                   </td>
                   <td valign="top" style="padding:10px 0; font-size:15px; color:#1a1a1a; line-height:1.5;">
-                    <strong>Meet your New Member Buddy</strong> — they'll help you find your bearings around the chapter.
+                    <strong>Join us in the Upcoming Chapter Meeting</strong> — Held the second Tuesday of each month is the best way to connect with other members and learn about the chapter.
                   </td>
                 </tr>
               </table>
