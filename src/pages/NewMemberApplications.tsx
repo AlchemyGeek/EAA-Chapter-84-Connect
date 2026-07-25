@@ -182,45 +182,86 @@ export default function NewMemberApplications() {
 
   const existingEaaSet = new Set(existingMembers.map((m) => m.eaa_number?.trim()));
 
-  // For each application, look up the roster row by EAA number (stable across key_id remapping
-  // during imports) and determine when it was last touched by a roster import.
+  // Principle: the roster import is the authoritative source of truth for
+  // member identity. For each application, look up the current roster row —
+  // preferring the stable roster_key_id anchor (written by the prospect
+  // creation trigger) and falling back to EAA# for legacy rows without a link.
+  const rosterKeyIds = Array.from(
+    new Set(
+      applications
+        .map((a) => a.roster_key_id)
+        .filter((v): v is number => typeof v === "number")
+    )
+  );
+
   const { data: linkedRosterRows = [] } = useQuery({
-    queryKey: ["nma-linked-roster-import-by-eaa", eaaNumbers],
-    enabled: eaaNumbers.length > 0,
+    queryKey: ["nma-linked-roster", rosterKeyIds, eaaNumbers],
+    enabled: rosterKeyIds.length > 0 || eaaNumbers.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_members")
-        .select("key_id, eaa_number, last_import_id")
-        .in("eaa_number", eaaNumbers);
-      if (error) throw error;
-      return data;
+      // Fetch by key_id and eaa_number in parallel, then merge/dedupe by key_id.
+      const [byKey, byEaa] = await Promise.all([
+        rosterKeyIds.length > 0
+          ? supabase
+              .from("roster_members")
+              .select("key_id, eaa_number")
+              .in("key_id", rosterKeyIds)
+          : Promise.resolve({ data: [], error: null }),
+        eaaNumbers.length > 0
+          ? supabase
+              .from("roster_members")
+              .select("key_id, eaa_number")
+              .in("eaa_number", eaaNumbers)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+      if (byKey.error) throw byKey.error;
+      if (byEaa.error) throw byEaa.error;
+      const merged = new Map<number, { key_id: number; eaa_number: string | null }>();
+      for (const r of [...(byKey.data ?? []), ...(byEaa.data ?? [])]) {
+        merged.set(r.key_id, r as any);
+      }
+      return Array.from(merged.values());
     },
   });
 
-  const importIds = Array.from(
-    new Set(linkedRosterRows.map((r) => r.last_import_id).filter(Boolean) as string[])
+  const rosterByKeyId = new Map(linkedRosterRows.map((r) => [r.key_id, r]));
+  const rosterByEaa = new Map(
+    linkedRosterRows
+      .map((r) => [(r.eaa_number ?? "").trim(), r] as const)
+      .filter(([e]) => e)
   );
 
-  const { data: importTimes = [] } = useQuery({
-    queryKey: ["nma-import-times", importIds],
-    enabled: importIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_imports")
-        .select("id, imported_at")
-        .in("id", importIds);
-      if (error) throw error;
-      return data;
-    },
-  });
+  // Auto-reconcile: when an application has a stable roster_key_id link but its
+  // recorded EAA# differs from the roster's, trust the roster and update the
+  // application. Runs once per (app, roster-eaa) pair to avoid re-firing.
+  const reconciledRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    (async () => {
+      const toFix: Array<{ id: string; eaa_number: string }> = [];
+      for (const app of applications) {
+        if (!app.roster_key_id) continue;
+        const roster = rosterByKeyId.get(app.roster_key_id);
+        if (!roster) continue;
+        const rosterEaa = (roster.eaa_number ?? "").trim();
+        const appEaa = (app.eaa_number ?? "").trim();
+        if (!rosterEaa || rosterEaa === appEaa) continue;
+        const marker = `${app.id}:${rosterEaa}`;
+        if (reconciledRef.current.has(marker)) continue;
+        reconciledRef.current.add(marker);
+        toFix.push({ id: app.id, eaa_number: rosterEaa });
+      }
+      if (toFix.length === 0) return;
+      await Promise.all(
+        toFix.map((f) =>
+          supabase
+            .from("new_member_applications")
+            .update({ eaa_number: f.eaa_number } as any)
+            .eq("id", f.id)
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+    })();
+  }, [applications, linkedRosterRows, queryClient]);
 
-  const importTimeById = new Map(importTimes.map((i) => [i.id, new Date(i.imported_at)]));
-  const lastImportByEaa = new Map<string, Date | null>(
-    linkedRosterRows.map((r) => [
-      (r.eaa_number ?? "").trim(),
-      r.last_import_id ? (importTimeById.get(r.last_import_id) ?? null) : null,
-    ])
-  );
 
 
   const updateVerification = useMutation({
