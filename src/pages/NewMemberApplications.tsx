@@ -450,13 +450,21 @@ export default function NewMemberApplications() {
   if (!user) return <Navigate to="/auth" replace />;
   if (!isOfficerOrAbove) return <Navigate to="/home" replace />;
 
+  // Sync check: the applicant's EAA# must currently exist in the roster AND the
+  // roster as a whole must have been re-imported after the application was
+  // processed. We can't rely on roster_members.last_import_id because that only
+  // updates when a specific row is modified in an import — an unchanged row
+  // keeps its old last_import_id even after many later full-roster imports.
+  const linkedEaaSet = new Set(
+    linkedRosterRows.map((r) => (r.eaa_number ?? "").trim()).filter(Boolean)
+  );
   const isSynced = (app: any) => {
     const eaa = (app.eaa_number ?? "").trim();
     if (!eaa) return false;
-    const rosterImportTime = lastImportByEaa.get(eaa);
-    if (!rosterImportTime) return false;
+    if (!linkedEaaSet.has(eaa)) return false;
+    if (!lastSync) return false;
     const reference = app.processed_at ? new Date(app.processed_at) : new Date(app.created_at);
-    return rosterImportTime >= reference;
+    return lastSync >= reference;
   };
 
   return (
