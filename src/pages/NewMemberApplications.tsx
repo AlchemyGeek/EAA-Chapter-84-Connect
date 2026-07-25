@@ -182,21 +182,16 @@ export default function NewMemberApplications() {
 
   const existingEaaSet = new Set(existingMembers.map((m) => m.eaa_number?.trim()));
 
-  // For each application's linked roster member, determine when it was last touched by a roster import.
-  // An application counts as "synced" only if its linked roster row has been touched by an import
-  // that ran at or after the application was processed (or created, if not yet processed).
-  const rosterKeyIds = applications
-    .map((a) => a.roster_key_id)
-    .filter((k): k is number => typeof k === "number");
-
+  // For each application, look up the roster row by EAA number (stable across key_id remapping
+  // during imports) and determine when it was last touched by a roster import.
   const { data: linkedRosterRows = [] } = useQuery({
-    queryKey: ["nma-linked-roster-import", rosterKeyIds],
-    enabled: rosterKeyIds.length > 0,
+    queryKey: ["nma-linked-roster-import-by-eaa", eaaNumbers],
+    enabled: eaaNumbers.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("key_id, last_import_id")
-        .in("key_id", rosterKeyIds);
+        .select("key_id, eaa_number, last_import_id")
+        .in("eaa_number", eaaNumbers);
       if (error) throw error;
       return data;
     },
@@ -220,8 +215,11 @@ export default function NewMemberApplications() {
   });
 
   const importTimeById = new Map(importTimes.map((i) => [i.id, new Date(i.imported_at)]));
-  const lastImportByKeyId = new Map(
-    linkedRosterRows.map((r) => [r.key_id, r.last_import_id ? importTimeById.get(r.last_import_id) : null])
+  const lastImportByEaa = new Map<string, Date | null>(
+    linkedRosterRows.map((r) => [
+      (r.eaa_number ?? "").trim(),
+      r.last_import_id ? (importTimeById.get(r.last_import_id) ?? null) : null,
+    ])
   );
 
 
