@@ -561,7 +561,7 @@ export default function NewMemberApplications() {
                       })()}
                     </p>
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      {existingEaaSet.has(app.eaa_number?.trim()) && (
+                      {existingEaaSet.has(app.eaa_number?.trim()) && !app.processed && (
                         <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
                           <AlertTriangle className="h-3 w-3" />
                           Existing Member
