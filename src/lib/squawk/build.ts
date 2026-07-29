@@ -6,7 +6,7 @@ const MAX_SLOTS = 5;
 const MAX_MANUAL = 2;
 const MAX_WELCOME = 1;
 const MAX_PER_MEDIUM = 3; // classifieds, hangar talk, volunteering
-const MAX_QUOTES_WITH_CONTENT = 2; // quotes mixed in when real content exists
+const MAX_QUOTES_WITH_CONTENT = 1; // at most one quote when real content exists
 const QUOTE_FALLBACK_SLOTS = 3; // only used when there is no real content at all
 
 
