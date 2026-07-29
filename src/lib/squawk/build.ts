@@ -139,6 +139,30 @@ function manualToSlide(m: SquawkEntry): SquawkSlide {
   };
 }
 
+// Max rendered length (quote text + author formatting) that fits the fixed
+// 130px tile under the tiered sizing in SquawkSlide. Quotes longer than this
+// are excluded from the selection pool.
+const MAX_QUOTE_LENGTH = 180;
+
+function renderedQuoteLength(q: { text: string; author: string }): number {
+  const title = `"${q.text}"`;
+  const body = q.author ? `— ${q.author}` : "";
+  return title.length + body.length;
+}
+
+function eligibleQuoteIndices(): number[] {
+  const fit = AVIATION_QUOTES
+    .map((q, i) => ({ i, len: renderedQuoteLength(q) }))
+    .filter((x) => x.len <= MAX_QUOTE_LENGTH)
+    .map((x) => x.i);
+  if (fit.length > 0) return fit;
+  // Safety fallback: no quote fits (shouldn't happen) — return shortest one.
+  const shortest = AVIATION_QUOTES
+    .map((q, i) => ({ i, len: renderedQuoteLength(q) }))
+    .sort((a, b) => a.len - b.len)[0];
+  return shortest ? [shortest.i] : [];
+}
+
 function quoteSlide(idx: number): SquawkSlide {
   const q = AVIATION_QUOTES[idx % AVIATION_QUOTES.length];
   return {
@@ -192,13 +216,13 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
 
   // 4. Quotes: fallback when there is no real content, otherwise mix a couple in.
   if (slides.length === 0) {
-    const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
+    const shuffledQuotes = shuffle(eligibleQuoteIndices());
     for (let i = 0; i < QUOTE_FALLBACK_SLOTS && i < shuffledQuotes.length; i++) {
       slides.push(quoteSlide(shuffledQuotes[i]));
     }
   } else {
     // Mix in a couple of quotes with real content.
-    const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
+    const shuffledQuotes = shuffle(eligibleQuoteIndices());
     let added = 0;
     for (const idx of shuffledQuotes) {
       if (slides.length >= MAX_SLOTS) break;
