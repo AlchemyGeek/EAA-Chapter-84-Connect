@@ -32,7 +32,7 @@ export function Squawk() {
     staleTime: Infinity,
   });
 
-  const [emblaRef, embla] = useEmblaCarousel({ loop: true, align: "start" });
+  const [emblaRef, embla] = useEmblaCarousel({ loop: true, align: "start", watchDrag: false });
   const [selected, setSelected] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const pausedRef = useRef(false);
