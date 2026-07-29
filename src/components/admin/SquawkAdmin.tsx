@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { format } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
@@ -16,7 +20,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Megaphone, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
+import { Megaphone, ChevronRight, Plus, Pencil, Trash2, CalendarIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { SquawkEntry, SquawkEntryType } from "@/lib/squawk/types";
 
@@ -41,6 +45,8 @@ export function SquawkAdmin() {
   const [message, setMessage] = useState("");
   const [link, setLink] = useState("");
   const [expiryDays, setExpiryDays] = useState<number>(14);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+  const [useCustomDate, setUseCustomDate] = useState(false);
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["squawk-entries-admin"],
@@ -61,6 +67,8 @@ export function SquawkAdmin() {
     setMessage("");
     setLink("");
     setExpiryDays(14);
+    setCustomDate(undefined);
+    setUseCustomDate(false);
   };
 
   const openAdd = () => {
@@ -82,7 +90,16 @@ export function SquawkAdmin() {
     const bestFit = EXPIRY_OPTIONS.reduce((best, opt) =>
       Math.abs(opt.days - remaining) < Math.abs(best.days - remaining) ? opt : best,
     );
-    setExpiryDays(bestFit.days);
+    // If not close to any preset (>2 day difference), treat as custom.
+    if (Math.abs(bestFit.days - remaining) > 2) {
+      setUseCustomDate(true);
+      setCustomDate(new Date(e.expires_at));
+      setExpiryDays(bestFit.days);
+    } else {
+      setUseCustomDate(false);
+      setCustomDate(undefined);
+      setExpiryDays(bestFit.days);
+    }
     setDialogOpen(true);
   };
 
@@ -93,7 +110,16 @@ export function SquawkAdmin() {
       if (!t) throw new Error("Title is required");
       if (t.length > 80) throw new Error("Title too long (max 80 chars)");
       if (m.length > 200) throw new Error("Message too long (max 200 chars)");
-      const expires = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString();
+      let expires: string;
+      if (useCustomDate) {
+        if (!customDate) throw new Error("Please pick a custom expiration date");
+        const d = new Date(customDate);
+        d.setHours(23, 59, 59, 999);
+        if (d.getTime() <= Date.now()) throw new Error("Expiration date must be in the future");
+        expires = d.toISOString();
+      } else {
+        expires = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString();
+      }
       const payload = {
         type,
         title: t,
@@ -242,15 +268,55 @@ export function SquawkAdmin() {
               <Input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://… or /internal-path" />
             </div>
             <div>
-              <Label className="text-xs">Expires in</Label>
-              <Select value={String(expiryDays)} onValueChange={(v) => setExpiryDays(Number(v))}>
+              <Label className="text-xs">Expires</Label>
+              <Select
+                value={useCustomDate ? "custom" : String(expiryDays)}
+                onValueChange={(v) => {
+                  if (v === "custom") {
+                    setUseCustomDate(true);
+                    if (!customDate) {
+                      setCustomDate(new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000));
+                    }
+                  } else {
+                    setUseCustomDate(false);
+                    setExpiryDays(Number(v));
+                  }
+                }}
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {EXPIRY_OPTIONS.map((o) => (
-                    <SelectItem key={o.days} value={String(o.days)}>{o.label}</SelectItem>
+                    <SelectItem key={o.days} value={String(o.days)}>In {o.label}</SelectItem>
                   ))}
+                  <SelectItem value="custom">Custom date…</SelectItem>
                 </SelectContent>
               </Select>
+              {useCustomDate && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "mt-2 w-full justify-start text-left font-normal",
+                        !customDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customDate ? format(customDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customDate}
+                      onSelect={setCustomDate}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </div>
           <DialogFooter>
