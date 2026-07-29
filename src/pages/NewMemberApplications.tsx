@@ -171,7 +171,7 @@ export default function NewMemberApplications() {
       if (eaaNumbers.length === 0) return [];
       const { data, error } = await supabase
         .from("roster_members")
-        .select("eaa_number, first_name, last_name, member_type, current_standing")
+        .select("key_id, eaa_number, first_name, last_name, member_type, current_standing")
         .in("eaa_number", eaaNumbers)
         .neq("member_type", "Prospect");
       if (error) throw error;
@@ -180,7 +180,20 @@ export default function NewMemberApplications() {
     enabled: eaaNumbers.length > 0,
   });
 
-  const existingEaaSet = new Set(existingMembers.map((m) => m.eaa_number?.trim()));
+  // A match is only a real duplicate when it points at a *different* roster row
+  // than the one this application created/owns. Once an applicant is promoted,
+  // their own roster row stops being a Prospect and would otherwise match itself.
+  const duplicateFor = (app: { eaa_number?: string | null; roster_key_id?: number | null }) =>
+    existingMembers.find(
+      (m) =>
+        m.eaa_number?.trim() === app.eaa_number?.trim() &&
+        m.key_id !== app.roster_key_id
+    );
+
+  const existingEaaSet = new Set(
+    applications.filter((a) => duplicateFor(a)).map((a) => a.eaa_number?.trim())
+  );
+
 
   // Principle: the roster import is the authoritative source of truth for
   // member identity. For each application, look up the current roster row —
