@@ -45,6 +45,8 @@ export function SquawkAdmin() {
   const [message, setMessage] = useState("");
   const [link, setLink] = useState("");
   const [expiryDays, setExpiryDays] = useState<number>(14);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+  const [useCustomDate, setUseCustomDate] = useState(false);
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["squawk-entries-admin"],
