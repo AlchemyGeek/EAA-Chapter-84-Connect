@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -68,6 +68,13 @@ function getSecondTuesdayOfMarchNextYear(): string {
   // Format as YYYY-MM-DD
   return `${nextYear}-03-${String(secondTuesday).padStart(2, "0")}`;
 }
+
+type ApplicationRosterMatch = {
+  key_id: number;
+  member_type: string | null;
+  current_standing: string | null;
+  expiration_date: string | null;
+};
 
 export default function NewMemberApplications() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
@@ -175,47 +182,86 @@ export default function NewMemberApplications() {
 
   const existingEaaSet = new Set(existingMembers.map((m) => m.eaa_number?.trim()));
 
-  // For each application's linked roster member, determine when it was last touched by a roster import.
-  // An application counts as "synced" only if its linked roster row has been touched by an import
-  // that ran at or after the application was processed (or created, if not yet processed).
-  const rosterKeyIds = applications
-    .map((a) => a.roster_key_id)
-    .filter((k): k is number => typeof k === "number");
+  // Principle: the roster import is the authoritative source of truth for
+  // member identity. For each application, look up the current roster row —
+  // preferring the stable roster_key_id anchor (written by the prospect
+  // creation trigger) and falling back to EAA# for legacy rows without a link.
+  const rosterKeyIds = Array.from(
+    new Set(
+      applications
+        .map((a) => a.roster_key_id)
+        .filter((v): v is number => typeof v === "number")
+    )
+  );
 
   const { data: linkedRosterRows = [] } = useQuery({
-    queryKey: ["nma-linked-roster-import", rosterKeyIds],
-    enabled: rosterKeyIds.length > 0,
+    queryKey: ["nma-linked-roster", rosterKeyIds, eaaNumbers],
+    enabled: rosterKeyIds.length > 0 || eaaNumbers.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_members")
-        .select("key_id, last_import_id")
-        .in("key_id", rosterKeyIds);
-      if (error) throw error;
-      return data;
+      // Fetch by key_id and eaa_number in parallel, then merge/dedupe by key_id.
+      const [byKey, byEaa] = await Promise.all([
+        rosterKeyIds.length > 0
+          ? supabase
+              .from("roster_members")
+              .select("key_id, eaa_number")
+              .in("key_id", rosterKeyIds)
+          : Promise.resolve({ data: [], error: null }),
+        eaaNumbers.length > 0
+          ? supabase
+              .from("roster_members")
+              .select("key_id, eaa_number")
+              .in("eaa_number", eaaNumbers)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+      if (byKey.error) throw byKey.error;
+      if (byEaa.error) throw byEaa.error;
+      const merged = new Map<number, { key_id: number; eaa_number: string | null }>();
+      for (const r of [...(byKey.data ?? []), ...(byEaa.data ?? [])]) {
+        merged.set(r.key_id, r as any);
+      }
+      return Array.from(merged.values());
     },
   });
 
-  const importIds = Array.from(
-    new Set(linkedRosterRows.map((r) => r.last_import_id).filter(Boolean) as string[])
+  const rosterByKeyId = new Map(linkedRosterRows.map((r) => [r.key_id, r]));
+  const rosterByEaa = new Map(
+    linkedRosterRows
+      .map((r) => [(r.eaa_number ?? "").trim(), r] as const)
+      .filter(([e]) => e)
   );
 
-  const { data: importTimes = [] } = useQuery({
-    queryKey: ["nma-import-times", importIds],
-    enabled: importIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("roster_imports")
-        .select("id, imported_at")
-        .in("id", importIds);
-      if (error) throw error;
-      return data;
-    },
-  });
+  // Auto-reconcile: when an application has a stable roster_key_id link but its
+  // recorded EAA# differs from the roster's, trust the roster and update the
+  // application. Runs once per (app, roster-eaa) pair to avoid re-firing.
+  const reconciledRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    (async () => {
+      const toFix: Array<{ id: string; eaa_number: string }> = [];
+      for (const app of applications) {
+        if (!app.roster_key_id) continue;
+        const roster = rosterByKeyId.get(app.roster_key_id);
+        if (!roster) continue;
+        const rosterEaa = (roster.eaa_number ?? "").trim();
+        const appEaa = (app.eaa_number ?? "").trim();
+        if (!rosterEaa || rosterEaa === appEaa) continue;
+        const marker = `${app.id}:${rosterEaa}`;
+        if (reconciledRef.current.has(marker)) continue;
+        reconciledRef.current.add(marker);
+        toFix.push({ id: app.id, eaa_number: rosterEaa });
+      }
+      if (toFix.length === 0) return;
+      await Promise.all(
+        toFix.map((f) =>
+          supabase
+            .from("new_member_applications")
+            .update({ eaa_number: f.eaa_number } as any)
+            .eq("id", f.id)
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+    })();
+  }, [applications, linkedRosterRows, queryClient]);
 
-  const importTimeById = new Map(importTimes.map((i) => [i.id, new Date(i.imported_at)]));
-  const lastImportByKeyId = new Map(
-    linkedRosterRows.map((r) => [r.key_id, r.last_import_id ? importTimeById.get(r.last_import_id) : null])
-  );
 
 
   const updateVerification = useMutation({
@@ -290,7 +336,7 @@ export default function NewMemberApplications() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
-      toast({ title: "Reminder email queued" });
+      toast({ title: "Payment reminder queued" });
       setDetailApp(null);
     },
     onError: (err: any) => {
@@ -302,31 +348,99 @@ export default function NewMemberApplications() {
     },
   });
 
+  const sendWelcome = useMutation({
+    mutationFn: async (app: any) => {
+      const { data, error } = await supabase.functions.invoke("new-member-welcome", {
+        body: { application_id: app.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+      toast({ title: "Welcome email queued" });
+      setDetailApp(null);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Could not send welcome",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const recordFeePayment = useMutation({
     mutationFn: async () => {
       const app = feeDialogApp;
       if (!app) throw new Error("No application selected");
-      if (!app.roster_key_id) throw new Error("No linked roster record found");
       const methodObj = PAYMENT_METHODS.find((m) => m.label === payMethod);
       if (!methodObj) throw new Error("Invalid method");
       const amountNum = parseFloat(payAmount);
       if (isNaN(amountNum) || amountNum <= 0) throw new Error("Invalid amount");
 
+      const rosterMatches: ApplicationRosterMatch[] = [];
+
+      if (app.roster_key_id) {
+        const { data, error } = await supabase
+          .from("roster_members")
+          .select("key_id, member_type, current_standing, expiration_date")
+          .eq("key_id", app.roster_key_id)
+          .maybeSingle();
+        if (error) throw error;
+        if (data) rosterMatches.push(data);
+      }
+
+      if (app.eaa_number) {
+        const { data, error } = await supabase
+          .from("roster_members")
+          .select("key_id, member_type, current_standing, expiration_date")
+          .eq("eaa_number", app.eaa_number)
+          .order("key_id", { ascending: false })
+          .limit(1);
+        if (error) throw error;
+        if (data?.[0] && !rosterMatches.some((m) => m.key_id === data[0].key_id)) {
+          rosterMatches.push(data[0]);
+        }
+      }
+
+      const rosterMatch = rosterMatches[0];
+      if (!rosterMatch) throw new Error("No linked roster record found");
+
       const udf1Value = `${format(payDate, "MM/dd/yyyy")} $${amountNum}/${methodObj.code}`;
+      const recorderName = user?.email ?? "Unknown";
+      const newExpiration = getSecondTuesdayOfMarchNextYear();
+
+      const { error: payErr } = await supabase
+        .from("dues_payments" as any)
+        .insert({
+          key_id: rosterMatch.key_id,
+          payment_date: format(payDate, "yyyy-MM-dd"),
+          amount: amountNum,
+          method: payMethod,
+          method_code: methodObj.code,
+          new_expiration_date: newExpiration,
+          old_expiration_date: rosterMatch.expiration_date,
+          old_standing: rosterMatch.current_standing,
+          recorded_by: user?.id,
+          recorded_by_name: recorderName,
+        } as any);
+      if (payErr) throw payErr;
 
       const { error: rosterErr } = await supabase
         .from("roster_members")
         .update({ udf1_text: udf1Value } as any)
-        .eq("key_id", app.roster_key_id);
+        .eq("key_id", rosterMatch.key_id);
       if (rosterErr) throw rosterErr;
 
       const { error: appErr } = await supabase
         .from("new_member_applications")
-        .update({ fees_verified: true } as any)
+        .update({ fees_verified: true, roster_key_id: rosterMatch.key_id } as any)
         .eq("id", app.id);
       if (appErr) throw appErr;
 
-      return app;
+      return { ...app, roster_key_id: rosterMatch.key_id };
     },
     onSuccess: (app) => {
       queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
@@ -377,13 +491,21 @@ export default function NewMemberApplications() {
   if (!user) return <Navigate to="/auth" replace />;
   if (!isOfficerOrAbove) return <Navigate to="/home" replace />;
 
+  // Sync check: the applicant must currently exist in the roster (matched by
+  // stable roster_key_id, with EAA# fallback) AND the roster must have been
+  // re-imported after the application was processed. We don't rely on
+  // roster_members.last_import_id because it only updates when a specific row
+  // is modified in an import — unchanged rows keep an old value.
   const isSynced = (app: any) => {
-    if (!app.roster_key_id) return false;
-    const rosterImportTime = lastImportByKeyId.get(app.roster_key_id);
-    if (!rosterImportTime) return false;
+    const hasRosterRow =
+      (app.roster_key_id && rosterByKeyId.has(app.roster_key_id)) ||
+      rosterByEaa.has((app.eaa_number ?? "").trim());
+    if (!hasRosterRow) return false;
+    if (!lastSync) return false;
     const reference = app.processed_at ? new Date(app.processed_at) : new Date(app.created_at);
-    return rosterImportTime >= reference;
+    return lastSync >= reference;
   };
+
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
@@ -433,13 +555,13 @@ export default function NewMemberApplications() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
-                      {!app.processed && (() => {
+                      {(() => {
                         const days = differenceInCalendarDays(new Date(), new Date(app.created_at));
                         return ` · ${days} day${days === 1 ? "" : "s"} ago`;
                       })()}
                     </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      {existingEaaSet.has(app.eaa_number?.trim()) && (
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      {existingEaaSet.has(app.eaa_number?.trim()) && !app.processed && (
                         <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
                           <AlertTriangle className="h-3 w-3" />
                           Existing Member
@@ -459,10 +581,16 @@ export default function NewMemberApplications() {
                       ) : (
                         <Badge variant="secondary" className="text-xs">Pending</Badge>
                       )}
-                      {!app.processed && app.reminder_sent_at && (
+                      {app.reminder_sent_at && (
                         <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 gap-1">
                           <Mail className="h-3 w-3" />
                           Reminder Sent
+                        </Badge>
+                      )}
+                      {app.welcome_sent_at && (
+                        <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                          <Mail className="h-3 w-3" />
+                          Welcome Sent
                         </Badge>
                       )}
                     </div>
@@ -565,34 +693,66 @@ export default function NewMemberApplications() {
               )}
               {detailApp.reminder_sent_at && (
                 <div className="col-span-2">
-                  <span className="text-muted-foreground">Dues Reminder Sent</span>
+                  <span className="text-muted-foreground">Payment Reminder Sent</span>
                   <p className="font-medium">
                     {format(new Date(detailApp.reminder_sent_at), "MMMM d, yyyy h:mm a")}
                   </p>
                 </div>
               )}
+              {detailApp.welcome_sent_at && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Welcome Email Sent</span>
+                  <p className="font-medium">
+                    {format(new Date(detailApp.welcome_sent_at), "MMMM d, yyyy h:mm a")}
+                  </p>
+                </div>
+              )}
               </div>
 
-              {!detailApp.processed && !detailApp.fees_verified && (
-                <div className="pt-2 border-t border-border">
+              <div className="pt-2 border-t border-border space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Emails are sent to <strong>{detailApp.email}</strong> with a copy to <strong>membership@eaa84.org</strong>.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
                   {detailApp.reminder_sent_at ? (
-                    <p className="text-xs text-muted-foreground">
-                      A dues reminder has already been sent. Only one reminder per applicant is allowed.
-                    </p>
+                    <Button variant="outline" size="sm" disabled className="w-full sm:w-auto">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Reminder sent · {format(new Date(detailApp.reminder_sent_at), "MMM d")}
+                    </Button>
                   ) : (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full sm:w-auto"
-                      disabled={sendReminder.isPending}
+                      disabled={sendReminder.isPending || detailApp.fees_verified}
+                      title={detailApp.fees_verified ? "Dues already verified" : undefined}
                       onClick={() => sendReminder.mutate(detailApp)}
                     >
                       <Mail className="h-4 w-4 mr-2" />
-                      {sendReminder.isPending ? "Sending..." : "Send Dues Reminder Email"}
+                      {sendReminder.isPending ? "Sending..." : "Payment Reminder"}
+                    </Button>
+                  )}
+
+                  {detailApp.welcome_sent_at ? (
+                    <Button variant="outline" size="sm" disabled className="w-full sm:w-auto">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Welcome sent · {format(new Date(detailApp.welcome_sent_at), "MMM d")}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={sendWelcome.isPending || !detailApp.fees_verified}
+                      title={!detailApp.fees_verified ? "Mark dues verified first" : undefined}
+                      onClick={() => sendWelcome.mutate(detailApp)}
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      {sendWelcome.isPending ? "Sending..." : "Application Completed"}
                     </Button>
                   )}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </DialogContent>

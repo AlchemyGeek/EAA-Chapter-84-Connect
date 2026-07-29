@@ -252,6 +252,39 @@ Deno.serve(async (req) => {
     const existingMap = new Map<number, Record<string, any>>();
     (existingMembers || []).forEach((m: any) => existingMap.set(m.key_id, m));
 
+    // Build EAA# -> local Prospect lookup for reconciliation.
+    // When the EAA Roster Tool re-imports a prospect we exported, it comes
+    // back with a NEW key_id. Match on normalized EAA# so we can treat it as
+    // "same person, modified" instead of Added + Removed.
+    const normEaa = (v: any): string => String(v ?? "").trim().toLowerCase();
+    const localProspectsByEaa = new Map<string, Record<string, any>>();
+    for (const m of existingMembers || []) {
+      const isProspect = m.member_type && String(m.member_type).toLowerCase() === "prospect";
+      if (!isProspect) continue;
+      const eaa = normEaa(m.eaa_number);
+      if (!eaa) continue;
+      // Skip if this prospect's own key_id is also in the incoming file
+      // (already handled by direct key_id match)
+      if (incomingKeyIds.has(m.key_id)) continue;
+      if (!localProspectsByEaa.has(eaa)) localProspectsByEaa.set(eaa, m);
+    }
+
+    // For each incoming record, resolve which local row (if any) it corresponds to.
+    // Returns { existing, isReconciledProspect } — isReconciledProspect means matched
+    // by EAA# to a local Prospect with a different key_id.
+    const resolveExisting = (incoming: Record<string, any>) => {
+      const byKey = existingMap.get(incoming.key_id);
+      if (byKey) return { existing: byKey, isReconciledProspect: false };
+      const eaa = normEaa(incoming.eaa_number);
+      if (!eaa) return { existing: null, isReconciledProspect: false };
+      const prospect = localProspectsByEaa.get(eaa);
+      if (!prospect) return { existing: null, isReconciledProspect: false };
+      return { existing: prospect, isReconciledProspect: true };
+    };
+
+    // key_ids of local rows that are "consumed" by an incoming record via EAA reconciliation
+    const reconciledOldKeyIds = new Set<number>();
+
     // ===== DRY RUN: compute preview without writing =====
     if (dryRun) {
       const previewAdded: any[] = [];
@@ -260,7 +293,7 @@ Deno.serve(async (req) => {
       const previewReconciled: any[] = [];
 
       for (const incoming of incomingRecords) {
-        const existing = existingMap.get(incoming.key_id);
+        const { existing, isReconciledProspect } = resolveExisting(incoming);
         if (!existing) {
           previewAdded.push({
             key_id: incoming.key_id,
@@ -270,10 +303,21 @@ Deno.serve(async (req) => {
             member_type: incoming.member_type,
           });
         } else {
+          if (isReconciledProspect) {
+            reconciledOldKeyIds.add(existing.key_id);
+            previewReconciled.push({
+              old_key_id: existing.key_id,
+              new_key_id: incoming.key_id,
+              first_name: incoming.first_name,
+              last_name: incoming.last_name,
+              eaa_number: incoming.eaa_number,
+            });
+          }
           const diffs = diffRecord(existing, incoming);
           if (diffs.length > 0) {
             previewModified.push({
-              key_id: incoming.key_id,
+              key_id: isReconciledProspect ? existing.key_id : incoming.key_id,
+              new_key_id: isReconciledProspect ? incoming.key_id : undefined,
               first_name: incoming.first_name,
               last_name: incoming.last_name,
               eaa_number: incoming.eaa_number,
@@ -283,34 +327,15 @@ Deno.serve(async (req) => {
         }
       }
 
-      const incomingByEaaPreview = new Map<string, any>();
-      for (const r of incomingRecords) {
-        const eaa = (r.eaa_number || "").toString().trim();
-        if (!eaa) continue;
-        if (r.member_type && String(r.member_type).toLowerCase() === "prospect") continue;
-        if (!incomingByEaaPreview.has(eaa)) incomingByEaaPreview.set(eaa, r);
-      }
       for (const [keyId, existing] of existingMap) {
         if (incomingKeyIds.has(keyId)) continue;
-        const isProspect = existing.member_type && String(existing.member_type).toLowerCase() === "prospect";
-        const eaa = (existing.eaa_number || "").toString().trim();
-        const replacement = isProspect && eaa ? incomingByEaaPreview.get(eaa) : null;
-        if (replacement) {
-          previewReconciled.push({
-            old_key_id: keyId,
-            new_key_id: replacement.key_id,
-            first_name: existing.first_name,
-            last_name: existing.last_name,
-            eaa_number: existing.eaa_number,
-          });
-        }
+        if (reconciledOldKeyIds.has(keyId)) continue; // matched via EAA reconciliation
         previewRemoved.push({
           key_id: keyId,
           first_name: existing.first_name,
           last_name: existing.last_name,
           eaa_number: existing.eaa_number,
           member_type: existing.member_type,
-          reconciled_to_key_id: replacement ? replacement.key_id : null,
         });
       }
 
@@ -334,6 +359,7 @@ Deno.serve(async (req) => {
       );
     }
 
+
     // Create import record
     const { data: importRecord, error: importError } = await adminClient
       .from("roster_imports")
@@ -355,12 +381,46 @@ Deno.serve(async (req) => {
     const changeRecords: any[] = [];
 
 
+    // Tables that reference roster_members.key_id — used to remap FKs when a
+    // local Prospect is reconciled to an EAA-assigned key_id.
+    const KEY_ID_TABLES: { table: string; col: string }[] = [
+      { table: "badge_deliveries", col: "key_id" },
+      { table: "buddy_volunteers", col: "key_id" },
+      { table: "buddy_assignments", col: "volunteer_key_id" },
+      { table: "chapter_leadership", col: "key_id" },
+      { table: "classifieds", col: "author_key_id" },
+      { table: "dues_payments", col: "key_id" },
+      { table: "hangar_talk_member_tags", col: "key_id" },
+      { table: "hangar_talk_posts", col: "author_key_id" },
+      { table: "hangar_talk_replies", col: "author_key_id" },
+      { table: "hangar_talk_subscriptions", col: "key_id" },
+      { table: "member_chapter_data", col: "key_id" },
+      { table: "member_engagement_events", col: "key_id" },
+      { table: "member_images", col: "key_id" },
+      { table: "new_member_applications", col: "roster_key_id" },
+      { table: "proxy_votes_2026", col: "key_id" },
+      { table: "volunteering_applications", col: "key_id" },
+      { table: "volunteering_opportunity_contacts", col: "key_id" },
+    ];
+
+    const remapChildFks = async (oldKeyId: number, newKeyId: number) => {
+      for (const { table, col } of KEY_ID_TABLES) {
+        const { error } = await adminClient
+          .from(table)
+          .update({ [col]: newKeyId })
+          .eq(col, oldKeyId);
+        if (error) {
+          console.error(`FK remap failed for ${table}.${col} ${oldKeyId}->${newKeyId}:`, error.message);
+        }
+      }
+    };
+
     // Process each incoming record
     for (const incoming of incomingRecords) {
-      const existing = existingMap.get(incoming.key_id);
+      const { existing, isReconciledProspect } = resolveExisting(incoming);
 
       if (!existing) {
-        // New member
+        // Truly new member
         addedCount++;
         await adminClient.from("roster_members").insert({
           ...incoming,
@@ -377,81 +437,92 @@ Deno.serve(async (req) => {
           last_name: incoming.last_name,
           eaa_number: incoming.eaa_number,
         });
-      } else {
-        // Check for modifications
-        const diffs = diffRecord(existing, incoming);
-        if (diffs.length > 0) {
-          modifiedCount++;
-          await adminClient
-            .from("roster_members")
-            .update({ ...incoming, last_import_id: importId })
-            .eq("key_id", incoming.key_id);
-
-          for (const diff of diffs) {
-            changeRecords.push({
-              import_id: importId,
-              key_id: incoming.key_id,
-              change_type: "modified",
-              field_name: diff.field,
-              old_value: diff.oldVal,
-              new_value: diff.newVal,
-              first_name: incoming.first_name,
-              last_name: incoming.last_name,
-              eaa_number: incoming.eaa_number,
-            });
-          }
-        }
+        continue;
       }
-    }
 
-    // Reconcile Prospect stubs: when EAA roster brings in a real (non-Prospect)
-    // record for an EAA number that we previously stubbed as a local Prospect,
-    // repoint the application's roster_key_id to the real record before the
-    // Prospect stub gets deleted by the removal step below. Roster data wins.
-    const incomingByEaa = new Map<string, any>();
-    for (const r of incomingRecords) {
-      const eaa = (r.eaa_number || "").toString().trim();
-      if (!eaa) continue;
-      if (r.member_type && String(r.member_type).toLowerCase() === "prospect") continue;
-      if (!incomingByEaa.has(eaa)) incomingByEaa.set(eaa, r);
-    }
-    for (const [keyId, existing] of existingMap) {
-      if (incomingKeyIds.has(keyId)) continue;
-      const isProspect = existing.member_type && String(existing.member_type).toLowerCase() === "prospect";
-      if (!isProspect) continue;
-      const eaa = (existing.eaa_number || "").toString().trim();
-      if (!eaa) continue;
-      const replacement = incomingByEaa.get(eaa);
-      if (!replacement) continue;
-      // Repoint pending application records to the new roster key_id
-      await adminClient
-        .from("new_member_applications")
-        .update({ roster_key_id: replacement.key_id })
-        .eq("roster_key_id", keyId);
-    }
+      const diffs = diffRecord(existing, incoming);
 
-    // Detect removed members (present locally but missing from import file)
-    const removedKeyIds: number[] = [];
-    for (const [keyId, existing] of existingMap) {
-      if (!incomingKeyIds.has(keyId)) {
-        removedKeyIds.push(keyId);
-        // Only record/apply deletion when explicitly allowed by the importer
-        if (allowRemovals) {
-          removedCount++;
+      if (isReconciledProspect) {
+        // Local Prospect matched to EAA-assigned record by EAA#.
+        // Remap child FKs first, then delete the old prospect row and
+        // insert the incoming one with the new key_id. This preserves all
+        // chapter-side data (notes, images, subscriptions, dues, etc.).
+        reconciledOldKeyIds.add(existing.key_id);
+        await remapChildFks(existing.key_id, incoming.key_id);
+        await adminClient.from("roster_members").delete().eq("key_id", existing.key_id);
+        await adminClient.from("roster_members").insert({
+          ...incoming,
+          last_import_id: importId,
+        });
+
+        modifiedCount++;
+        // Always emit a change record so the reconciliation is visible in history
+        const effectiveDiffs = diffs.length > 0
+          ? diffs
+          : [{ field: "key_id", oldVal: String(existing.key_id), newVal: String(incoming.key_id) }];
+        for (const diff of effectiveDiffs) {
           changeRecords.push({
             import_id: importId,
-            key_id: keyId,
-            change_type: "removed",
-            field_name: null,
-            old_value: null,
-            new_value: null,
-            first_name: existing.first_name,
-            last_name: existing.last_name,
-            eaa_number: existing.eaa_number,
+            key_id: incoming.key_id,
+            change_type: "modified",
+            field_name: diff.field,
+            old_value: diff.oldVal,
+            new_value: diff.newVal,
+            first_name: incoming.first_name,
+            last_name: incoming.last_name,
+            eaa_number: incoming.eaa_number,
+          });
+        }
+        continue;
+      }
+
+      // Same key_id — check for modifications
+      if (diffs.length > 0) {
+        modifiedCount++;
+        await adminClient
+          .from("roster_members")
+          .update({ ...incoming, last_import_id: importId })
+          .eq("key_id", incoming.key_id);
+
+        for (const diff of diffs) {
+          changeRecords.push({
+            import_id: importId,
+            key_id: incoming.key_id,
+            change_type: "modified",
+            field_name: diff.field,
+            old_value: diff.oldVal,
+            new_value: diff.newVal,
+            first_name: incoming.first_name,
+            last_name: incoming.last_name,
+            eaa_number: incoming.eaa_number,
           });
         }
       }
     }
+
+    // Detect removed members (present locally but missing from import file),
+    // excluding those already reconciled by EAA# to a new key_id above.
+    const removedKeyIds: number[] = [];
+    for (const [keyId, existing] of existingMap) {
+      if (incomingKeyIds.has(keyId)) continue;
+      if (reconciledOldKeyIds.has(keyId)) continue;
+      removedKeyIds.push(keyId);
+      if (allowRemovals) {
+        removedCount++;
+        changeRecords.push({
+          import_id: importId,
+          key_id: keyId,
+          change_type: "removed",
+          field_name: null,
+          old_value: null,
+          new_value: null,
+          first_name: existing.first_name,
+          last_name: existing.last_name,
+          eaa_number: existing.eaa_number,
+        });
+      }
+    }
+
 
     // Delete removed members from roster_members only when explicitly allowed.
     // When allow_removals is false, missing members are PRESERVED — this supports
