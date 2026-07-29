@@ -65,6 +65,20 @@ const KIND_STYLES: Record<SquawkSlideKind, KindStyle> = {
 function Body({ slide }: { slide: Slide }) {
   const style = KIND_STYLES[slide.kind];
   const Icon = style.icon;
+
+  // Tiered sizing for quotes so medium-long quotes still fit the fixed tile.
+  const isQuote = slide.kind === "quote";
+  const totalLen = (slide.title?.length ?? 0) + (slide.body?.length ?? 0);
+  const quoteMedium = isQuote && totalLen > 110;
+
+  const titleClass = isQuote && quoteMedium
+    ? "text-xs sm:text-sm font-semibold text-foreground leading-snug line-clamp-3"
+    : "text-sm sm:text-base font-semibold text-foreground leading-snug line-clamp-2";
+
+  const bodyClass = isQuote && quoteMedium
+    ? "mt-1 text-[11px] text-muted-foreground leading-snug line-clamp-1"
+    : "mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2";
+
   return (
     <div
       className={cn(
@@ -79,11 +93,11 @@ function Body({ slide }: { slide: Slide }) {
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
           {slide.label}
         </p>
-        <h3 className="text-sm sm:text-base font-semibold text-foreground leading-snug line-clamp-2">
+        <h3 className={titleClass}>
           {slide.title}
         </h3>
         {slide.body && (
-          <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2">
+          <p className={bodyClass}>
             {slide.body}
           </p>
         )}
