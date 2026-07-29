@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import type { MouseEvent } from "react";
 import { ChevronRight, Megaphone, Sparkles, UserPlus, Tag, MessageSquare, HandHelping, Quote } from "lucide-react";
 import type { SquawkSlide as Slide, SquawkSlideKind } from "@/lib/squawk/types";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 type KindStyle = {
   icon: typeof Megaphone;
@@ -96,9 +96,25 @@ function Body({ slide }: { slide: Slide }) {
   );
 }
 
-function openMailto(event: MouseEvent<HTMLAnchorElement>, mailto: string) {
-  event.preventDefault();
-  window.location.href = mailto;
+function getMailtoAddress(mailto: string) {
+  const address = mailto.replace(/^mailto:/i, "").split("?")[0];
+  try {
+    return decodeURIComponent(address);
+  } catch {
+    return address;
+  }
+}
+
+function handleMailtoClick(mailto: string) {
+  const address = getMailtoAddress(mailto);
+  if (address && navigator.clipboard) {
+    void navigator.clipboard.writeText(address).catch(() => undefined);
+  }
+
+  toast({
+    title: "Opening email",
+    description: address ? `${address} copied in case your mail app does not open.` : undefined,
+  });
 }
 
 export function SquawkSlide({ slide }: { slide: Slide }) {
@@ -106,7 +122,7 @@ export function SquawkSlide({ slide }: { slide: Slide }) {
     return (
       <a
         href={slide.mailto}
-        onClick={(event) => openMailto(event, slide.mailto)}
+        onClick={() => handleMailtoClick(slide.mailto)}
         className="block cursor-pointer hover:bg-muted/40 transition-colors"
       >
         <Body slide={slide} />
