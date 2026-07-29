@@ -268,15 +268,55 @@ export function SquawkAdmin() {
               <Input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://… or /internal-path" />
             </div>
             <div>
-              <Label className="text-xs">Expires in</Label>
-              <Select value={String(expiryDays)} onValueChange={(v) => setExpiryDays(Number(v))}>
+              <Label className="text-xs">Expires</Label>
+              <Select
+                value={useCustomDate ? "custom" : String(expiryDays)}
+                onValueChange={(v) => {
+                  if (v === "custom") {
+                    setUseCustomDate(true);
+                    if (!customDate) {
+                      setCustomDate(new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000));
+                    }
+                  } else {
+                    setUseCustomDate(false);
+                    setExpiryDays(Number(v));
+                  }
+                }}
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {EXPIRY_OPTIONS.map((o) => (
-                    <SelectItem key={o.days} value={String(o.days)}>{o.label}</SelectItem>
+                    <SelectItem key={o.days} value={String(o.days)}>In {o.label}</SelectItem>
                   ))}
+                  <SelectItem value="custom">Custom date…</SelectItem>
                 </SelectContent>
               </Select>
+              {useCustomDate && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "mt-2 w-full justify-start text-left font-normal",
+                        !customDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customDate ? format(customDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customDate}
+                      onSelect={setCustomDate}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </div>
           <DialogFooter>
