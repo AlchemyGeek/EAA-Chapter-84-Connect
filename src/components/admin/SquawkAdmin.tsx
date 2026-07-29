@@ -67,6 +67,8 @@ export function SquawkAdmin() {
     setMessage("");
     setLink("");
     setExpiryDays(14);
+    setCustomDate(undefined);
+    setUseCustomDate(false);
   };
 
   const openAdd = () => {
@@ -88,7 +90,16 @@ export function SquawkAdmin() {
     const bestFit = EXPIRY_OPTIONS.reduce((best, opt) =>
       Math.abs(opt.days - remaining) < Math.abs(best.days - remaining) ? opt : best,
     );
-    setExpiryDays(bestFit.days);
+    // If not close to any preset (>2 day difference), treat as custom.
+    if (Math.abs(bestFit.days - remaining) > 2) {
+      setUseCustomDate(true);
+      setCustomDate(new Date(e.expires_at));
+      setExpiryDays(bestFit.days);
+    } else {
+      setUseCustomDate(false);
+      setCustomDate(undefined);
+      setExpiryDays(bestFit.days);
+    }
     setDialogOpen(true);
   };
 
@@ -99,7 +110,16 @@ export function SquawkAdmin() {
       if (!t) throw new Error("Title is required");
       if (t.length > 80) throw new Error("Title too long (max 80 chars)");
       if (m.length > 200) throw new Error("Message too long (max 200 chars)");
-      const expires = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString();
+      let expires: string;
+      if (useCustomDate) {
+        if (!customDate) throw new Error("Please pick a custom expiration date");
+        const d = new Date(customDate);
+        d.setHours(23, 59, 59, 999);
+        if (d.getTime() <= Date.now()) throw new Error("Expiration date must be in the future");
+        expires = d.toISOString();
+      } else {
+        expires = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString();
+      }
       const payload = {
         type,
         title: t,
