@@ -98,11 +98,7 @@ function Body({ slide }: { slide: Slide }) {
 
 function openMailto(event: MouseEvent<HTMLAnchorElement>, mailto: string) {
   event.preventDefault();
-
-  const opened = window.open(mailto, "_top");
-  if (!opened) {
-    window.location.href = mailto;
-  }
+  window.location.href = mailto;
 }
 
 export function SquawkSlide({ slide }: { slide: Slide }) {
@@ -110,7 +106,6 @@ export function SquawkSlide({ slide }: { slide: Slide }) {
     return (
       <a
         href={slide.mailto}
-        target="_top"
         onClick={(event) => openMailto(event, slide.mailto)}
         className="block cursor-pointer hover:bg-muted/40 transition-colors"
       >
