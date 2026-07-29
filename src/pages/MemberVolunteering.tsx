@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
-import { Navigate, Link, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Link, useSearchParams, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ export default function MemberVolunteering() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { id: opportunityId } = useParams<{ id: string }>();
   const viewAsKeyId = searchParams.get("viewAs");
   const [applyingOpportunityId, setApplyingOpportunityId] = useState<string | null>(null);
   useTrackEngagement("service_page");
@@ -118,6 +119,15 @@ export default function MemberVolunteering() {
   });
 
   const appliedIds = new Set((displayedApplications ?? []).map((a) => a.opportunity_id));
+
+  // Scroll to and highlight the opportunity referenced by /member-volunteering/:id
+  useEffect(() => {
+    if (!opportunityId || isLoading) return;
+    const el = document.getElementById(`vol-opp-${opportunityId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [opportunityId, isLoading]);
 
   // Apply mutation
   const applyMutation = useMutation({
@@ -225,6 +235,7 @@ export default function MemberVolunteering() {
                     applying={applyingOpportunityId === opp.id && applyMutation.isPending}
                     canApply={!!displayMember && !isPendingImpersonation}
                     isImpersonating={isImpersonating}
+                    highlighted={opportunityId === opp.id}
                   />
                 ))}
               </>
@@ -247,6 +258,7 @@ export default function MemberVolunteering() {
                     applying={false}
                     canApply={false}
                     isImpersonating={isImpersonating}
+                    highlighted={opportunityId === opp.id}
                   />
                 ))}
               </>
@@ -267,14 +279,18 @@ type OpportunityCardProps = {
   applying: boolean;
   canApply: boolean;
   isImpersonating: boolean;
+  highlighted?: boolean;
 };
 
-function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, applying, canApply, isImpersonating }: OpportunityCardProps) {
+function OpportunityCard({ opp, contacts, contactNameMap, hasApplied, onApply, applying, canApply, isImpersonating, highlighted }: OpportunityCardProps) {
   const oppContacts = contacts.filter((c) => c.opportunity_id === opp.id);
   const isActive = opp.status === "Active";
 
   return (
-    <Card className={!isActive ? "opacity-70" : ""}>
+    <Card
+      id={`vol-opp-${opp.id}`}
+      className={`${!isActive ? "opacity-70" : ""} ${highlighted ? "ring-2 ring-accent ring-offset-2" : ""}`}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">

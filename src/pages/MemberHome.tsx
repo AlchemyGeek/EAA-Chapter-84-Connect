@@ -20,7 +20,7 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
   UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, Activity, Newspaper,
-  ClipboardList, Vote, Tag, MessageSquare,
+  ClipboardList, Vote, Tag, MessageSquare, Archive,
 } from "lucide-react";
 
 import { useIsOfficer } from "@/hooks/useIsOfficer";
@@ -37,6 +37,7 @@ import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 import { Navigate, Link } from "react-router-dom";
 import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
+import { Squawk } from "@/components/squawk/Squawk";
 import { version as appVersion } from "../../package.json";
 
 export default function MemberHome() {
@@ -150,6 +151,31 @@ export default function MemberHome() {
     },
   });
 
+  const { data: activeClassifiedsCount = 0 } = useQuery({
+    queryKey: ["active-classifieds-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("classifieds")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString());
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const { data: activeHangarTalkCount = 0 } = useQuery({
+    queryKey: ["active-hangar-talk-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("hangar_talk_posts")
+        .select("*", { count: "exact", head: true })
+        .is("resolved_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   // Fetch pending new member applications count
   const { data: pendingAppCount = 0 } = useQuery({
     queryKey: ["pending-app-count"],
@@ -160,6 +186,21 @@ export default function MemberHome() {
         .from("new_member_applications")
         .select("*", { count: "exact", head: true })
         .eq("processed", false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  // Fetch unexported dues payments count
+  const { data: unexportedDuesCount = 0 } = useQuery({
+    queryKey: ["unexported-dues-count"],
+    enabled: isOfficerOrAbove || isAdmin,
+    staleTime: 0,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("dues_payments")
+        .select("*", { count: "exact", head: true })
+        .eq("exported", false);
       if (error) throw error;
       return count ?? 0;
     },
@@ -483,6 +524,8 @@ export default function MemberHome() {
           </Card>
         )}
 
+
+
         {/* Prospect (application pending) CTA */}
         {member && isProspect && (
           <Card className="border-2 border-amber-300/60 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/40 shadow-md">
@@ -618,6 +661,12 @@ export default function MemberHome() {
               directoryToggleDisabled={toggleVisibility.isPending}
             />
             <MemberImageGallery keyId={member.key_id} editable={!isImpersonating || isAdmin} />
+
+
+            {/* Squawk carousel — below member photos */}
+            <Squawk />
+
+
             
           </div>
         )}
@@ -678,8 +727,8 @@ export default function MemberHome() {
                   icon={HandHelping} 
                   label={`Chapter Volunteering Opportunities${activeVolCount > 0 ? ` (${activeVolCount})` : ""}`} 
                 />
-                <AdminLink to="/classifieds" icon={Tag} label="Classifieds" />
-                <AdminLink to="/hangar-talk" icon={MessageSquare} label="Hangar Talk" badge="New" />
+                <AdminLink to="/classifieds" icon={Tag} label={`Classifieds${activeClassifiedsCount > 0 ? ` (${activeClassifiedsCount})` : ""}`} />
+                <AdminLink to="/hangar-talk" icon={MessageSquare} label={`Hangar Talk${activeHangarTalkCount > 0 ? ` (${activeHangarTalkCount})` : ""}`} />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 
               </>
@@ -699,20 +748,11 @@ export default function MemberHome() {
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Chapter Operations</p>
-                <AdminLink to="/dues-payment" icon={CircleDollarSign} label="Membership Dues" />
+                <AdminLink to="/dues-payment" icon={CircleDollarSign} label={`Membership Dues${unexportedDuesCount > 0 ? ` (${unexportedDuesCount})` : ""}`} />
                 <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
                 <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
                 <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
                 <AdminLink to="/email-lists" icon={Mail} label="Email List Builder" />
-                <button
-                  type="button"
-                  onClick={() => exportProxyVoteResults().catch(() => {})}
-                  className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md hover:bg-muted/60 transition-colors min-h-[44px] text-sm"
-                >
-                  <ClipboardList className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="flex-1">2026 Bylaws Proxy Vote Results{proxyVoteSignCount > 0 ? ` (${proxyVoteSignCount})` : ""}</span>
-                  <Download className="h-4 w-4 text-muted-foreground" />
-                </button>
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">New Members</p>
@@ -723,6 +763,18 @@ export default function MemberHome() {
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Insights</p>
                 <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
                 <AdminLink to="/member-engagement" icon={Activity} label="Member Engagement" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Archive</p>
+                <button
+                  type="button"
+                  onClick={() => exportProxyVoteResults().catch(() => {})}
+                  className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md hover:bg-muted/60 transition-colors min-h-[44px] text-sm"
+                >
+                  <ClipboardList className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="flex-1">2026 Bylaws Proxy Vote Results{proxyVoteSignCount > 0 ? ` (${proxyVoteSignCount})` : ""}</span>
+                  <Download className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
             </CardContent>
           </Card>

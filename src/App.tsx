@@ -96,6 +96,7 @@ const App = () => (
             <Route path="/directory/:keyId" element={<MemberProfile />} />
             <Route path="/dues-payment" element={<DuesPayment />} />
             <Route path="/volunteering-opportunities" element={<VolunteeringOpportunities />} />
+            <Route path="/member-volunteering/:id" element={<MemberVolunteering />} />
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
             <Route path="/newsletters" element={<Newsletters />} />
             <Route path="/hangar-talk" element={<HangarTalk />} />

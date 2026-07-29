@@ -1,0 +1,1 @@
+ALTER TABLE public.squawk_entries ALTER COLUMN message DROP NOT NULL;
