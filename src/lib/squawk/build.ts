@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AVIATION_QUOTES } from "./quotes";
 import type { SquawkEntry, SquawkSlide } from "./types";
 
-const MAX_SLOTS = 10;
+const MAX_SLOTS = 5;
 const MAX_MANUAL = 2;
 const MAX_WELCOME = 1;
 const MAX_PER_MEDIUM = 3; // classifieds, hangar talk, volunteering
