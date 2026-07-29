@@ -216,13 +216,13 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
 
   // 4. Quotes: fallback when there is no real content, otherwise mix a couple in.
   if (slides.length === 0) {
-    const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
+    const shuffledQuotes = shuffle(eligibleQuoteIndices());
     for (let i = 0; i < QUOTE_FALLBACK_SLOTS && i < shuffledQuotes.length; i++) {
       slides.push(quoteSlide(shuffledQuotes[i]));
     }
   } else {
     // Mix in a couple of quotes with real content.
-    const shuffledQuotes = shuffle(AVIATION_QUOTES.map((_, i) => i));
+    const shuffledQuotes = shuffle(eligibleQuoteIndices());
     let added = 0;
     for (const idx of shuffledQuotes) {
       if (slides.length >= MAX_SLOTS) break;
