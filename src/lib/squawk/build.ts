@@ -48,11 +48,12 @@ async function fetchWelcome(): Promise<SquawkSlide[]> {
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("roster_members")
-    .select("key_id, first_name, last_name, nickname, email, email_private, current_joined_on_date, current_standing")
+    .select("key_id, first_name, last_name, nickname, email, email_private, current_joined_on_date, current_standing, member_type")
     .eq("current_standing", "Active")
+    .neq("member_type", "prospect")
     .gte("current_joined_on_date", since);
   if (error || !data) return [];
-  const eligible = data.filter((m) => m.email && !m.email_private);
+  const eligible = data.filter((m) => m.email && !m.email_private && String(m.member_type ?? "").toLowerCase() !== "prospect");
   return eligible.map((m) => {
     const first = m.nickname?.trim() ? `${m.first_name} (${m.nickname.trim()})` : m.first_name;
     const display = `${first} ${m.last_name}`.trim();
