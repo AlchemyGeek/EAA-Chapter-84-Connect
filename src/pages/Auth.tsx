@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,23 @@ import { useToast } from "@/hooks/use-toast";
 
 type AuthStep = "email" | "otp";
 
+function isSameOriginRelativePath(path: string): boolean {
+  if (!path.startsWith("/")) return false;
+  try {
+    const url = new URL(path, window.location.origin);
+    return url.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<AuthStep>("email");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   const sendOtp = async () => {
@@ -40,7 +51,12 @@ const Auth = () => {
           type: "email",
         });
         if (error) throw error;
-        navigate("/home");
+        const next = searchParams.get("next");
+        if (next && isSameOriginRelativePath(next)) {
+          window.location.href = next;
+        } else {
+          navigate("/home");
+        }
       }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

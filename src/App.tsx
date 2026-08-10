@@ -46,6 +46,7 @@ import HangarTalkNew from "./pages/HangarTalkNew";
 import HangarTalkEdit from "./pages/HangarTalkEdit";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
+import OAuthConsent from "./pages/OAuthConsent";
 
 
 const queryClient = new QueryClient({
@@ -72,6 +73,7 @@ const App = () => (
           
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/auth" element={<Auth />} />
             
             <Route path="/home" element={<MemberHome />} />
