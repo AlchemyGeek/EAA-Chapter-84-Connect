@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Rss } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+const RSS_FEED_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset"}.supabase.co/functions/v1/briefing-room-rss`;
 
 export function BriefingMasthead({
   active,
@@ -31,12 +33,24 @@ export function BriefingMasthead({
         </div>
       </div>
 
-      <nav className="flex items-center gap-1 border-b border-border">
-        <Tab to="/briefing-room" label="Front Page" active={active === "front"} />
-        <Tab to="/briefing-room/archive" label="Archive" active={active === "archive"} />
-        {showReview && (
-          <Tab to="/briefing-room/review" label="Review Queue" active={active === "review"} />
-        )}
+      <nav className="flex items-center justify-between gap-1 border-b border-border">
+        <div className="flex items-center gap-1">
+          <Tab to="/briefing-room" label="Front Page" active={active === "front"} />
+          <Tab to="/briefing-room/archive" label="Archive" active={active === "archive"} />
+          {showReview && (
+            <Tab to="/briefing-room/review" label="Review Queue" active={active === "review"} />
+          )}
+        </div>
+        <a
+          href={RSS_FEED_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-[44px] items-center gap-1.5 px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="RSS feed"
+        >
+          <Rss className="h-4 w-4" />
+          <span className="hidden sm:inline">RSS Feed</span>
+        </a>
       </nav>
     </header>
   );
