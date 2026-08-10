@@ -38,6 +38,7 @@ export interface BriefingItem {
   source_name: string;
   source_url: string;
   source_published_at: string | null;
+  image_url: string | null;
   added_at: string;
   published_at: string | null;
   category: BriefingCategory;
