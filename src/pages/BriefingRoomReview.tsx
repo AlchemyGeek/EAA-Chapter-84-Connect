@@ -257,6 +257,15 @@ function ReviewRow({
                 Republish
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              onClick={handleDelete}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" />
+              Delete
+            </Button>
           </div>
         </>
       )}
