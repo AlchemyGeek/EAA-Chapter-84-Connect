@@ -17,6 +17,7 @@ const Auth = () => {
   const [step, setStep] = useState<AuthStep>("email");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   const sendOtp = async () => {
