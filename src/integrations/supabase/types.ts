@@ -44,6 +44,90 @@ export type Database = {
         }
         Relationships: []
       }
+      briefing_room_items: {
+        Row: {
+          added_at: string
+          category: Database["public"]["Enums"]["briefing_room_category"]
+          created_at: string
+          created_by: string | null
+          edited: boolean
+          edited_at: string | null
+          edited_by: string | null
+          edited_by_name: string | null
+          headline: string
+          id: string
+          published_at: string | null
+          search_vector: unknown
+          source_name: string
+          source_published_at: string | null
+          source_url: string
+          status: Database["public"]["Enums"]["briefing_room_status"]
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          added_at?: string
+          category: Database["public"]["Enums"]["briefing_room_category"]
+          created_at?: string
+          created_by?: string | null
+          edited?: boolean
+          edited_at?: string | null
+          edited_by?: string | null
+          edited_by_name?: string | null
+          headline: string
+          id?: string
+          published_at?: string | null
+          search_vector?: unknown
+          source_name: string
+          source_published_at?: string | null
+          source_url: string
+          status?: Database["public"]["Enums"]["briefing_room_status"]
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          added_at?: string
+          category?: Database["public"]["Enums"]["briefing_room_category"]
+          created_at?: string
+          created_by?: string | null
+          edited?: boolean
+          edited_at?: string | null
+          edited_by?: string | null
+          edited_by_name?: string | null
+          headline?: string
+          id?: string
+          published_at?: string | null
+          search_vector?: unknown
+          source_name?: string
+          source_published_at?: string | null
+          source_url?: string
+          status?: Database["public"]["Enums"]["briefing_room_status"]
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      briefing_room_settings: {
+        Row: {
+          auto_publish: boolean
+          created_at: string
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          auto_publish?: boolean
+          created_at?: string
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_publish?: boolean
+          created_at?: string
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       buddy_assignments: {
         Row: {
           application_id: string
@@ -1682,6 +1766,17 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member" | "officer"
+      briefing_room_category:
+        | "homebuilding"
+        | "safety_regulatory"
+        | "industry_news"
+        | "events_airshows"
+        | "eaa"
+      briefing_room_status:
+        | "pending_review"
+        | "published"
+        | "rejected"
+        | "archived"
       classified_category:
         | "for-sale"
         | "wanted"
@@ -1821,6 +1916,19 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member", "officer"],
+      briefing_room_category: [
+        "homebuilding",
+        "safety_regulatory",
+        "industry_news",
+        "events_airshows",
+        "eaa",
+      ],
+      briefing_room_status: [
+        "pending_review",
+        "published",
+        "rejected",
+        "archived",
+      ],
       classified_category: [
         "for-sale",
         "wanted",
