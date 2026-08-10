@@ -63,7 +63,7 @@ export function BriefingItemCard({
         )}
 
         <div className="flex items-start gap-3">
-          {!open && showImage && (
+          {!open && showCollapsedImage && showImage && (
             <img
               src={item.image_url!}
               alt={item.headline}
