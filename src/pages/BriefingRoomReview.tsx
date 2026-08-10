@@ -111,6 +111,16 @@ function ReviewRow({
     }
   }
 
+  async function handleDelete() {
+    if (!window.confirm("Delete this story permanently?")) return;
+    try {
+      await deleteItem.mutateAsync({ id: item.id });
+      toast({ title: "Deleted" });
+    } catch (e: any) {
+      toast({ title: "Could not delete", description: e?.message, variant: "destructive" });
+    }
+  }
+
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       {editing ? (
