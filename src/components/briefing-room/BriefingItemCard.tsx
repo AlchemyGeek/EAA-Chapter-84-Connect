@@ -24,6 +24,8 @@ export function BriefingItemCard({
   lead?: boolean;
 }) {
   const [open, setOpen] = useState(lead);
+  const [imgFailed, setImgFailed] = useState(false);
+  const showImage = !!item.image_url && !imgFailed;
 
   return (
     <article
@@ -32,6 +34,16 @@ export function BriefingItemCard({
         lead ? "p-5" : "p-4",
       )}
     >
+      {lead && showImage && (
+        <img
+          src={item.image_url!}
+          alt={item.headline}
+          loading="lazy"
+          onError={() => setImgFailed(true)}
+          className="mb-4 aspect-video w-full rounded-md border border-border object-cover"
+        />
+      )}
+
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -39,6 +51,15 @@ export function BriefingItemCard({
         aria-expanded={open}
       >
         <div className="flex items-start justify-between gap-3">
+          {!lead && showImage && (
+            <img
+              src={item.image_url!}
+              alt={item.headline}
+              loading="lazy"
+              onError={() => setImgFailed(true)}
+              className="h-[88px] w-[88px] shrink-0 rounded-md border border-border object-cover"
+            />
+          )}
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex flex-wrap items-center gap-2">
               <CategoryChip category={item.category} />
@@ -72,6 +93,7 @@ export function BriefingItemCard({
           />
         </div>
       </button>
+
 
       {open && (
         <a

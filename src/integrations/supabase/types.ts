@@ -56,6 +56,7 @@ export type Database = {
           edited_by_name: string | null
           headline: string
           id: string
+          image_url: string | null
           published_at: string | null
           search_vector: unknown
           source_name: string
@@ -76,6 +77,7 @@ export type Database = {
           edited_by_name?: string | null
           headline: string
           id?: string
+          image_url?: string | null
           published_at?: string | null
           search_vector?: unknown
           source_name: string
@@ -96,6 +98,7 @@ export type Database = {
           edited_by_name?: string | null
           headline?: string
           id?: string
+          image_url?: string | null
           published_at?: string | null
           search_vector?: unknown
           source_name?: string

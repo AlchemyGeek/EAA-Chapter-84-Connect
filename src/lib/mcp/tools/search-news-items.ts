@@ -36,7 +36,7 @@ export default defineTool({
     let q = supabase
       .from("briefing_room_items")
       .select(
-        "id,headline,summary,source_name,source_url,source_published_at,added_at,published_at,category,status",
+        "id,headline,summary,source_name,source_url,image_url,source_published_at,added_at,published_at,category,status",
       );
 
     if (!input.include_unpublished) q = q.eq("status", "published");

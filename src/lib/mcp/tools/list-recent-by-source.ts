@@ -20,7 +20,7 @@ export default defineTool({
 
     let q = supabase
       .from("briefing_room_items")
-      .select("id,headline,source_name,source_url,category,status,added_at")
+      .select("id,headline,source_name,source_url,image_url,category,status,added_at")
       .gte("added_at", since)
       .order("added_at", { ascending: false })
       .limit(Math.min(Math.max(limit ?? 50, 1), 100));

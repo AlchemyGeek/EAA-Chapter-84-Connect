@@ -92,6 +92,7 @@ function ReviewRow({
     summary: item.summary,
     category: item.category,
     source_name: item.source_name,
+    image_url: item.image_url ?? "",
   });
 
   async function run(
@@ -120,6 +121,11 @@ function ReviewRow({
             onChange={(e) => setDraft({ ...draft, summary: e.target.value })}
             rows={4}
             placeholder="Summary"
+          />
+          <Input
+            value={draft.image_url ?? ""}
+            onChange={(e) => setDraft({ ...draft, image_url: e.target.value })}
+            placeholder="Image URL (https://…) — leave blank for no image"
           />
           <div className="flex flex-wrap gap-2">
             <Input
@@ -173,7 +179,17 @@ function ReviewRow({
               </Badge>
             )}
           </div>
-          <h3 className="text-base font-semibold leading-snug">{item.headline}</h3>
+          <div className="flex items-start gap-3">
+            {item.image_url && (
+              <img
+                src={item.image_url}
+                alt={item.headline}
+                loading="lazy"
+                className="h-16 w-16 shrink-0 rounded-md border border-border object-cover"
+              />
+            )}
+            <h3 className="text-base font-semibold leading-snug">{item.headline}</h3>
+          </div>
           <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
           <a
             href={item.source_url}
