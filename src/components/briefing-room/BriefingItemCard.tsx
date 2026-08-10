@@ -30,27 +30,37 @@ export function BriefingItemCard({
   return (
     <article
       className={cn(
-        "rounded-lg border border-border bg-card",
+        "relative rounded-lg border border-border bg-card",
         lead ? "p-5" : "p-4",
       )}
     >
-      {open && showImage && (
-        <img
-          src={item.image_url!}
-          alt={item.headline}
-          loading="lazy"
-          onError={() => setImgFailed(true)}
-          className="mb-4 aspect-video w-full rounded-md border border-border object-cover"
-        />
-      )}
-
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full text-left"
+        className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted"
+        aria-label={open ? "Close story" : "Open story"}
         aria-expanded={open}
       >
-        <div className="flex items-start justify-between gap-3">
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      <div className="cursor-pointer pr-10" onClick={() => setOpen((v) => !v)}>
+        {open && showImage && (
+          <img
+            src={item.image_url!}
+            alt={item.headline}
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+            className="mb-4 aspect-video w-full rounded-md border border-border object-cover"
+          />
+        )}
+
+        <div className="flex items-start gap-3">
           {!open && showImage && (
             <img
               src={item.image_url!}
@@ -85,22 +95,16 @@ export function BriefingItemCard({
               {item.summary}
             </p>
           </div>
-          <ChevronDown
-            className={cn(
-              "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-              open && "rotate-180",
-            )}
-          />
         </div>
-      </button>
-
+      </div>
 
       {open && (
         <a
           href={item.source_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+          className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 pr-10 text-sm font-medium text-primary hover:underline"
         >
           Read the full story at {item.source_name}
           <ExternalLink className="h-4 w-4" />
