@@ -131,6 +131,179 @@
           }
         },
         "outputSchema": null
+      },
+      {
+        "name": "create_news_item",
+        "title": "Create a Briefing Room item",
+        "description": "Add a news item to the EAA Chapter 84 Briefing Room. Connect sets the status from the current publish mode (pending officer review unless auto-publish is on). Requires an officer account.",
+        "annotations": {
+          "readOnlyHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "headline": {
+              "type": "string",
+              "description": "Short story title."
+            },
+            "summary": {
+              "type": "string",
+              "description": "2-4 sentence summary of the story."
+            },
+            "source_name": {
+              "type": "string",
+              "description": "Display name of the outlet, e.g. 'AVweb'."
+            },
+            "source_url": {
+              "type": "string",
+              "description": "Link to the original article."
+            },
+            "source_published_at": {
+              "description": "ISO date/time the source published the article.",
+              "type": "string"
+            },
+            "category": {
+              "type": "string",
+              "enum": [
+                "homebuilding",
+                "safety_regulatory",
+                "industry_news",
+                "events_airshows",
+                "eaa"
+              ],
+              "description": "Category for the item."
+            }
+          },
+          "required": [
+            "headline",
+            "summary",
+            "source_name",
+            "source_url",
+            "category"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_news_items",
+        "title": "Search Briefing Room items",
+        "description": "Search existing EAA Chapter 84 Briefing Room news items by keyword, source, category, or date range. Useful for context and duplicate checking.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Keyword matched against headline and summary.",
+              "type": "string"
+            },
+            "source": {
+              "description": "Exact source name, e.g. 'AVweb'.",
+              "type": "string"
+            },
+            "category": {
+              "description": "Category filter.",
+              "type": "string",
+              "enum": [
+                "homebuilding",
+                "safety_regulatory",
+                "industry_news",
+                "events_airshows",
+                "eaa"
+              ]
+            },
+            "added_since": {
+              "description": "ISO date/time; only items added on or after this.",
+              "type": "string"
+            },
+            "added_before": {
+              "description": "ISO date/time; only items added before this.",
+              "type": "string"
+            },
+            "include_unpublished": {
+              "description": "Include pending/rejected/archived items (officers only). Default false.",
+              "type": "boolean"
+            },
+            "limit": {
+              "description": "Max rows, 1-100 (default 20).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "check_duplicate",
+        "title": "Check for a duplicate Briefing Room item",
+        "description": "Given a candidate article URL and headline, report whether a matching or near-matching item already exists in the recent Briefing Room archive.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "source_url": {
+              "type": "string",
+              "description": "Candidate article URL."
+            },
+            "headline": {
+              "type": "string",
+              "description": "Candidate headline."
+            },
+            "days": {
+              "description": "How far back to compare, in days (default 45).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "source_url",
+            "headline"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_recent_by_source",
+        "title": "List recent Briefing Room items by source",
+        "description": "List recently added Briefing Room items, optionally filtered to one source, so the agent can pace itself and avoid over-relying on a single outlet. Omit the source to get a per-source count summary.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "source": {
+              "description": "Exact source name; omit for a summary across sources.",
+              "type": "string"
+            },
+            "days": {
+              "description": "Look-back window in days (default 30).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "limit": {
+              "description": "Max rows, 1-100 (default 50).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
       }
     ]
   }
