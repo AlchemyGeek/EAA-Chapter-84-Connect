@@ -753,11 +753,6 @@ export default function MemberHome() {
                 <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
                 <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
                 <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
-                <AdminLink
-                  to="/briefing-room/review"
-                  icon={Newspaper}
-                  label={`Briefing Room Review${pendingBriefingCount > 0 ? ` (${pendingBriefingCount})` : ""}`}
-                />
                 <AdminLink to="/email-lists" icon={Mail} label="Email List Builder" />
               </div>
               <div className="space-y-1">
