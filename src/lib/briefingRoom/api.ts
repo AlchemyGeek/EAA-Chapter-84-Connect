@@ -160,6 +160,36 @@ export function useRecentPublishedCount() {
   });
 }
 
+export function useBriefingRoomStats() {
+  return useQuery({
+    queryKey: ["briefing-room", "stats"],
+    staleTime: 0,
+    queryFn: async () => {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const [totalResult, newResult] = await Promise.all([
+        supabase
+          .from(TABLE as any)
+          .select("*", { count: "exact", head: true })
+          .eq("status", "published"),
+        supabase
+          .from(TABLE as any)
+          .select("*", { count: "exact", head: true })
+          .eq("status", "published")
+          .gte("published_at", since),
+      ]);
+
+      if (totalResult.error) throw totalResult.error;
+      if (newResult.error) throw newResult.error;
+
+      return {
+        total: totalResult.count ?? 0,
+        newThisWeek: newResult.count ?? 0,
+      };
+    },
+  });
+}
+
+
 export interface ItemEdit {
   headline?: string;
   summary?: string;
