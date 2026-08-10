@@ -31,6 +31,9 @@ import BuddyProgram from "./pages/BuddyProgram";
 import MemberEngagement from "./pages/MemberEngagement";
 import EmailListBuilder from "./pages/EmailListBuilder";
 import Newsletters from "./pages/Newsletters";
+import BriefingRoom from "./pages/BriefingRoom";
+import BriefingRoomArchive from "./pages/BriefingRoomArchive";
+import BriefingRoomReview from "./pages/BriefingRoomReview";
 import NewslettersAdmin from "./pages/NewslettersAdmin";
 import ProxyVote from "./pages/ProxyVote";
 import Classifieds from "./pages/Classifieds";
@@ -99,6 +102,9 @@ const App = () => (
             <Route path="/member-volunteering/:id" element={<MemberVolunteering />} />
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
             <Route path="/newsletters" element={<Newsletters />} />
+            <Route path="/briefing-room" element={<BriefingRoom />} />
+            <Route path="/briefing-room/archive" element={<BriefingRoomArchive />} />
+            <Route path="/briefing-room/review" element={<BriefingRoomReview />} />
             <Route path="/hangar-talk" element={<HangarTalk />} />
             <Route path="/hangar-talk/new" element={<HangarTalkNew />} />
             <Route path="/hangar-talk/:id" element={<HangarTalkPost />} />

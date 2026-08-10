@@ -149,18 +149,226 @@ var list_volunteering_default = defineTool5({
   }
 });
 
+// src/lib/mcp/tools/create-news-item.ts
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { z as z5 } from "npm:zod@^4.4.3";
+var CATEGORIES = [
+  "homebuilding",
+  "safety_regulatory",
+  "industry_news",
+  "events_airshows",
+  "eaa"
+];
+var create_news_item_default = defineTool6({
+  name: "create_news_item",
+  title: "Create a Briefing Room item",
+  description: "Add a news item to the EAA Chapter 84 Briefing Room. Connect sets the status from the current publish mode (pending officer review unless auto-publish is on). Requires an officer account.",
+  inputSchema: {
+    headline: z5.string().describe("Short story title."),
+    summary: z5.string().describe("2-4 sentence summary of the story."),
+    source_name: z5.string().describe("Display name of the outlet, e.g. 'AVweb'."),
+    source_url: z5.string().describe("Link to the original article."),
+    source_published_at: z5.string().optional().describe("ISO date/time the source published the article."),
+    category: z5.enum(CATEGORIES).describe("Category for the item.")
+  },
+  annotations: { readOnlyHint: false, openWorldHint: false },
+  handler: async (input, ctx) => {
+    if (!ctx.isAuthenticated()) return notAuthed();
+    const supabase = supabaseForUser(ctx);
+    const { data: settings } = await supabase.from("briefing_room_settings").select("auto_publish").eq("id", 1).maybeSingle();
+    const autoPublish = !!settings?.auto_publish;
+    const { data, error } = await supabase.from("briefing_room_items").insert({
+      headline: input.headline.trim(),
+      summary: input.summary.trim(),
+      source_name: input.source_name.trim(),
+      source_url: input.source_url.trim(),
+      source_published_at: input.source_published_at ?? null,
+      category: input.category,
+      status: autoPublish ? "published" : "pending_review",
+      published_at: autoPublish ? (/* @__PURE__ */ new Date()).toISOString() : null,
+      created_by: ctx.getUserId()
+    }).select("id,status,headline").maybeSingle();
+    if (error) {
+      if (error.code === "23505") {
+        return errorResult("An item with this source URL already exists in Briefing Room.");
+      }
+      return errorResult(error.message);
+    }
+    return jsonResult(data, { item: data });
+  }
+});
+
+// src/lib/mcp/tools/search-news-items.ts
+import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { z as z6 } from "npm:zod@^4.4.3";
+var CATEGORIES2 = [
+  "homebuilding",
+  "safety_regulatory",
+  "industry_news",
+  "events_airshows",
+  "eaa"
+];
+var search_news_items_default = defineTool7({
+  name: "search_news_items",
+  title: "Search Briefing Room items",
+  description: "Search existing EAA Chapter 84 Briefing Room news items by keyword, source, category, or date range. Useful for context and duplicate checking.",
+  inputSchema: {
+    query: z6.string().optional().describe("Keyword matched against headline and summary."),
+    source: z6.string().optional().describe("Exact source name, e.g. 'AVweb'."),
+    category: z6.enum(CATEGORIES2).optional().describe("Category filter."),
+    added_since: z6.string().optional().describe("ISO date/time; only items added on or after this."),
+    added_before: z6.string().optional().describe("ISO date/time; only items added before this."),
+    include_unpublished: z6.boolean().optional().describe("Include pending/rejected/archived items (officers only). Default false."),
+    limit: z6.number().int().optional().describe("Max rows, 1-100 (default 20).")
+  },
+  annotations: { readOnlyHint: true, openWorldHint: false },
+  handler: async (input, ctx) => {
+    if (!ctx.isAuthenticated()) return notAuthed();
+    const supabase = supabaseForUser(ctx);
+    const limit = Math.min(Math.max(input.limit ?? 20, 1), 100);
+    let q = supabase.from("briefing_room_items").select(
+      "id,headline,summary,source_name,source_url,source_published_at,added_at,published_at,category,status"
+    );
+    if (!input.include_unpublished) q = q.eq("status", "published");
+    if (input.query) {
+      const term = input.query.replace(/[%,()]/g, " ").trim();
+      if (term) q = q.or(`headline.ilike.%${term}%,summary.ilike.%${term}%`);
+    }
+    if (input.source) q = q.eq("source_name", input.source);
+    if (input.category) q = q.eq("category", input.category);
+    if (input.added_since) q = q.gte("added_at", input.added_since);
+    if (input.added_before) q = q.lt("added_at", input.added_before);
+    const { data, error } = await q.order("added_at", { ascending: false }).limit(limit);
+    if (error) return errorResult(error.message);
+    return jsonResult(data ?? [], { items: data ?? [], count: data?.length ?? 0 });
+  }
+});
+
+// src/lib/mcp/tools/check-duplicate.ts
+import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { z as z7 } from "npm:zod@^4.4.3";
+function normalizeUrl(url) {
+  try {
+    const u = new URL(url);
+    u.hash = "";
+    u.search = "";
+    return `${u.hostname.replace(/^www\./, "")}${u.pathname.replace(/\/$/, "")}`.toLowerCase();
+  } catch {
+    return url.trim().toLowerCase();
+  }
+}
+function normalizeHeadline(h) {
+  return h.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+function similarity(a, b) {
+  const wa = new Set(normalizeHeadline(a).split(" ").filter((w) => w.length > 2));
+  const wb = new Set(normalizeHeadline(b).split(" ").filter((w) => w.length > 2));
+  if (wa.size === 0 || wb.size === 0) return 0;
+  let shared = 0;
+  wa.forEach((w) => {
+    if (wb.has(w)) shared++;
+  });
+  return shared / Math.max(wa.size, wb.size);
+}
+var check_duplicate_default = defineTool8({
+  name: "check_duplicate",
+  title: "Check for a duplicate Briefing Room item",
+  description: "Given a candidate article URL and headline, report whether a matching or near-matching item already exists in the recent Briefing Room archive.",
+  inputSchema: {
+    source_url: z7.string().describe("Candidate article URL."),
+    headline: z7.string().describe("Candidate headline."),
+    days: z7.number().int().optional().describe("How far back to compare, in days (default 45).")
+  },
+  annotations: { readOnlyHint: true, openWorldHint: false },
+  handler: async ({ source_url, headline, days }, ctx) => {
+    if (!ctx.isAuthenticated()) return notAuthed();
+    const supabase = supabaseForUser(ctx);
+    const since = new Date(Date.now() - (days ?? 45) * 24 * 60 * 60 * 1e3).toISOString();
+    const { data, error } = await supabase.from("briefing_room_items").select("id,headline,source_url,source_name,status,added_at").gte("added_at", since).order("added_at", { ascending: false }).limit(500);
+    if (error) return errorResult(error.message);
+    const candidateUrl = normalizeUrl(source_url);
+    const rows = data ?? [];
+    const exact = rows.find((r) => normalizeUrl(r.source_url) === candidateUrl);
+    if (exact) {
+      return jsonResult(
+        { duplicate: true, reason: "url_match", match: exact },
+        { duplicate: true, reason: "url_match", match: exact }
+      );
+    }
+    let best = null;
+    for (const r of rows) {
+      const score = similarity(headline, r.headline);
+      if (!best || score > best.score) best = { row: r, score };
+    }
+    if (best && best.score >= 0.6) {
+      return jsonResult(
+        { duplicate: true, reason: "headline_similarity", score: best.score, match: best.row },
+        { duplicate: true, reason: "headline_similarity", score: best.score, match: best.row }
+      );
+    }
+    return jsonResult(
+      { duplicate: false, closest_score: best?.score ?? 0 },
+      { duplicate: false, closest_score: best?.score ?? 0 }
+    );
+  }
+});
+
+// src/lib/mcp/tools/list-recent-by-source.ts
+import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { z as z8 } from "npm:zod@^4.4.3";
+var list_recent_by_source_default = defineTool9({
+  name: "list_recent_by_source",
+  title: "List recent Briefing Room items by source",
+  description: "List recently added Briefing Room items, optionally filtered to one source, so the agent can pace itself and avoid over-relying on a single outlet. Omit the source to get a per-source count summary.",
+  inputSchema: {
+    source: z8.string().optional().describe("Exact source name; omit for a summary across sources."),
+    days: z8.number().int().optional().describe("Look-back window in days (default 30)."),
+    limit: z8.number().int().optional().describe("Max rows, 1-100 (default 50).")
+  },
+  annotations: { readOnlyHint: true, openWorldHint: false },
+  handler: async ({ source, days, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return notAuthed();
+    const supabase = supabaseForUser(ctx);
+    const since = new Date(Date.now() - (days ?? 30) * 24 * 60 * 60 * 1e3).toISOString();
+    let q = supabase.from("briefing_room_items").select("id,headline,source_name,source_url,category,status,added_at").gte("added_at", since).order("added_at", { ascending: false }).limit(Math.min(Math.max(limit ?? 50, 1), 100));
+    if (source) q = q.eq("source_name", source);
+    const { data, error } = await q;
+    if (error) return errorResult(error.message);
+    const rows = data ?? [];
+    const counts = {};
+    for (const r of rows) {
+      const name = r.source_name;
+      counts[name] = (counts[name] ?? 0) + 1;
+    }
+    return jsonResult(
+      { window_days: days ?? 30, counts_by_source: counts, items: rows },
+      { counts_by_source: counts, items: rows, count: rows.length }
+    );
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "exhrqwxmezowohckuzvv";
 var mcp_default = defineMcp({
   name: "eaa84-connect-mcp",
   title: "EAA Chapter 84 Connect",
   version: "0.1.0",
-  instructions: "Tools for EAA Chapter 84 Connect. Callers act as their signed-in member account. Use get_my_profile for membership status, list_directory to look up members, and list_hangar_talk_posts / list_classifieds / list_volunteering_opportunities for chapter activity.",
+  instructions: "Tools for EAA Chapter 84 Connect. Callers act as their signed-in member account. Use get_my_profile for membership status, list_directory to look up members, and list_hangar_talk_posts / list_classifieds / list_volunteering_opportunities for chapter activity. Briefing Room (general aviation and homebuilding news): use check_duplicate before adding a story, search_news_items and list_recent_by_source for context and source balance, and create_news_item to submit a story for officer review.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
-  tools: [get_my_profile_default, list_directory_default, list_hangar_talk_default, list_classifieds_default, list_volunteering_default]
+  tools: [
+    get_my_profile_default,
+    list_directory_default,
+    list_hangar_talk_default,
+    list_classifieds_default,
+    list_volunteering_default,
+    create_news_item_default,
+    search_news_items_default,
+    check_duplicate_default,
+    list_recent_by_source_default
+  ]
 });
 
 // lovable-mcp-supabase-entry.ts

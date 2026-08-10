@@ -39,6 +39,7 @@ import { Navigate, Link } from "react-router-dom";
 import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
 import { Squawk } from "@/components/squawk/Squawk";
 import { version as appVersion } from "../../package.json";
+import { usePendingCount, useRecentPublishedCount } from "@/lib/briefingRoom/api";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, isOfficerOrAbove, signOut } = useAuth();
@@ -150,6 +151,9 @@ export default function MemberHome() {
       return count ?? 0;
     },
   });
+
+  const { data: recentBriefingCount = 0 } = useRecentPublishedCount();
+  const { data: pendingBriefingCount = 0 } = usePendingCount(true);
 
   const { data: activeClassifiedsCount = 0 } = useQuery({
     queryKey: ["active-classifieds-count"],
@@ -729,6 +733,12 @@ export default function MemberHome() {
                 />
                 <AdminLink to="/classifieds" icon={Tag} label={`Classifieds${activeClassifiedsCount > 0 ? ` (${activeClassifiedsCount})` : ""}`} />
                 <AdminLink to="/hangar-talk" icon={MessageSquare} label={`Hangar Talk${activeHangarTalkCount > 0 ? ` (${activeHangarTalkCount})` : ""}`} />
+                <AdminLink
+                  to="/briefing-room"
+                  icon={Newspaper}
+                  label={`Briefing Room${recentBriefingCount > 0 ? ` (${recentBriefingCount})` : ""}`}
+                  badge="New"
+                />
                 <AdminLink to="/newsletters" icon={Newspaper} label="Newsletter Archive" />
                 
               </>
@@ -752,6 +762,11 @@ export default function MemberHome() {
                 <AdminLink to="/membership-badges" icon={BadgeCheck} label="2026 Membership Badges" />
                 <AdminLink to="/volunteering-opportunities" icon={HandHelping} label="Chapter Volunteering" />
                 <AdminLink to="/newsletters-admin" icon={Newspaper} label="Newsletters" />
+                <AdminLink
+                  to="/briefing-room/review"
+                  icon={Newspaper}
+                  label={`Briefing Room Review${pendingBriefingCount > 0 ? ` (${pendingBriefingCount})` : ""}`}
+                />
                 <AdminLink to="/email-lists" icon={Mail} label="Email List Builder" />
               </div>
               <div className="space-y-1">
