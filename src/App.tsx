@@ -102,6 +102,9 @@ const App = () => (
             <Route path="/member-volunteering/:id" element={<MemberVolunteering />} />
             <Route path="/member-volunteering" element={<MemberVolunteering />} />
             <Route path="/newsletters" element={<Newsletters />} />
+            <Route path="/briefing-room" element={<BriefingRoom />} />
+            <Route path="/briefing-room/archive" element={<BriefingRoomArchive />} />
+            <Route path="/briefing-room/review" element={<BriefingRoomReview />} />
             <Route path="/hangar-talk" element={<HangarTalk />} />
             <Route path="/hangar-talk/new" element={<HangarTalkNew />} />
             <Route path="/hangar-talk/:id" element={<HangarTalkPost />} />
