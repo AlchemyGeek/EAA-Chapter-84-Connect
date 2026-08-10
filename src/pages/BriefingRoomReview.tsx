@@ -59,7 +59,7 @@ export default function BriefingRoomReview() {
             </div>
           ) : (
             pending.map((item) => (
-              <ReviewRow key={item.id} item={item} update={update} pending />
+              <ReviewRow key={item.id} item={item} update={update} deleteItem={deleteItem} pending />
             ))
           )}
         </section>
@@ -82,10 +82,12 @@ export default function BriefingRoomReview() {
 function ReviewRow({
   item,
   update,
+  deleteItem,
   pending = false,
 }: {
   item: BriefingItem;
   update: ReturnType<typeof useUpdateItem>;
+  deleteItem: ReturnType<typeof useDeleteItem>;
   pending?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
