@@ -39,6 +39,7 @@ import { Navigate, Link } from "react-router-dom";
 import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
 import { Squawk } from "@/components/squawk/Squawk";
 import { version as appVersion } from "../../package.json";
+import { usePendingCount, useRecentPublishedCount } from "@/lib/briefingRoom/api";
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, isOfficerOrAbove, signOut } = useAuth();
@@ -150,6 +151,9 @@ export default function MemberHome() {
       return count ?? 0;
     },
   });
+
+  const { data: recentBriefingCount = 0 } = useRecentPublishedCount();
+  const { data: pendingBriefingCount = 0 } = usePendingCount(true);
 
   const { data: activeClassifiedsCount = 0 } = useQuery({
     queryKey: ["active-classifieds-count"],
