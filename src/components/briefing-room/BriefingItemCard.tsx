@@ -19,9 +19,11 @@ export function CategoryChip({ category }: { category: BriefingItem["category"] 
 export function BriefingItemCard({
   item,
   lead = false,
+  showCollapsedImage = true,
 }: {
   item: BriefingItem;
   lead?: boolean;
+  showCollapsedImage?: boolean;
 }) {
   const [open, setOpen] = useState(lead);
   const [imgFailed, setImgFailed] = useState(false);
