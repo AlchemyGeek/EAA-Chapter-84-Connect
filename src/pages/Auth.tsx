@@ -41,7 +41,12 @@ const Auth = () => {
           type: "email",
         });
         if (error) throw error;
-        navigate("/home");
+        const next = searchParams.get("next");
+        if (next && isSameOriginRelativePath(next)) {
+          window.location.href = next;
+        } else {
+          navigate("/home");
+        }
       }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
