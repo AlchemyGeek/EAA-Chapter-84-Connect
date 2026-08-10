@@ -1,34 +1,57 @@
-## Goal
+# Briefing Room — v1
 
-Prevent aviation quotes from being visibly clipped in the Squawk banner, without changing the fixed 130px tile height.
+A running archive of general aviation and homebuilding news inside Connect, filled by the Claude agent over MCP, reviewed by officers, and readable by all active members. Public RSS feed included.
 
-## Approach
+## Member experience
 
-Two-part fix, both scoped to quotes only:
+**Front Page** (`/briefing-room`)
+- Newspaper-masthead nameplate: "EAA Chapter 84 — Briefing Room", flat light styling with hairline borders, no shadows (matches app style).
+- One lead item shown large (most recent published), remaining recent items in a compact list below.
+- Each item: headline, short summary, source name, category chip, publish date.
+- Tapping an item expands the full summary and gives a clear link out to the original article (opens in a new tab).
+- Persistent toggle to switch to Archive.
 
-**1. Auto-shrink medium-long quotes** (in `src/components/squawk/SquawkSlide.tsx`)
-- When `slide.kind === "quote"`, measure the combined character length of title (the quote) + body (the author).
-- Three tiers:
-  - Short (≤ ~110 chars total): current sizing — `text-sm sm:text-base` title, `line-clamp-2`.
-  - Medium (~111–180 chars): drop title to `text-xs sm:text-sm`, tighten leading (`leading-snug`), allow `line-clamp-3` on the title, keep author at `text-[11px]`.
-  - Long (> 180 chars): filtered out at the source (see #2), never rendered.
-- Non-quote tiles keep their current styling untouched.
+**Archive / Search** (`/briefing-room/archive`)
+- Flat list of every published item, newest first, infinite scroll / "Load more".
+- Keyword search across headline + summary.
+- Filters: category (Homebuilding, Safety & Regulatory, Industry News, Events & Airshows, EAA), source, date range.
+- Nothing ever expires from this view.
 
-**2. Filter unfittable quotes from the pool** (in `src/lib/squawk/quotes.ts` + `src/lib/squawk/build.ts`)
-- Add a `MAX_QUOTE_LENGTH = 180` constant (quote text + author, incl. quote marks and dash).
-- In `build.ts` `quoteSlide()` / the quote selection step, only draw from quotes whose rendered length is within the cap. If the pool of eligible quotes is empty (edge case), fall back to the shortest available quote so the slot never breaks.
-- No data migration; quotes stay in the file, just aren't selected when too long.
+**Entry into the app**
+- New "Briefing Room" tile on the Member Home menu with a "New" badge, and a count of items added in the last 7 days.
+- Access gated the same way as Hangar Talk / Classifieds: active members only.
 
-## Files touched
+## Officer approval queue
 
-- `src/components/squawk/SquawkSlide.tsx` — tiered sizing for `kind === "quote"`.
-- `src/lib/squawk/build.ts` — filter the quote candidate list by length before random pick.
+`/briefing-room/review`, visible only to officers.
+- Lists all items with status "pending review", newest first, with a pending count badge on the Officer Services card.
+- Per item: Approve (publish), Edit (headline / summary / category / source name), Reject (discarded, hidden everywhere).
+- Officers can also edit already-published items in place, and unpublish to "archived" if a story is retracted.
+- Any officer edit sets an internal "edited" flag plus who edited and when; shown in the queue, not to members.
 
-No schema changes. No changes to non-quote tiles or carousel timing.
+## Agent integration (MCP)
 
-## Out of scope
+Four new tools added to the existing Connect MCP server, so the agent connects through the same OAuth flow and acts as a real account:
+- `search_news_items` — search by keyword, source, category, date range.
+- `check_duplicate` — given URL + headline, reports whether a matching or near-matching item already exists in the recent archive (exact URL match, plus normalized-headline similarity).
+- `create_news_item` — creates an item; Connect sets the status from the current publish mode (pending review in v1).
+- `list_recent_by_source` — recent items for a given source, so the agent can pace itself.
 
-- Modal / click-to-expand for quotes.
-- Variable tile height.
-- Marquee scrolling.
-- Extended dwell time for long quotes.
+Write access is restricted to officers, so the agent must be connected as a designated officer account. Read tools stay open to active members.
+
+## RSS feed
+
+Public edge function at `/functions/v1/briefing-room-feed` returning RSS 2.0 XML, no auth required. Published items only, newest first, capped at the most recent 50. Each item carries title, link (source URL), description (summary), pubDate, category, and a stable guid. Updates automatically as officers approve items.
+
+## Technical notes
+
+- New table `briefing_room_items`: headline, summary, source_name, source_url (unique), source_published_at, added_at, category (enum), status (pending_review / published / rejected / archived), edited flag, edited_by, edited_at, created_by.
+- RLS: active members read published items; officers read and write everything; the RSS function reads published items with the service role. Explicit GRANTs for `authenticated` and `service_role`; no `anon` grant (the feed goes through the function).
+- Full-text search index (tsvector over headline + summary), same approach as the newsletter archive, plus indexes on status, category, and date.
+- An "auto-publish" flag lives in site config, defaulted off, so flipping it later needs no code change to the MCP contract.
+- MCP manifest regenerated and the `mcp` function redeployed after the new tools are added.
+- Version string bumped and reflected in the UI.
+
+## Not in v1
+
+Featured/notable flagging (front page always leads with the most recent), YouTube/video items, and auto-publish being turned on.
