@@ -3,18 +3,53 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.26.1";
 
 // src/lib/mcp/tools/get-my-profile.ts
-import { defineTool } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool } from "npm:@lovable.dev/mcp-js@0.26.1";
 
 // src/lib/mcp/supabase.ts
 import { createClient } from "npm:@supabase/supabase-js@^2.98.0";
+function runtimeEnv(name) {
+  const runtime = globalThis;
+  return runtime.Deno?.env?.get?.(name) ?? runtime.process?.env?.[name];
+}
+function configuredEnv(names) {
+  for (const name of names) {
+    const value = runtimeEnv(name)?.trim();
+    if (value) return value;
+  }
+  return void 0;
+}
+function supabaseProjectUrl() {
+  const url = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
+  if (!url) throw new Error("SUPABASE_URL is required");
+  return url;
+}
+function supabasePublishableKey() {
+  const direct = configuredEnv(["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"]);
+  if (direct) return direct;
+  const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
+  if (keyset) {
+    try {
+      const parsed = JSON.parse(keyset);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const keys = parsed;
+        const key = [keys.default, ...Object.values(keys)].find((v) => typeof v === "string" && v.trim().startsWith("sb_publishable_"))?.trim();
+        if (key) return key;
+      }
+    } catch {
+    }
+  }
+  const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
+  if (legacy) return legacy;
+  throw new Error("Supabase publishable key is required");
+}
 function supabaseForUser(ctx) {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
-  return createClient(url, key, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+  const token = ctx.getToken();
+  if (!token) throw new Error("supabaseForUser requires a verified OAuth token");
+  return createClient(supabaseProjectUrl(), supabasePublishableKey(), {
+    global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
@@ -59,7 +94,7 @@ var get_my_profile_default = defineTool({
 });
 
 // src/lib/mcp/tools/list-directory.ts
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z } from "npm:zod@^4.4.3";
 var list_directory_default = defineTool2({
   name: "list_directory",
@@ -87,7 +122,7 @@ var list_directory_default = defineTool2({
 });
 
 // src/lib/mcp/tools/list-hangar-talk.ts
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z as z2 } from "npm:zod@^4.4.3";
 var list_hangar_talk_default = defineTool3({
   name: "list_hangar_talk_posts",
@@ -110,7 +145,7 @@ var list_hangar_talk_default = defineTool3({
 });
 
 // src/lib/mcp/tools/list-classifieds.ts
-import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z as z3 } from "npm:zod@^4.4.3";
 var list_classifieds_default = defineTool4({
   name: "list_classifieds",
@@ -130,7 +165,7 @@ var list_classifieds_default = defineTool4({
 });
 
 // src/lib/mcp/tools/list-volunteering.ts
-import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z as z4 } from "npm:zod@^4.4.3";
 var list_volunteering_default = defineTool5({
   name: "list_volunteering_opportunities",
@@ -150,7 +185,7 @@ var list_volunteering_default = defineTool5({
 });
 
 // src/lib/mcp/tools/create-news-item.ts
-import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z as z5 } from "npm:zod@^4.4.3";
 var CATEGORIES = [
   "homebuilding",
@@ -199,7 +234,7 @@ var create_news_item_default = defineTool6({
 });
 
 // src/lib/mcp/tools/search-news-items.ts
-import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z as z6 } from "npm:zod@^4.4.3";
 var CATEGORIES2 = [
   "homebuilding",
@@ -245,7 +280,7 @@ var search_news_items_default = defineTool7({
 });
 
 // src/lib/mcp/tools/check-duplicate.ts
-import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z as z7 } from "npm:zod@^4.4.3";
 function normalizeUrl(url) {
   try {
@@ -314,7 +349,7 @@ var check_duplicate_default = defineTool8({
 });
 
 // src/lib/mcp/tools/list-recent-by-source.ts
-import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@0.24.0";
+import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z as z8 } from "npm:zod@^4.4.3";
 var list_recent_by_source_default = defineTool9({
   name: "list_recent_by_source",
@@ -372,5 +407,5 @@ var mcp_default = defineMcp({
 });
 
 // lovable-mcp-supabase-entry.ts
-import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.24.0/stacks/supabase";
+import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.26.1/stacks/supabase";
 Deno.serve(createSupabaseHandler(mcp_default, { functionName: "mcp" }));
