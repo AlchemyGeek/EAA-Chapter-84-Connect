@@ -13,7 +13,7 @@ export default function BriefingRoom() {
   useTrackEngagement("service_page");
   const { data: me } = useCurrentMember();
   const { isOfficer } = useIsOfficer(me?.key_id);
-  const { data: items = [], isLoading } = usePublishedItems(12);
+  const { data: items = [], isLoading } = usePublishedItems();
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 

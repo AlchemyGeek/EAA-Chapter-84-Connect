@@ -14,9 +14,12 @@ export interface ArchiveFilters {
 
 export const PAGE_SIZE = 20;
 
-export function usePublishedItems(limit = 12) {
+export const FRONT_PAGE_MIN = 20;
+
+/** Front page: everything published in the last month, or the latest 20 if the month has fewer. */
+export function usePublishedItems(minItems = FRONT_PAGE_MIN) {
   return useQuery({
-    queryKey: ["briefing-room", "published", limit],
+    queryKey: ["briefing-room", "published", minItems],
     staleTime: 0,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,12 +28,19 @@ export function usePublishedItems(limit = 12) {
         .eq("status", "published")
         .order("published_at", { ascending: false, nullsFirst: false })
         .order("added_at", { ascending: false })
-        .limit(limit);
+        .limit(200);
       if (error) throw error;
-      return (data ?? []) as unknown as BriefingItem[];
+      const all = (data ?? []) as unknown as BriefingItem[];
+      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const recent = all.filter((i) => {
+        const d = new Date(i.published_at ?? i.added_at).getTime();
+        return Number.isFinite(d) && d >= cutoff;
+      });
+      return recent.length >= minItems ? recent : all.slice(0, minItems);
     },
   });
 }
+
 
 export function useArchiveItems(filters: ArchiveFilters, page: number) {
   return useQuery({
