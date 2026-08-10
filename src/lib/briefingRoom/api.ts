@@ -155,6 +155,7 @@ export interface ItemEdit {
   summary?: string;
   category?: BriefingCategory;
   source_name?: string;
+  image_url?: string | null;
 }
 
 export function useUpdateItem(editorName: string | null) {
@@ -172,6 +173,10 @@ export function useUpdateItem(editorName: string | null) {
       markEdited?: boolean;
     }) => {
       const patch: Record<string, unknown> = { ...(changes ?? {}) };
+      if ("image_url" in patch) {
+        const raw = String(patch.image_url ?? "").trim();
+        patch.image_url = raw && /^https:\/\//i.test(raw) ? raw : null;
+      }
       if (status) {
         patch.status = status;
         if (status === "published") patch.published_at = new Date().toISOString();
