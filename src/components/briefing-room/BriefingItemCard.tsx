@@ -34,7 +34,7 @@ export function BriefingItemCard({
         lead ? "p-5" : "p-4",
       )}
     >
-      {lead && showImage && (
+      {open && showImage && (
         <img
           src={item.image_url!}
           alt={item.headline}
@@ -51,7 +51,7 @@ export function BriefingItemCard({
         aria-expanded={open}
       >
         <div className="flex items-start justify-between gap-3">
-          {!lead && showImage && (
+          {!open && showImage && (
             <img
               src={item.image_url!}
               alt={item.headline}
