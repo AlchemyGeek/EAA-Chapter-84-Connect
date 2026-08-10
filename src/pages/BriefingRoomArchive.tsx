@@ -127,7 +127,7 @@ export default function BriefingRoomArchive() {
 
         <div className="space-y-3">
           {items.map((item) => (
-            <BriefingItemCard key={item.id} item={item} />
+            <BriefingItemCard key={item.id} item={item} showCollapsedImage={false} />
           ))}
           {!isLoading && items.length === 0 && (
             <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
