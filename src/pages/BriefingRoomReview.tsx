@@ -37,6 +37,7 @@ export default function BriefingRoomReview() {
 
   const editorName = me ? `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() : null;
   const update = useUpdateItem(editorName);
+  const deleteItem = useDeleteItem();
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
   if (!authLoading && !officerLoading && me && !allowed) return <Navigate to="/briefing-room" replace />;
@@ -70,7 +71,7 @@ export default function BriefingRoomReview() {
           {recent.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nothing published yet.</p>
           ) : (
-            recent.map((item) => <ReviewRow key={item.id} item={item} update={update} />)
+            recent.map((item) => <ReviewRow key={item.id} item={item} update={update} deleteItem={deleteItem} />)
           )}
         </section>
       </div>
