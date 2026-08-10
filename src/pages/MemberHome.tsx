@@ -39,6 +39,8 @@ import { Navigate, Link } from "react-router-dom";
 import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
 import { Squawk } from "@/components/squawk/Squawk";
 import { version as appVersion } from "../../package.json";
+import { useBriefingRoomStats } from "@/lib/briefingRoom/api";
+
 
 export default function MemberHome() {
   const { user, loading: authLoading, isAdmin, isOfficerOrAbove, signOut } = useAuth();
