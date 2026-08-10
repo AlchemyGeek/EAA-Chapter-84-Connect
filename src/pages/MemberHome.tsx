@@ -151,8 +151,6 @@ export default function MemberHome() {
     },
   });
 
-  const { data: recentBriefingCount = 0 } = useRecentPublishedCount();
-  const { data: pendingBriefingCount = 0 } = usePendingCount(true);
 
   const { data: activeClassifiedsCount = 0 } = useQuery({
     queryKey: ["active-classifieds-count"],
