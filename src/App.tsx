@@ -46,6 +46,7 @@ import HangarTalkNew from "./pages/HangarTalkNew";
 import HangarTalkEdit from "./pages/HangarTalkEdit";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
+import OAuthConsent from "./pages/OAuthConsent";
 
 
 const queryClient = new QueryClient({
