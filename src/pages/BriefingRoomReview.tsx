@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Check, ExternalLink, Pencil, X, Archive as ArchiveIcon, Undo2 } from "lucide-react";
+import { Check, ExternalLink, Pencil, X, Archive as ArchiveIcon, Undo2, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentMember } from "@/lib/hangarTalk/api";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
@@ -15,6 +15,7 @@ import {
   usePendingItems,
   useRecentPublishedForReview,
   useUpdateItem,
+  useDeleteItem,
   type ItemEdit,
 } from "@/lib/briefingRoom/api";
 import {
@@ -36,6 +37,7 @@ export default function BriefingRoomReview() {
 
   const editorName = me ? `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() : null;
   const update = useUpdateItem(editorName);
+  const deleteItem = useDeleteItem();
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
   if (!authLoading && !officerLoading && me && !allowed) return <Navigate to="/briefing-room" replace />;
@@ -57,7 +59,7 @@ export default function BriefingRoomReview() {
             </div>
           ) : (
             pending.map((item) => (
-              <ReviewRow key={item.id} item={item} update={update} pending />
+              <ReviewRow key={item.id} item={item} update={update} deleteItem={deleteItem} pending />
             ))
           )}
         </section>
@@ -69,7 +71,7 @@ export default function BriefingRoomReview() {
           {recent.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nothing published yet.</p>
           ) : (
-            recent.map((item) => <ReviewRow key={item.id} item={item} update={update} />)
+            recent.map((item) => <ReviewRow key={item.id} item={item} update={update} deleteItem={deleteItem} />)
           )}
         </section>
       </div>
@@ -80,10 +82,12 @@ export default function BriefingRoomReview() {
 function ReviewRow({
   item,
   update,
+  deleteItem,
   pending = false,
 }: {
   item: BriefingItem;
   update: ReturnType<typeof useUpdateItem>;
+  deleteItem: ReturnType<typeof useDeleteItem>;
   pending?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -104,6 +108,16 @@ function ReviewRow({
       toast({ title: message });
     } catch (e: any) {
       toast({ title: "Could not save", description: e?.message, variant: "destructive" });
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("Delete this story permanently?")) return;
+    try {
+      await deleteItem.mutateAsync({ id: item.id });
+      toast({ title: "Deleted" });
+    } catch (e: any) {
+      toast({ title: "Could not delete", description: e?.message, variant: "destructive" });
     }
   }
 
@@ -243,6 +257,15 @@ function ReviewRow({
                 Republish
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              onClick={handleDelete}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" />
+              Delete
+            </Button>
           </div>
         </>
       )}

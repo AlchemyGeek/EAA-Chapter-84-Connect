@@ -196,3 +196,16 @@ export function useUpdateItem(editorName: string | null) {
     },
   });
 }
+
+export function useDeleteItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase.from(TABLE as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["briefing-room"] });
+    },
+  });
+}
