@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Check, ExternalLink, Pencil, X, Archive as ArchiveIcon, Undo2 } from "lucide-react";
+import { Check, ExternalLink, Pencil, X, Archive as ArchiveIcon, Undo2, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentMember } from "@/lib/hangarTalk/api";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
@@ -15,6 +15,7 @@ import {
   usePendingItems,
   useRecentPublishedForReview,
   useUpdateItem,
+  useDeleteItem,
   type ItemEdit,
 } from "@/lib/briefingRoom/api";
 import {
