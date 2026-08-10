@@ -204,7 +204,10 @@ var create_news_item_default = defineTool6({
     source_name: z5.string().describe("Display name of the outlet, e.g. 'AVweb'."),
     source_url: z5.string().describe("Link to the original article."),
     source_published_at: z5.string().optional().describe("ISO date/time the source published the article."),
-    category: z5.enum(CATEGORIES).describe("Category for the item.")
+    category: z5.enum(CATEGORIES).describe("Category for the item."),
+    image_url: z5.string().optional().describe(
+      "Direct https link to a representative image for the story (article photo or outlet image). Ignored if not https."
+    )
   },
   annotations: { readOnlyHint: false, openWorldHint: false },
   handler: async (input, ctx) => {
@@ -218,6 +221,7 @@ var create_news_item_default = defineTool6({
       source_name: input.source_name.trim(),
       source_url: input.source_url.trim(),
       source_published_at: input.source_published_at ?? null,
+      image_url: input.image_url && /^https:\/\//i.test(input.image_url.trim()) ? input.image_url.trim() : null,
       category: input.category,
       status: autoPublish ? "published" : "pending_review",
       published_at: autoPublish ? (/* @__PURE__ */ new Date()).toISOString() : null,
@@ -262,7 +266,7 @@ var search_news_items_default = defineTool7({
     const supabase = supabaseForUser(ctx);
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 100);
     let q = supabase.from("briefing_room_items").select(
-      "id,headline,summary,source_name,source_url,source_published_at,added_at,published_at,category,status"
+      "id,headline,summary,source_name,source_url,image_url,source_published_at,added_at,published_at,category,status"
     );
     if (!input.include_unpublished) q = q.eq("status", "published");
     if (input.query) {
@@ -365,7 +369,7 @@ var list_recent_by_source_default = defineTool9({
     if (!ctx.isAuthenticated()) return notAuthed();
     const supabase = supabaseForUser(ctx);
     const since = new Date(Date.now() - (days ?? 30) * 24 * 60 * 60 * 1e3).toISOString();
-    let q = supabase.from("briefing_room_items").select("id,headline,source_name,source_url,category,status,added_at").gte("added_at", since).order("added_at", { ascending: false }).limit(Math.min(Math.max(limit ?? 50, 1), 100));
+    let q = supabase.from("briefing_room_items").select("id,headline,source_name,source_url,image_url,category,status,added_at").gte("added_at", since).order("added_at", { ascending: false }).limit(Math.min(Math.max(limit ?? 50, 1), 100));
     if (source) q = q.eq("source_name", source);
     const { data, error } = await q;
     if (error) return errorResult(error.message);

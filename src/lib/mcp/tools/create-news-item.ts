@@ -25,6 +25,12 @@ export default defineTool({
       .optional()
       .describe("ISO date/time the source published the article."),
     category: z.enum(CATEGORIES).describe("Category for the item."),
+    image_url: z
+      .string()
+      .optional()
+      .describe(
+        "Direct https link to a representative image for the story (article photo or outlet image). Ignored if not https.",
+      ),
   },
   annotations: { readOnlyHint: false, openWorldHint: false },
   handler: async (input, ctx) => {
@@ -46,6 +52,10 @@ export default defineTool({
         source_name: input.source_name.trim(),
         source_url: input.source_url.trim(),
         source_published_at: input.source_published_at ?? null,
+        image_url:
+          input.image_url && /^https:\/\//i.test(input.image_url.trim())
+            ? input.image_url.trim()
+            : null,
         category: input.category,
         status: autoPublish ? "published" : "pending_review",
         published_at: autoPublish ? new Date().toISOString() : null,
