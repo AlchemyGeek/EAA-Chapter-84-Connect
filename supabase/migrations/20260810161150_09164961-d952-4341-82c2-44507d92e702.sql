@@ -1,0 +1,1 @@
+ALTER TABLE public.briefing_room_items ADD COLUMN IF NOT EXISTS image_url text;
