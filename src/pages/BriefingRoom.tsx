@@ -16,7 +16,12 @@ export default function BriefingRoom() {
   const { isOfficer } = useIsOfficer(me?.key_id);
   const { data: items = [], isLoading } = usePublishedItems();
 
+  useEffect(() => {
+    markBriefingVisited();
+  }, []);
+
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
+
 
   const [lead, ...rest] = items;
 
