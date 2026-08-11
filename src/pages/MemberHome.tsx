@@ -178,6 +178,8 @@ export default function MemberHome() {
     },
   });
 
+  const { data: unseenBriefingCount = 0 } = useUnseenBriefingCount();
+
   // Fetch pending new member applications count
   const { data: pendingAppCount = 0 } = useQuery({
     queryKey: ["pending-app-count"],
