@@ -249,3 +249,41 @@ export function useDeleteItem() {
     },
   });
 }
+
+/** localStorage key holding the last time this browser opened the Briefing Room. */
+export const BRIEFING_LAST_VISIT_KEY = "briefing-room-last-visit";
+
+export function getBriefingLastVisit(): string | null {
+  try {
+    return localStorage.getItem(BRIEFING_LAST_VISIT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function markBriefingVisited() {
+  try {
+    localStorage.setItem(BRIEFING_LAST_VISIT_KEY, new Date().toISOString());
+  } catch {
+    // ignore
+  }
+}
+
+/** Number of stories published since the user's last Briefing Room visit. */
+export function useUnseenBriefingCount() {
+  return useQuery({
+    queryKey: ["briefing-room", "unseen-count"],
+    staleTime: 0,
+    queryFn: async () => {
+      const since = getBriefingLastVisit();
+      let q = supabase
+        .from(TABLE as any)
+        .select("*", { count: "exact", head: true })
+        .eq("status", "published");
+      if (since) q = q.gt("published_at", since);
+      const { count, error } = await q;
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
