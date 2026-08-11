@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MemberImageGallery } from "@/components/member/MemberImageGallery";
+import { useUnseenBriefingCount } from "@/lib/briefingRoom/api";
 
 import { CheckForUpdatesButton } from "@/components/CheckForUpdatesButton";
 import chapterLogo from "@/assets/chapter-logo.jpg";
@@ -177,6 +178,8 @@ export default function MemberHome() {
       return count ?? 0;
     },
   });
+
+  const { data: unseenBriefingCount = 0 } = useUnseenBriefingCount();
 
   // Fetch pending new member applications count
   const { data: pendingAppCount = 0 } = useQuery({
@@ -731,6 +734,7 @@ export default function MemberHome() {
                 />
                 <AdminLink to="/classifieds" icon={Tag} label={`Classifieds${activeClassifiedsCount > 0 ? ` (${activeClassifiedsCount})` : ""}`} />
                 <AdminLink to="/hangar-talk" icon={MessageSquare} label={`Hangar Talk${activeHangarTalkCount > 0 ? ` (${activeHangarTalkCount})` : ""}`} />
+                <AdminLink to="/briefing-room" icon={Newspaper} label={`Briefing Room${unseenBriefingCount > 0 ? ` (${unseenBriefingCount})` : ""}`} />
                 <AdminLink to="/newsletters" icon={FileText} label="Newsletter Archive" />
 
                 

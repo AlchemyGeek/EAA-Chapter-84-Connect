@@ -3,7 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { useCurrentMember } from "@/lib/hangarTalk/api";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
-import { usePublishedItems } from "@/lib/briefingRoom/api";
+import { usePublishedItems, markBriefingVisited } from "@/lib/briefingRoom/api";
+import { useEffect } from "react";
 import { BriefingMasthead } from "@/components/briefing-room/BriefingMasthead";
 import { BriefingItemCard } from "@/components/briefing-room/BriefingItemCard";
 import { Newspaper } from "lucide-react";
@@ -15,7 +16,12 @@ export default function BriefingRoom() {
   const { isOfficer } = useIsOfficer(me?.key_id);
   const { data: items = [], isLoading } = usePublishedItems();
 
+  useEffect(() => {
+    markBriefingVisited();
+  }, []);
+
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
+
 
   const [lead, ...rest] = items;
 
