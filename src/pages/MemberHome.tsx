@@ -179,6 +179,26 @@ export default function MemberHome() {
     },
   });
 
+  const { data: directoryCount = 0 } = useQuery({
+    queryKey: ["directory-member-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_directory_members");
+      if (error) throw error;
+      return (data ?? []).length;
+    },
+  });
+
+  const { data: newsletterCount = 0 } = useQuery({
+    queryKey: ["newsletter-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("newsletters")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const { data: unseenBriefingCount = 0 } = useUnseenBriefingCount();
 
   // Fetch pending new member applications count
@@ -726,7 +746,7 @@ export default function MemberHome() {
               </div>
             ) : (
               <>
-                <AdminLink to="/members" icon={Users} label="Member Directory" />
+                <AdminLink to="/members" icon={Users} label={`Member Directory${directoryCount > 0 ? ` (${directoryCount})` : ""}`} />
                 <AdminLink 
                   to={impersonateKeyId ? `/member-volunteering?viewAs=${impersonateKeyId}` : "/member-volunteering"} 
                   icon={HandHelping} 
@@ -735,7 +755,7 @@ export default function MemberHome() {
                 <AdminLink to="/classifieds" icon={Tag} label={`Classifieds${activeClassifiedsCount > 0 ? ` (${activeClassifiedsCount})` : ""}`} />
                 <AdminLink to="/hangar-talk" icon={MessageSquare} label={`Hangar Talk${activeHangarTalkCount > 0 ? ` (${activeHangarTalkCount})` : ""}`} />
                 <AdminLink to="/briefing-room" icon={Newspaper} label={`Briefing Room${unseenBriefingCount > 0 ? ` (${unseenBriefingCount})` : ""}`} />
-                <AdminLink to="/newsletters" icon={FileText} label="Newsletter Archive" />
+                <AdminLink to="/newsletters" icon={FileText} label={`Newsletter Archive${newsletterCount > 0 ? ` (${newsletterCount})` : ""}`} />
 
                 
               </>
