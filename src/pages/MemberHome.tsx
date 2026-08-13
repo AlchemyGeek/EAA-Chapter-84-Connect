@@ -746,7 +746,7 @@ export default function MemberHome() {
               </div>
             ) : (
               <>
-                <AdminLink to="/members" icon={Users} label="Member Directory" />
+                <AdminLink to="/members" icon={Users} label={`Member Directory${directoryCount > 0 ? ` (${directoryCount})` : ""}`} />
                 <AdminLink 
                   to={impersonateKeyId ? `/member-volunteering?viewAs=${impersonateKeyId}` : "/member-volunteering"} 
                   icon={HandHelping} 
@@ -755,7 +755,7 @@ export default function MemberHome() {
                 <AdminLink to="/classifieds" icon={Tag} label={`Classifieds${activeClassifiedsCount > 0 ? ` (${activeClassifiedsCount})` : ""}`} />
                 <AdminLink to="/hangar-talk" icon={MessageSquare} label={`Hangar Talk${activeHangarTalkCount > 0 ? ` (${activeHangarTalkCount})` : ""}`} />
                 <AdminLink to="/briefing-room" icon={Newspaper} label={`Briefing Room${unseenBriefingCount > 0 ? ` (${unseenBriefingCount})` : ""}`} />
-                <AdminLink to="/newsletters" icon={FileText} label="Newsletter Archive" />
+                <AdminLink to="/newsletters" icon={FileText} label={`Newsletter Archive${newsletterCount > 0 ? ` (${newsletterCount})` : ""}`} />
 
                 
               </>
