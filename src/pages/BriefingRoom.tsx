@@ -47,7 +47,7 @@ export default function BriefingRoom() {
           </div>
         ) : (
           <div className="space-y-4">
-            <BriefingItemCard item={lead} lead />
+            <BriefingItemCard item={lead} lead isNew={isNewItem(lead)} />
             {rest.length > 0 && (
               <>
                 <p className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
