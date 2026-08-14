@@ -3,8 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { useCurrentMember } from "@/lib/hangarTalk/api";
 import { useIsOfficer } from "@/hooks/useIsOfficer";
-import { usePublishedItems, markBriefingVisited } from "@/lib/briefingRoom/api";
-import { useEffect } from "react";
+import { usePublishedItems, markBriefingVisited, getBriefingLastVisit } from "@/lib/briefingRoom/api";
+import { useEffect, useState } from "react";
 import { BriefingMasthead } from "@/components/briefing-room/BriefingMasthead";
 import { BriefingItemCard } from "@/components/briefing-room/BriefingItemCard";
 import { Newspaper } from "lucide-react";
@@ -15,10 +15,16 @@ export default function BriefingRoom() {
   const { data: me } = useCurrentMember();
   const { isOfficer } = useIsOfficer(me?.key_id);
   const { data: items = [], isLoading } = usePublishedItems();
+  const [lastVisit] = useState<string | null>(() => getBriefingLastVisit());
 
   useEffect(() => {
     markBriefingVisited();
   }, []);
+
+  const isNewItem = (item: { published_at: string | null; added_at: string }) => {
+    if (!lastVisit) return false;
+    return new Date(item.published_at ?? item.added_at) > new Date(lastVisit);
+  };
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 
@@ -41,7 +47,7 @@ export default function BriefingRoom() {
           </div>
         ) : (
           <div className="space-y-4">
-            <BriefingItemCard item={lead} lead />
+            <BriefingItemCard item={lead} lead isNew={isNewItem(lead)} />
             {rest.length > 0 && (
               <>
                 <p className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -49,7 +55,7 @@ export default function BriefingRoom() {
                 </p>
                 <div className="space-y-3">
                   {rest.map((item) => (
-                    <BriefingItemCard key={item.id} item={item} />
+                    <BriefingItemCard key={item.id} item={item} isNew={isNewItem(item)} />
                   ))}
                 </div>
               </>

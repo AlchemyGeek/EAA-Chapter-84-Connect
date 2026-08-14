@@ -20,10 +20,12 @@ export function BriefingItemCard({
   item,
   lead = false,
   showCollapsedImage = true,
+  isNew = false,
 }: {
   item: BriefingItem;
   lead?: boolean;
   showCollapsedImage?: boolean;
+  isNew?: boolean;
 }) {
   const [open, setOpen] = useState(lead);
   const [imgFailed, setImgFailed] = useState(false);
@@ -74,6 +76,11 @@ export function BriefingItemCard({
           )}
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex flex-wrap items-center gap-2">
+              {isNew && (
+                <span className="inline-flex items-center rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+                  New
+                </span>
+              )}
               <CategoryChip category={item.category} />
               <span className="text-xs text-muted-foreground">{item.source_name}</span>
               <span className="text-xs text-muted-foreground">·</span>
