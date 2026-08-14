@@ -55,7 +55,7 @@ export default function BriefingRoom() {
                 </p>
                 <div className="space-y-3">
                   {rest.map((item) => (
-                    <BriefingItemCard key={item.id} item={item} />
+                    <BriefingItemCard key={item.id} item={item} isNew={isNewItem(item)} />
                   ))}
                 </div>
               </>
