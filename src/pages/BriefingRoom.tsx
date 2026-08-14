@@ -15,10 +15,16 @@ export default function BriefingRoom() {
   const { data: me } = useCurrentMember();
   const { isOfficer } = useIsOfficer(me?.key_id);
   const { data: items = [], isLoading } = usePublishedItems();
+  const [lastVisit] = useState<string | null>(() => getBriefingLastVisit());
 
   useEffect(() => {
     markBriefingVisited();
   }, []);
+
+  const isNewItem = (item: { published_at: string | null; added_at: string }) => {
+    if (!lastVisit) return false;
+    return new Date(item.published_at ?? item.added_at) > new Date(lastVisit);
+  };
 
   if (!authLoading && !user) return <Navigate to="/auth" replace />;
 
