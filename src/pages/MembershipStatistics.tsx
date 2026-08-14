@@ -98,7 +98,6 @@ export default function MembershipStatistics() {
   }).length;
 
   const yetToRenew = members.filter((m) => {
-    if (m.current_standing !== "Active") return false;
     if (!m.expiration_date) return false;
     return new Date(m.expiration_date).getFullYear() === currentYear;
   }).length;
