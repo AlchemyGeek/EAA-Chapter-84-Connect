@@ -109,10 +109,9 @@ export default function MembershipStatistics() {
 
   const inactive = members.filter((m) => m.current_standing !== "Active").length;
 
-  // Retention KPI — Active members only
-  // Last year base: Active members with expiration >= currentYear, minus new members added this year
+  // Retention KPI — standing-agnostic
+  // Last year base: members with expiration in currentYear or later, minus new members added this year
   const lastYearBase = members.filter((m) => {
-    if (m.current_standing !== "Active") return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() < currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
@@ -121,7 +120,6 @@ export default function MembershipStatistics() {
 
   // Retained: from that base, those whose expiration extends beyond current year
   const retained = members.filter((m) => {
-    if (m.current_standing !== "Active") return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
