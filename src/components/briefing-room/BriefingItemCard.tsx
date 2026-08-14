@@ -20,10 +20,12 @@ export function BriefingItemCard({
   item,
   lead = false,
   showCollapsedImage = true,
+  isNew = false,
 }: {
   item: BriefingItem;
   lead?: boolean;
   showCollapsedImage?: boolean;
+  isNew?: boolean;
 }) {
   const [open, setOpen] = useState(lead);
   const [imgFailed, setImgFailed] = useState(false);
