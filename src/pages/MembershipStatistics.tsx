@@ -116,6 +116,7 @@ export default function MembershipStatistics() {
   // Retention KPI — standing-agnostic
   // Last year base: members with expiration in currentYear or later, minus new members added this year
   const lastYearBase = members.filter((m) => {
+    if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() < currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
