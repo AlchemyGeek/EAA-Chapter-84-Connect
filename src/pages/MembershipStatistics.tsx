@@ -57,7 +57,7 @@ export default function MembershipStatistics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("first_name, last_name, current_standing, expiration_date, date_added, udf1_text");
+        .select("first_name, last_name, current_standing, expiration_date, date_added, udf1_text, member_type");
       if (error) throw error;
       return data;
     },
@@ -97,7 +97,11 @@ export default function MembershipStatistics() {
     return new Date(m.expiration_date).getFullYear() > currentYear;
   }).length;
 
+  // Prospects were not members last year — excluded from renewal/retention stats
+  const isProspect = (m: { member_type?: string | null }) => m.member_type === "Prospect";
+
   const yetToRenew = members.filter((m) => {
+    if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     return new Date(m.expiration_date).getFullYear() === currentYear;
   }).length;
@@ -112,6 +116,7 @@ export default function MembershipStatistics() {
   // Retention KPI — standing-agnostic
   // Last year base: members with expiration in currentYear or later, minus new members added this year
   const lastYearBase = members.filter((m) => {
+    if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() < currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
@@ -120,6 +125,7 @@ export default function MembershipStatistics() {
 
   // Retained: from that base, those whose expiration extends beyond current year
   const retained = members.filter((m) => {
+    if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
