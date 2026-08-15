@@ -125,6 +125,7 @@ export default function MembershipStatistics() {
 
   // Retained: from that base, those whose expiration extends beyond current year
   const retained = members.filter((m) => {
+    if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
