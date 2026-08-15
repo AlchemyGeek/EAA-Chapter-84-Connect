@@ -97,7 +97,11 @@ export default function MembershipStatistics() {
     return new Date(m.expiration_date).getFullYear() > currentYear;
   }).length;
 
+  // Prospects were not members last year — excluded from renewal/retention stats
+  const isProspect = (m: { member_type?: string | null }) => m.member_type === "Prospect";
+
   const yetToRenew = members.filter((m) => {
+    if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     return new Date(m.expiration_date).getFullYear() === currentYear;
   }).length;
