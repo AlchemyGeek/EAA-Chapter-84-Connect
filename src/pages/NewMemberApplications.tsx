@@ -673,6 +673,11 @@ export default function NewMemberApplications() {
                       )}
                       {app.processed ? (
                         <Badge className="text-xs bg-primary/10 text-primary border-0">Completed</Badge>
+                      ) : app.archived_at ? (
+                        <Badge variant="outline" className="text-xs bg-muted text-muted-foreground gap-1">
+                          <Archive className="h-3 w-3" />
+                          Incomplete
+                        </Badge>
                       ) : (
                         <Badge variant="secondary" className="text-xs">Pending</Badge>
                       )}
