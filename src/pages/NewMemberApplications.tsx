@@ -616,6 +616,7 @@ export default function NewMemberApplications() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="incomplete">Incomplete</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="all">All</SelectItem>
           </SelectContent>
