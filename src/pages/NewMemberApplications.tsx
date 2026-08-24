@@ -76,6 +76,12 @@ type ApplicationRosterMatch = {
   expiration_date: string | null;
 };
 
+const isOverdue = (app: any) => {
+  if (app.processed || app.archived_at) return false;
+  const created = new Date(app.created_at);
+  return differenceInCalendarDays(new Date(), created) > 30;
+};
+
 export default function NewMemberApplications() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const queryClient = useQueryClient();
