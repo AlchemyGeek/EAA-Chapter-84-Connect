@@ -833,10 +833,11 @@ export default function NewMemberApplications() {
                 <span className="text-muted-foreground">EAA Number</span>
                 <p className="font-medium">{detailApp.eaa_number}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-muted-foreground">Email</span>
-                <p className="font-medium">{detailApp.email}</p>
+                <p className="font-medium break-all">{detailApp.email}</p>
               </div>
+
               <div className="col-span-2">
                 <span className="text-muted-foreground">Address</span>
                 <p className="font-medium">
