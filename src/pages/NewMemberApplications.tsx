@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, AlertTriangle, Mail, CalendarIcon, CircleDollarSign } from "lucide-react";
+import { UserPlus, AlertTriangle, Mail, CalendarIcon, CircleDollarSign, Archive, RotateCcw } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
