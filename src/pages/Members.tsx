@@ -93,7 +93,7 @@ export default function Members() {
   });
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="mx-auto w-full max-w-3xl px-4 py-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl md:text-2xl font-bold">Members</h1>
         <span className="text-sm text-muted-foreground">{filtered.length} members</span>
