@@ -340,6 +340,86 @@ export default function NewMemberApplications() {
     },
   });
 
+  // Resolve the roster row linked to an application (roster_key_id first, EAA# fallback)
+  const resolveRosterKeyId = async (app: any): Promise<number> => {
+    if (app.roster_key_id) {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id")
+        .eq("key_id", app.roster_key_id)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) return data.key_id;
+    }
+    const eaa = (app.eaa_number ?? "").trim();
+    if (eaa) {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id")
+        .eq("eaa_number", eaa)
+        .order("key_id", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      if (data?.[0]) return data[0].key_id;
+    }
+    throw new Error("No linked roster record found");
+  };
+
+  const setStandingAndArchive = async (app: any, archived: boolean) => {
+    const keyId = await resolveRosterKeyId(app);
+
+    const { error: rosterErr } = await supabase
+      .from("roster_members")
+      .update({ current_standing: archived ? "Inactive" : "Active" } as any)
+      .eq("key_id", keyId);
+    if (rosterErr) throw rosterErr;
+
+    const { error: appErr } = await supabase
+      .from("new_member_applications")
+      .update({
+        roster_key_id: keyId,
+        archived_at: archived ? new Date().toISOString() : null,
+        archived_by: archived ? user?.id ?? null : null,
+        archived_by_name: archived ? user?.email ?? null : null,
+      } as any)
+      .eq("id", app.id);
+    if (appErr) throw appErr;
+  };
+
+  const invalidateAfterArchive = () => {
+    queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+    queryClient.invalidateQueries({ queryKey: ["members"] });
+    queryClient.invalidateQueries({ queryKey: ["members-full"] });
+    queryClient.invalidateQueries({ queryKey: ["application-roster-rows"] });
+  };
+
+  const archiveApplication = useMutation({
+    mutationFn: (app: any) => setStandingAndArchive(app, true),
+    onSuccess: () => {
+      invalidateAfterArchive();
+      toast({
+        title: "Application archived",
+        description: "The member is now Inactive and will be included in the next export.",
+      });
+      setArchiveApp(null);
+      setDetailApp(null);
+    },
+    onError: (err: any) =>
+      toast({ title: "Could not archive application", description: err.message, variant: "destructive" }),
+  });
+
+  const restoreApplication = useMutation({
+    mutationFn: (app: any) => setStandingAndArchive(app, false),
+    onSuccess: () => {
+      invalidateAfterArchive();
+      toast({ title: "Application restored", description: "The member is Active again." });
+      setDetailApp(null);
+    },
+    onError: (err: any) =>
+      toast({ title: "Could not restore application", description: err.message, variant: "destructive" }),
+  });
+
+
   const sendReminder = useMutation({
     mutationFn: async (app: any) => {
       const { data, error } = await supabase.functions.invoke("new-member-reminder", {
