@@ -76,6 +76,12 @@ type ApplicationRosterMatch = {
   expiration_date: string | null;
 };
 
+const isOverdue = (app: any) => {
+  if (app.processed || app.archived_at) return false;
+  const created = new Date(app.created_at);
+  return differenceInCalendarDays(new Date(), created) > 30;
+};
+
 export default function NewMemberApplications() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const queryClient = useQueryClient();
@@ -717,6 +723,11 @@ export default function NewMemberApplications() {
                           <Archive className="h-3 w-3" />
                           Incomplete
                         </Badge>
+                      ) : isOverdue(app) ? (
+                        <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Overdue
+                        </Badge>
                       ) : (
                         <Badge variant="secondary" className="text-xs">Pending</Badge>
                       )}
@@ -799,7 +810,15 @@ export default function NewMemberApplications() {
       <Dialog open={!!detailApp} onOpenChange={() => setDetailApp(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Application Details</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Application Details
+              {detailApp && isOverdue(detailApp) && (
+                <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Overdue
+                </Badge>
+              )}
+            </DialogTitle>
             <DialogDescription>
               Submitted {detailApp && format(new Date(detailApp.created_at), "MMMM d, yyyy")}
             </DialogDescription>
