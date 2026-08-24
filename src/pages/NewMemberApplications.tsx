@@ -609,18 +609,27 @@ export default function NewMemberApplications() {
         Track new member applications, validate their EAA national membership, and confirm that membership fees have been paid. Once both checks are complete, the member can be promoted from a Prospect to a Regular Member.
       </p>
 
-      <div className="flex items-center justify-between">
-        <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="incomplete">Incomplete</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="all">All</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="incomplete">Incomplete</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {filter === "incomplete" && (
+          <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            In the roster or directory search, incomplete applications appear as
+            <strong>Status: Inactive</strong> and <strong>Member Type: Prospect</strong>.
+          </p>
+        )}
       </div>
 
       {lastSync && (
