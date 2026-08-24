@@ -723,6 +723,11 @@ export default function NewMemberApplications() {
                           <Archive className="h-3 w-3" />
                           Incomplete
                         </Badge>
+                      ) : isOverdue(app) ? (
+                        <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Overdue
+                        </Badge>
                       ) : (
                         <Badge variant="secondary" className="text-xs">Pending</Badge>
                       )}
