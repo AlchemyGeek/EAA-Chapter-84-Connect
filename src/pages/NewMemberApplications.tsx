@@ -151,7 +151,8 @@ export default function NewMemberApplications() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (filter === "pending") query = query.eq("processed", false);
+      if (filter === "pending") query = query.eq("processed", false).is("archived_at", null);
+      else if (filter === "incomplete") query = query.not("archived_at", "is", null);
       else if (filter === "completed") query = query.eq("processed", true);
 
       const { data, error } = await query;
