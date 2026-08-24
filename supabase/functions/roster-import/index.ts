@@ -252,22 +252,28 @@ Deno.serve(async (req) => {
     const existingMap = new Map<number, Record<string, any>>();
     (existingMembers || []).forEach((m: any) => existingMap.set(m.key_id, m));
 
-    // Build EAA# -> local Prospect lookup for reconciliation.
-    // When the EAA Roster Tool re-imports a prospect we exported, it comes
-    // back with a NEW key_id. Match on normalized EAA# so we can treat it as
-    // "same person, modified" instead of Added + Removed.
+    // Build EAA# -> local member lookup for reconciliation.
+    // When the EAA Roster Tool re-issues a record we exported (typically a
+    // prospect that was promoted), it comes back with a NEW key_id. Match on
+    // normalized EAA# so we treat it as "same person, modified" instead of
+    // Added + Removed. Applies to any member_type, since the local record may
+    // already have been promoted from Prospect to Regular.
     const normEaa = (v: any): string => String(v ?? "").trim().toLowerCase();
-    const localProspectsByEaa = new Map<string, Record<string, any>>();
+    const localByEaa = new Map<string, Record<string, any>>();
     for (const m of existingMembers || []) {
-      const isProspect = m.member_type && String(m.member_type).toLowerCase() === "prospect";
-      if (!isProspect) continue;
       const eaa = normEaa(m.eaa_number);
       if (!eaa) continue;
-      // Skip if this prospect's own key_id is also in the incoming file
+      // Skip if this row's own key_id is also in the incoming file
       // (already handled by direct key_id match)
       if (incomingKeyIds.has(m.key_id)) continue;
-      if (!localProspectsByEaa.has(eaa)) localProspectsByEaa.set(eaa, m);
+      // Prefer Prospect rows when several local rows share an EAA#
+      const prev = localByEaa.get(eaa);
+      const isProspect = String(m.member_type ?? "").toLowerCase() === "prospect";
+      if (!prev || (isProspect && String(prev.member_type ?? "").toLowerCase() !== "prospect")) {
+        localByEaa.set(eaa, m);
+      }
     }
+
 
     // For each incoming record, resolve which local row (if any) it corresponds to.
     // Returns { existing, isReconciledProspect } — isReconciledProspect means matched
