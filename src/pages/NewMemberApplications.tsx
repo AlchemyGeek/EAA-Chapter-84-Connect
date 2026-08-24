@@ -837,13 +837,38 @@ export default function NewMemberApplications() {
                       variant="outline"
                       size="sm"
                       className="w-full sm:w-auto"
-                      disabled={sendWelcome.isPending || !detailApp.fees_verified}
+                      disabled={sendWelcome.isPending || !detailApp.fees_verified || !!detailApp.archived_at}
                       title={!detailApp.fees_verified ? "Mark dues verified first" : undefined}
                       onClick={() => sendWelcome.mutate(detailApp)}
                     >
                       <Mail className="h-4 w-4 mr-2" />
                       {sendWelcome.isPending ? "Sending..." : "Application Completed"}
                     </Button>
+                  )}
+
+                  {!detailApp.processed && (
+                    detailApp.archived_at ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        disabled={restoreApplication.isPending}
+                        onClick={() => restoreApplication.mutate(detailApp)}
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        {restoreApplication.isPending ? "Restoring..." : "Restore Application"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto text-destructive hover:text-destructive"
+                        onClick={() => setArchiveApp(detailApp)}
+                      >
+                        <Archive className="h-4 w-4 mr-2" />
+                        Archive as Incomplete
+                      </Button>
+                    )
                   )}
                 </div>
               </div>
