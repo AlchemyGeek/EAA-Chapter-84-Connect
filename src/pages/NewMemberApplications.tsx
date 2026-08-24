@@ -215,6 +215,16 @@ export default function NewMemberApplications() {
     applications.filter((a) => duplicateFor(a)).map((a) => a.eaa_number?.trim())
   );
 
+  // Roster prospects marked Inactive that have no matching application row.
+  const rosterOnlyIncomplete = rosterIncomplete.filter((m) => {
+    const eaa = m.eaa_number?.trim();
+    return !applications.some(
+      (a) =>
+        (a.roster_key_id && a.roster_key_id === m.key_id) ||
+        (eaa && a.eaa_number?.trim() === eaa)
+    );
+  });
+
 
   // Principle: the roster import is the authoritative source of truth for
   // member identity. For each application, look up the current roster row —
