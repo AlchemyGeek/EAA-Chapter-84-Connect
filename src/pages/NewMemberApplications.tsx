@@ -810,7 +810,15 @@ export default function NewMemberApplications() {
       <Dialog open={!!detailApp} onOpenChange={() => setDetailApp(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Application Details</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Application Details
+              {detailApp && isOverdue(detailApp) && (
+                <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Overdue
+                </Badge>
+              )}
+            </DialogTitle>
             <DialogDescription>
               Submitted {detailApp && format(new Date(detailApp.created_at), "MMMM d, yyyy")}
             </DialogDescription>
