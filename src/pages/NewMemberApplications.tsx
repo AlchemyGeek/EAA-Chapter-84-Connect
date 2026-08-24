@@ -833,7 +833,7 @@ export default function NewMemberApplications() {
                       variant="outline"
                       size="sm"
                       className="w-full sm:w-auto"
-                      disabled={sendReminder.isPending || detailApp.fees_verified}
+                      disabled={sendReminder.isPending || detailApp.fees_verified || !!detailApp.archived_at}
                       title={detailApp.fees_verified ? "Dues already verified" : undefined}
                       onClick={() => sendReminder.mutate(detailApp)}
                     >
