@@ -807,6 +807,15 @@ export default function NewMemberApplications() {
                   </p>
                 </div>
               )}
+              {detailApp.archived_at && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Archived as Incomplete</span>
+                  <p className="font-medium">
+                    {format(new Date(detailApp.archived_at), "MMMM d, yyyy h:mm a")}
+                    {detailApp.archived_by_name ? ` · ${detailApp.archived_by_name}` : ""}
+                  </p>
+                </div>
+              )}
               </div>
 
               <div className="pt-2 border-t border-border space-y-2">
