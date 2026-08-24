@@ -80,7 +80,8 @@ export default function NewMemberApplications() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [filter, setFilter] = useState<"pending" | "completed" | "all">("pending");
+  const [filter, setFilter] = useState<"pending" | "incomplete" | "completed" | "all">("pending");
+  const [archiveApp, setArchiveApp] = useState<any | null>(null);
   const [detailApp, setDetailApp] = useState<any | null>(null);
   const [promoteApp, setPromoteApp] = useState<any | null>(null);
   const [feeDialogApp, setFeeDialogApp] = useState<any | null>(null);
