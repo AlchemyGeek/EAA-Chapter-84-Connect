@@ -162,6 +162,25 @@ export default function NewMemberApplications() {
     staleTime: 0,
   });
 
+  // Some incomplete applicants only exist as roster rows (Inactive + Prospect):
+  // e.g. applications submitted before this workflow existed, or entered
+  // directly in the roster. Surface them alongside archived applications.
+  const { data: rosterIncomplete = [] } = useQuery({
+    queryKey: ["roster-incomplete-prospects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, eaa_number, email, date_added")
+        .eq("member_type", "Prospect")
+        .eq("current_standing", "Inactive");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: filter === "incomplete" || filter === "all",
+    staleTime: 0,
+  });
+
+
   // Check which applicants' EAA numbers already exist in the roster as non-Prospect members
   const eaaNumbers = applications
     .filter((a) => a.eaa_number && a.eaa_number.trim())
