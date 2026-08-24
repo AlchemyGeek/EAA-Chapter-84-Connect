@@ -892,6 +892,37 @@ export default function NewMemberApplications() {
         </DialogContent>
       </Dialog>
 
+      {/* Archive as Incomplete confirmation */}
+      <AlertDialog open={!!archiveApp} onOpenChange={(open) => !open && setArchiveApp(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive as Incomplete?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveApp && (
+                <>
+                  <strong>{archiveApp.first_name} {archiveApp.last_name}</strong> will stay a Prospect but their
+                  standing becomes <strong>Inactive</strong>, and the application moves to the Incomplete list.
+                  The change is picked up in the next roster export. You can restore it later.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={archiveApplication.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (archiveApp) archiveApplication.mutate(archiveApp);
+              }}
+            >
+              {archiveApplication.isPending ? "Archiving..." : "Archive as Incomplete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {/* Record Membership Payment Dialog */}
       <Dialog open={!!feeDialogApp} onOpenChange={(open) => !open && setFeeDialogApp(null)}>
         <DialogContent>
