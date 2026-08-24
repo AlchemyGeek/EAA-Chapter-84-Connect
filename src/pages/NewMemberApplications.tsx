@@ -833,10 +833,11 @@ export default function NewMemberApplications() {
                 <span className="text-muted-foreground">EAA Number</span>
                 <p className="font-medium">{detailApp.eaa_number}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-muted-foreground">Email</span>
-                <p className="font-medium">{detailApp.email}</p>
+                <p className="font-medium break-all">{detailApp.email}</p>
               </div>
+
               <div className="col-span-2">
                 <span className="text-muted-foreground">Address</span>
                 <p className="font-medium">
@@ -887,10 +888,12 @@ export default function NewMemberApplications() {
               </div>
 
               <div className="pt-2 border-t border-border space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  Emails are sent to <strong>{detailApp.email}</strong> with a copy to <strong>membership@eaa84.org</strong>.
+                <p className="text-xs text-muted-foreground break-words">
+                  Emails are sent to <strong className="break-all">{detailApp.email}</strong> with a copy to{" "}
+                  <strong className="break-all">membership@eaa84.org</strong>.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
+
                   {detailApp.reminder_sent_at ? (
                     <Button variant="outline" size="sm" disabled className="w-full sm:w-auto">
                       <Mail className="h-4 w-4 mr-2" />
