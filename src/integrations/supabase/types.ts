@@ -885,6 +885,9 @@ export type Database = {
       new_member_applications: {
         Row: {
           address: string
+          archived_at: string | null
+          archived_by: string | null
+          archived_by_name: string | null
           city: string
           created_at: string
           eaa_number: string
@@ -906,6 +909,9 @@ export type Database = {
         }
         Insert: {
           address: string
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_by_name?: string | null
           city: string
           created_at?: string
           eaa_number: string
@@ -927,6 +933,9 @@ export type Database = {
         }
         Update: {
           address?: string
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_by_name?: string | null
           city?: string
           created_at?: string
           eaa_number?: string
