@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, AlertTriangle, Mail, CalendarIcon, CircleDollarSign } from "lucide-react";
+import { UserPlus, AlertTriangle, Mail, CalendarIcon, CircleDollarSign, Archive, RotateCcw } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,8 @@ export default function NewMemberApplications() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [filter, setFilter] = useState<"pending" | "completed" | "all">("pending");
+  const [filter, setFilter] = useState<"pending" | "incomplete" | "completed" | "all">("pending");
+  const [archiveApp, setArchiveApp] = useState<any | null>(null);
   const [detailApp, setDetailApp] = useState<any | null>(null);
   const [promoteApp, setPromoteApp] = useState<any | null>(null);
   const [feeDialogApp, setFeeDialogApp] = useState<any | null>(null);
@@ -150,7 +151,8 @@ export default function NewMemberApplications() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (filter === "pending") query = query.eq("processed", false);
+      if (filter === "pending") query = query.eq("processed", false).is("archived_at", null);
+      else if (filter === "incomplete") query = query.not("archived_at", "is", null);
       else if (filter === "completed") query = query.eq("processed", true);
 
       const { data, error } = await query;
@@ -337,6 +339,86 @@ export default function NewMemberApplications() {
       });
     },
   });
+
+  // Resolve the roster row linked to an application (roster_key_id first, EAA# fallback)
+  const resolveRosterKeyId = async (app: any): Promise<number> => {
+    if (app.roster_key_id) {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id")
+        .eq("key_id", app.roster_key_id)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) return data.key_id;
+    }
+    const eaa = (app.eaa_number ?? "").trim();
+    if (eaa) {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id")
+        .eq("eaa_number", eaa)
+        .order("key_id", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      if (data?.[0]) return data[0].key_id;
+    }
+    throw new Error("No linked roster record found");
+  };
+
+  const setStandingAndArchive = async (app: any, archived: boolean) => {
+    const keyId = await resolveRosterKeyId(app);
+
+    const { error: rosterErr } = await supabase
+      .from("roster_members")
+      .update({ current_standing: archived ? "Inactive" : "Active" } as any)
+      .eq("key_id", keyId);
+    if (rosterErr) throw rosterErr;
+
+    const { error: appErr } = await supabase
+      .from("new_member_applications")
+      .update({
+        roster_key_id: keyId,
+        archived_at: archived ? new Date().toISOString() : null,
+        archived_by: archived ? user?.id ?? null : null,
+        archived_by_name: archived ? user?.email ?? null : null,
+      } as any)
+      .eq("id", app.id);
+    if (appErr) throw appErr;
+  };
+
+  const invalidateAfterArchive = () => {
+    queryClient.invalidateQueries({ queryKey: ["new-member-applications"] });
+    queryClient.invalidateQueries({ queryKey: ["members"] });
+    queryClient.invalidateQueries({ queryKey: ["members-full"] });
+    queryClient.invalidateQueries({ queryKey: ["application-roster-rows"] });
+  };
+
+  const archiveApplication = useMutation({
+    mutationFn: (app: any) => setStandingAndArchive(app, true),
+    onSuccess: () => {
+      invalidateAfterArchive();
+      toast({
+        title: "Application archived",
+        description: "The member is now Inactive and will be included in the next export.",
+      });
+      setArchiveApp(null);
+      setDetailApp(null);
+    },
+    onError: (err: any) =>
+      toast({ title: "Could not archive application", description: err.message, variant: "destructive" }),
+  });
+
+  const restoreApplication = useMutation({
+    mutationFn: (app: any) => setStandingAndArchive(app, false),
+    onSuccess: () => {
+      invalidateAfterArchive();
+      toast({ title: "Application restored", description: "The member is Active again." });
+      setDetailApp(null);
+    },
+    onError: (err: any) =>
+      toast({ title: "Could not restore application", description: err.message, variant: "destructive" }),
+  });
+
 
   const sendReminder = useMutation({
     mutationFn: async (app: any) => {
@@ -534,6 +616,7 @@ export default function NewMemberApplications() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="incomplete">Incomplete</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="all">All</SelectItem>
           </SelectContent>
@@ -591,6 +674,11 @@ export default function NewMemberApplications() {
                       )}
                       {app.processed ? (
                         <Badge className="text-xs bg-primary/10 text-primary border-0">Completed</Badge>
+                      ) : app.archived_at ? (
+                        <Badge variant="outline" className="text-xs bg-muted text-muted-foreground gap-1">
+                          <Archive className="h-3 w-3" />
+                          Incomplete
+                        </Badge>
                       ) : (
                         <Badge variant="secondary" className="text-xs">Pending</Badge>
                       )}
@@ -719,6 +807,15 @@ export default function NewMemberApplications() {
                   </p>
                 </div>
               )}
+              {detailApp.archived_at && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Archived as Incomplete</span>
+                  <p className="font-medium">
+                    {format(new Date(detailApp.archived_at), "MMMM d, yyyy h:mm a")}
+                    {detailApp.archived_by_name ? ` · ${detailApp.archived_by_name}` : ""}
+                  </p>
+                </div>
+              )}
               </div>
 
               <div className="pt-2 border-t border-border space-y-2">
@@ -736,7 +833,7 @@ export default function NewMemberApplications() {
                       variant="outline"
                       size="sm"
                       className="w-full sm:w-auto"
-                      disabled={sendReminder.isPending || detailApp.fees_verified}
+                      disabled={sendReminder.isPending || detailApp.fees_verified || !!detailApp.archived_at}
                       title={detailApp.fees_verified ? "Dues already verified" : undefined}
                       onClick={() => sendReminder.mutate(detailApp)}
                     >
@@ -755,7 +852,7 @@ export default function NewMemberApplications() {
                       variant="outline"
                       size="sm"
                       className="w-full sm:w-auto"
-                      disabled={sendWelcome.isPending || !detailApp.fees_verified}
+                      disabled={sendWelcome.isPending || !detailApp.fees_verified || !!detailApp.archived_at}
                       title={!detailApp.fees_verified ? "Mark dues verified first" : undefined}
                       onClick={() => sendWelcome.mutate(detailApp)}
                     >
@@ -763,12 +860,68 @@ export default function NewMemberApplications() {
                       {sendWelcome.isPending ? "Sending..." : "Application Completed"}
                     </Button>
                   )}
+
+                  {!detailApp.processed && (
+                    detailApp.archived_at ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        disabled={restoreApplication.isPending}
+                        onClick={() => restoreApplication.mutate(detailApp)}
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        {restoreApplication.isPending ? "Restoring..." : "Restore Application"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto text-destructive hover:text-destructive"
+                        onClick={() => setArchiveApp(detailApp)}
+                      >
+                        <Archive className="h-4 w-4 mr-2" />
+                        Archive as Incomplete
+                      </Button>
+                    )
+                  )}
                 </div>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Archive as Incomplete confirmation */}
+      <AlertDialog open={!!archiveApp} onOpenChange={(open) => !open && setArchiveApp(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive as Incomplete?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveApp && (
+                <>
+                  <strong>{archiveApp.first_name} {archiveApp.last_name}</strong> will stay a Prospect but their
+                  standing becomes <strong>Inactive</strong>, and the application moves to the Incomplete list.
+                  The change is picked up in the next roster export. You can restore it later.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={archiveApplication.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (archiveApp) archiveApplication.mutate(archiveApp);
+              }}
+            >
+              {archiveApplication.isPending ? "Archiving..." : "Archive as Incomplete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Record Membership Payment Dialog */}
       <Dialog open={!!feeDialogApp} onOpenChange={(open) => !open && setFeeDialogApp(null)}>
