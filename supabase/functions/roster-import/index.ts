@@ -283,7 +283,7 @@ Deno.serve(async (req) => {
       if (byKey) return { existing: byKey, isReconciledProspect: false };
       const eaa = normEaa(incoming.eaa_number);
       if (!eaa) return { existing: null, isReconciledProspect: false };
-      const prospect = localProspectsByEaa.get(eaa);
+      const prospect = localByEaa.get(eaa);
       if (!prospect) return { existing: null, isReconciledProspect: false };
       return { existing: prospect, isReconciledProspect: true };
     };
