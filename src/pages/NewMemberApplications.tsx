@@ -162,6 +162,25 @@ export default function NewMemberApplications() {
     staleTime: 0,
   });
 
+  // Some incomplete applicants only exist as roster rows (Inactive + Prospect):
+  // e.g. applications submitted before this workflow existed, or entered
+  // directly in the roster. Surface them alongside archived applications.
+  const { data: rosterIncomplete = [] } = useQuery({
+    queryKey: ["roster-incomplete-prospects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roster_members")
+        .select("key_id, first_name, last_name, eaa_number, email, date_added")
+        .eq("member_type", "Prospect")
+        .eq("current_standing", "Inactive");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: filter === "incomplete" || filter === "all",
+    staleTime: 0,
+  });
+
+
   // Check which applicants' EAA numbers already exist in the roster as non-Prospect members
   const eaaNumbers = applications
     .filter((a) => a.eaa_number && a.eaa_number.trim())
@@ -195,6 +214,16 @@ export default function NewMemberApplications() {
   const existingEaaSet = new Set(
     applications.filter((a) => duplicateFor(a)).map((a) => a.eaa_number?.trim())
   );
+
+  // Roster prospects marked Inactive that have no matching application row.
+  const rosterOnlyIncomplete = rosterIncomplete.filter((m) => {
+    const eaa = m.eaa_number?.trim();
+    return !applications.some(
+      (a) =>
+        (a.roster_key_id && a.roster_key_id === m.key_id) ||
+        (eaa && a.eaa_number?.trim() === eaa)
+    );
+  });
 
 
   // Principle: the roster import is the authoritative source of truth for
@@ -735,6 +764,36 @@ export default function NewMemberApplications() {
           ))}
         </div>
       )}
+
+      {rosterOnlyIncomplete.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            Roster-only incomplete prospects (Inactive + Prospect) with no application record on file.
+          </p>
+          {rosterOnlyIncomplete.map((m) => (
+            <Card key={`roster-${m.key_id}`} className="opacity-90">
+              <CardContent className="p-4">
+                <p className="font-medium truncate">
+                  {m.last_name}, {m.first_name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  EAA #{m.eaa_number || "—"} · Key #{m.key_id}
+                  {m.date_added ? ` · Added ${format(new Date(m.date_added), "MM/dd/yyyy")}` : ""}
+                </p>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs bg-muted text-muted-foreground gap-1">
+                    <Archive className="h-3 w-3" />
+                    Incomplete
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">Roster only</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
 
       {/* Detail Dialog */}
       <Dialog open={!!detailApp} onOpenChange={() => setDetailApp(null)}>
