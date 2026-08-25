@@ -110,7 +110,7 @@ var list_directory_default = defineTool2({
     const supabase = supabaseForUser(ctx);
     let q = supabase.from("roster_members").select(
       "key_id,first_name,last_name,nickname,email,preferred_city,preferred_state,ratings,aircraft_owned"
-    ).eq("current_standing", "Active").order("last_name").limit(limit ?? 50);
+    ).eq("current_standing", "Active").neq("member_type", "Prospect").order("last_name").limit(limit ?? 50);
     if (search && search.trim()) {
       const s = search.trim();
       q = q.or(`first_name.ilike.%${s}%,last_name.ilike.%${s}%,nickname.ilike.%${s}%`);

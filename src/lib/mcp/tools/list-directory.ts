@@ -24,6 +24,7 @@ export default defineTool({
         "key_id,first_name,last_name,nickname,email,preferred_city,preferred_state,ratings,aircraft_owned"
       )
       .eq("current_standing", "Active")
+      .neq("member_type", "Prospect")
       .order("last_name")
       .limit(limit ?? 50);
     if (search && search.trim()) {
