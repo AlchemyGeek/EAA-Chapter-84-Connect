@@ -73,6 +73,9 @@ export default function Members() {
   }
 
   const filtered = members.filter((m) => {
+    // Exclude prospects from the directory even if they slip through the RPC
+    if (m.member_type === "Prospect") return false;
+
     const q = search.toLowerCase();
     const vis = visibilityMap.get(m.key_id);
     const contactVisible = vis?.contact ?? false;
