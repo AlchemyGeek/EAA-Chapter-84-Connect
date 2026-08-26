@@ -210,7 +210,8 @@ export default function MemberHome() {
       const { count, error } = await supabase
         .from("new_member_applications")
         .select("*", { count: "exact", head: true })
-        .eq("processed", false);
+        .eq("processed", false)
+        .is("archived_at", null);
       if (error) throw error;
       return count ?? 0;
     },
