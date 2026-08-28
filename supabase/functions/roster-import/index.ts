@@ -258,7 +258,9 @@ Deno.serve(async (req) => {
     // normalized EAA# so we treat it as "same person, modified" instead of
     // Added + Removed. Applies to any member_type, since the local record may
     // already have been promoted from Prospect to Regular.
-    const normEaa = (v: any): string => String(v ?? "").trim().toLowerCase();
+    // Normalize to digits only — local records entered via the application form
+    // may carry an "EAA " prefix or punctuation that the roster export omits.
+    const normEaa = (v: any): string => String(v ?? "").replace(/\D/g, "");
     const localByEaa = new Map<string, Record<string, any>>();
     for (const m of existingMembers || []) {
       const eaa = normEaa(m.eaa_number);
