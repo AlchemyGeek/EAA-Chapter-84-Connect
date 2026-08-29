@@ -115,13 +115,21 @@ export default function MembershipStatistics() {
 
   const inactive = members.filter((m) => m.current_standing !== "Active").length;
 
-  // Retention KPI — standing-agnostic
+  // Retention KPI — standing-agnostic, with one exception:
+  // members who are Inactive despite a paid-up expiration beyond this year
+  // (deceased, lifetime, etc.) were never renewal candidates — excluded from the base.
+  const isPaidUpInactive = (m: { current_standing?: string | null; expiration_date?: string | null }) =>
+    m.current_standing !== "Active" &&
+    !!m.expiration_date &&
+    new Date(m.expiration_date).getFullYear() > currentYear;
+
   // Last year base: members with expiration in currentYear or later, minus new members added this year
   const lastYearBase = members.filter((m) => {
     if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() < currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
+    if (isPaidUpInactive(m)) return false;
     return true;
   }).length;
 
@@ -131,6 +139,7 @@ export default function MembershipStatistics() {
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
+    if (isPaidUpInactive(m)) return false;
     return true;
   }).length;
 
