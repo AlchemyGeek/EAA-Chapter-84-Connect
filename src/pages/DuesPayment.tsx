@@ -174,18 +174,28 @@ export default function DuesPayment() {
     },
   });
 
-  // Filter search results
+  // Standing helpers (shared by search rows and selected member)
+  const memberStanding = (m: Member): "inactive" | "overdue" | "active" => {
+    if (m.current_standing !== "Active") return "inactive";
+    if (m.expiration_date && new Date(m.expiration_date) < new Date()) return "overdue";
+    return "active";
+  };
+
+  // Filter search results — prospects excluded, inactive members included
   const searchResults = useMemo(() => {
     if (searchTerm.length < 2) return [];
     const term = searchTerm.toLowerCase();
     return allMembers.filter(
       (m) =>
-        (m.first_name?.toLowerCase().includes(term) || false) ||
+        m.member_type !== "Prospect" &&
+        ((m.first_name?.toLowerCase().includes(term) || false) ||
+souhait
         (m.last_name?.toLowerCase().includes(term) || false) ||
         (`${m.first_name} ${m.last_name}`.toLowerCase().includes(term)) ||
-        (m.eaa_number?.includes(term) || false)
+        (m.eaa_number?.includes(term) || false))
     ).slice(0, 10);
   }, [searchTerm, allMembers]);
+
 
   // Filtered payments
   const filteredPayments = useMemo(() => {
