@@ -175,6 +175,7 @@ export default function MembershipStatistics() {
   const newMemberMonthCounts = new Array(12).fill(0);
   members.forEach((m) => {
     if (isProspect(m)) return;
+    if (isInactive(m)) return;
     if (!m.date_added) return;
     const d = new Date(m.date_added);
     if (d.getFullYear() === currentYear) {
