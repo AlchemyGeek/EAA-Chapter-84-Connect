@@ -174,18 +174,27 @@ export default function DuesPayment() {
     },
   });
 
-  // Filter search results
+  // Standing helpers (shared by search rows and selected member)
+  const memberStanding = (m: Member): "inactive" | "overdue" | "active" => {
+    if (m.current_standing !== "Active") return "inactive";
+    if (m.expiration_date && new Date(m.expiration_date) < new Date()) return "overdue";
+    return "active";
+  };
+
+  // Filter search results — prospects excluded, inactive members included
   const searchResults = useMemo(() => {
     if (searchTerm.length < 2) return [];
     const term = searchTerm.toLowerCase();
     return allMembers.filter(
       (m) =>
-        (m.first_name?.toLowerCase().includes(term) || false) ||
+        m.member_type !== "Prospect" &&
+        ((m.first_name?.toLowerCase().includes(term) || false) ||
         (m.last_name?.toLowerCase().includes(term) || false) ||
         (`${m.first_name} ${m.last_name}`.toLowerCase().includes(term)) ||
-        (m.eaa_number?.includes(term) || false)
+        (m.eaa_number?.includes(term) || false))
     ).slice(0, 10);
   }, [searchTerm, allMembers]);
+
 
   // Filtered payments
   const filteredPayments = useMemo(() => {
@@ -398,19 +407,31 @@ export default function DuesPayment() {
             {/* Search results */}
             {!selectedMember && searchResults.length > 0 && (
               <div className="border rounded-md divide-y max-h-48 overflow-y-auto">
-                {searchResults.map((m) => (
+                {searchResults.map((m) => {
+                  const standing = memberStanding(m);
+                  return (
                   <button
                     key={m.key_id}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between items-center"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between items-center gap-2"
                     onClick={() => {
                       setSelectedMember(m);
                       setSearchTerm(`${m.first_name} ${m.last_name}`);
                     }}
                   >
-                    <span className="font-medium">{m.last_name}, {m.first_name}</span>
-                    <span className="text-muted-foreground text-xs">EAA #{m.eaa_number}</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-medium truncate">{m.last_name}, {m.first_name}</span>
+                      {standing === "inactive" && (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Inactive</Badge>
+                      )}
+                      {standing === "overdue" && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Overdue</Badge>
+                      )}
+                    </span>
+                    <span className="text-muted-foreground text-xs shrink-0">EAA #{m.eaa_number}</span>
                   </button>
-                ))}
+                  );
+                })}
+
               </div>
             )}
 
@@ -551,6 +572,17 @@ export default function DuesPayment() {
                   </Select>
                 </div>
               </div>
+
+              {isStandingInactive && (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-xs text-destructive font-medium">
+                    This member is currently Inactive. Recording this payment will reactivate them
+                    and set their standing back to Active.
+                  </p>
+                </div>
+              )}
+
 
               <Button
                 className="w-full sm:w-auto min-h-[44px]"
