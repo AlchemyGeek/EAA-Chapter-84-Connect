@@ -259,7 +259,7 @@ export default function MembershipStatistics() {
               <span className="font-medium text-foreground">{retained}</span> have renewed beyond {currentYear}.
             </p>
             <div className="border-t pt-2 text-muted-foreground text-xs space-y-1">
-              <p><strong>Last year's base:</strong> Members with expiration in {currentYear} or beyond, excluding new members added in {currentYear}.</p>
+              <p><strong>Last year's base:</strong> Members with expiration in {currentYear} or beyond, excluding new members added in {currentYear} and inactive members already paid beyond {currentYear} (deceased, lifetime, etc.).</p>
               <p><strong>Retained:</strong> Members from that base whose expiration extends beyond {currentYear}.</p>
               <p><strong>Formula:</strong> Retained ÷ Last Year Base × 100</p>
             </div>
