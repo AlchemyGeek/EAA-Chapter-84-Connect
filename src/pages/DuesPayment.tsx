@@ -407,19 +407,31 @@ export default function DuesPayment() {
             {/* Search results */}
             {!selectedMember && searchResults.length > 0 && (
               <div className="border rounded-md divide-y max-h-48 overflow-y-auto">
-                {searchResults.map((m) => (
+                {searchResults.map((m) => {
+                  const standing = memberStanding(m);
+                  return (
                   <button
                     key={m.key_id}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between items-center"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between items-center gap-2"
                     onClick={() => {
                       setSelectedMember(m);
                       setSearchTerm(`${m.first_name} ${m.last_name}`);
                     }}
                   >
-                    <span className="font-medium">{m.last_name}, {m.first_name}</span>
-                    <span className="text-muted-foreground text-xs">EAA #{m.eaa_number}</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-medium truncate">{m.last_name}, {m.first_name}</span>
+                      {standing === "inactive" && (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Inactive</Badge>
+                      )}
+                      {standing === "overdue" && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Overdue</Badge>
+                      )}
+                    </span>
+                    <span className="text-muted-foreground text-xs shrink-0">EAA #{m.eaa_number}</span>
                   </button>
-                ))}
+                  );
+                })}
+
               </div>
             )}
 
