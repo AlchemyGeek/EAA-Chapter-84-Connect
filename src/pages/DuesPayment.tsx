@@ -195,6 +195,22 @@ export default function DuesPayment() {
     ).slice(0, 10);
   }, [searchTerm, allMembers]);
 
+  // Detect if the search term only matches prospects (excluded from dues)
+  const prospectMatches = useMemo(() => {
+    if (searchTerm.length < 2) return [];
+    const term = searchTerm.toLowerCase();
+    return allMembers.filter(
+      (m) =>
+        m.member_type === "Prospect" &&
+        ((m.first_name?.toLowerCase().includes(term) || false) ||
+        (m.last_name?.toLowerCase().includes(term) || false) ||
+        (`${m.first_name} ${m.last_name}`.toLowerCase().includes(term)) ||
+        (m.eaa_number?.includes(term) || false))
+    ).slice(0, 5);
+  }, [searchTerm, allMembers]);
+
+
+
 
   // Filtered payments
   const filteredPayments = useMemo(() => {
