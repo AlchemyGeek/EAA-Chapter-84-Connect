@@ -573,6 +573,17 @@ export default function DuesPayment() {
                 </div>
               </div>
 
+              {isStandingInactive && (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-xs text-destructive font-medium">
+                    This member is currently Inactive. Recording this payment will reactivate them
+                    and set their standing back to Active.
+                  </p>
+                </div>
+              )}
+
+
               <Button
                 className="w-full sm:w-auto min-h-[44px]"
                 disabled={!amount || !method || processPayment.isPending}
