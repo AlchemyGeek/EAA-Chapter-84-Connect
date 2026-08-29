@@ -195,6 +195,22 @@ export default function DuesPayment() {
     ).slice(0, 10);
   }, [searchTerm, allMembers]);
 
+  // Detect if the search term only matches prospects (excluded from dues)
+  const prospectMatches = useMemo(() => {
+    if (searchTerm.length < 2) return [];
+    const term = searchTerm.toLowerCase();
+    return allMembers.filter(
+      (m) =>
+        m.member_type === "Prospect" &&
+        ((m.first_name?.toLowerCase().includes(term) || false) ||
+        (m.last_name?.toLowerCase().includes(term) || false) ||
+        (`${m.first_name} ${m.last_name}`.toLowerCase().includes(term)) ||
+        (m.eaa_number?.includes(term) || false))
+    ).slice(0, 5);
+  }, [searchTerm, allMembers]);
+
+
+
 
   // Filtered payments
   const filteredPayments = useMemo(() => {
@@ -435,8 +451,34 @@ export default function DuesPayment() {
               </div>
             )}
 
-            {searchTerm.length >= 2 && searchResults.length === 0 && !selectedMember && (
+            {searchTerm.length >= 2 && searchResults.length === 0 && !selectedMember && prospectMatches.length === 0 && (
               <p className="text-sm text-muted-foreground">No members found.</p>
+            )}
+
+            {/* Prospect hint — prospects pay via the new application process */}
+            {!selectedMember && prospectMatches.length > 0 && (
+              <div className="border rounded-md p-3 space-y-2 bg-muted/30">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  <div className="text-sm space-y-1">
+                    <p className="font-medium">
+                      {prospectMatches.length === 1 ? "A prospect matches your search" : `${prospectMatches.length} prospects match your search`}
+                    </p>
+                    <ul className="text-muted-foreground">
+                      {prospectMatches.map((m) => (
+                        <li key={m.key_id}>{m.last_name}, {m.first_name} (EAA #{m.eaa_number}) — Prospect</li>
+                      ))}
+                    </ul>
+                    <p className="text-muted-foreground">
+                      Prospects are not included in dues payments. Dues are collected through the{" "}
+                      <Link to="/new-member-applications" className="underline font-medium text-foreground">
+                        New Member Application
+                      </Link>{" "}
+                      process.
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Selected member info */}
