@@ -100,6 +100,9 @@ export default function MembershipStatistics() {
   // Prospects were not members last year — excluded from renewal/retention stats
   const isProspect = (m: { member_type?: string | null }) => m.member_type === "Prospect";
 
+  // All membership stats exclude Inactive members (except the Inactive count and Yet to Renew).
+  const isInactive = (m: { current_standing?: string | null }) => m.current_standing !== "Active";
+
   // Yet to Renew: any non-Prospect member whose expiration falls in the current year,
   // regardless of standing — lapsed members (now Inactive) still count as not renewed.
   const yetToRenew = members.filter((m) => {
