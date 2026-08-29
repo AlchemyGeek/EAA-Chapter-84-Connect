@@ -121,10 +121,11 @@ export default function MembershipStatistics() {
 
   const inactive = members.filter((m) => isInactive(m)).length;
 
-  // Last year base: active members with expiration in currentYear or later, minus new members added this year
+  // Last year base: members who were valid at the START of the current year —
+  // expiration in currentYear or beyond, joined before currentYear — regardless of
+  // current standing. Lapsed members (now Inactive) must still count in the base.
   const lastYearBase = members.filter((m) => {
     if (isProspect(m)) return false;
-    if (isInactive(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() < currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
@@ -134,7 +135,6 @@ export default function MembershipStatistics() {
   // Retained: from that base, those whose expiration extends beyond current year
   const retained = members.filter((m) => {
     if (isProspect(m)) return false;
-    if (isInactive(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
