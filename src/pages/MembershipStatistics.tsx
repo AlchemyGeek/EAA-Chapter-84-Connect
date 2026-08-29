@@ -100,7 +100,8 @@ export default function MembershipStatistics() {
   // Prospects were not members last year — excluded from renewal/retention stats
   const isProspect = (m: { member_type?: string | null }) => m.member_type === "Prospect";
 
-  // All membership stats exclude Inactive members (except the Inactive count and Yet to Renew).
+  // Membership stats exclude Inactive members, except: the Inactive count itself,
+  // Yet to Renew (lapsed members), and the retention base (beginning-of-year members).
   const isInactive = (m: { current_standing?: string | null }) => m.current_standing !== "Active";
 
   // Yet to Renew: any non-Prospect member whose expiration falls in the current year,
@@ -121,10 +122,11 @@ export default function MembershipStatistics() {
 
   const inactive = members.filter((m) => isInactive(m)).length;
 
-  // Last year base: active members with expiration in currentYear or later, minus new members added this year
+  // Last year base: members who were valid at the START of the current year —
+  // expiration in currentYear or beyond, joined before currentYear — regardless of
+  // current standing. Lapsed members (now Inactive) must still count in the base.
   const lastYearBase = members.filter((m) => {
     if (isProspect(m)) return false;
-    if (isInactive(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() < currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
@@ -134,7 +136,6 @@ export default function MembershipStatistics() {
   // Retained: from that base, those whose expiration extends beyond current year
   const retained = members.filter((m) => {
     if (isProspect(m)) return false;
-    if (isInactive(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
     if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
@@ -258,7 +259,7 @@ export default function MembershipStatistics() {
               <span className="font-medium text-foreground">{retained}</span> have renewed beyond {currentYear}.
             </p>
             <div className="border-t pt-2 text-muted-foreground text-xs space-y-1">
-              <p><strong>Last year's base:</strong> Active members with expiration in {currentYear} or beyond, excluding new members added in {currentYear} and all inactive members (deceased, lifetime, etc.).</p>
+              <p><strong>Last year's base:</strong> Members whose expiration falls in {currentYear} or beyond and who joined before {currentYear}, regardless of current standing — members who let their membership lapse still count. Prospects and members added in {currentYear} are excluded.</p>
               <p><strong>Retained:</strong> Members from that base whose expiration extends beyond {currentYear}.</p>
               <p><strong>Formula:</strong> Retained ÷ Last Year Base × 100</p>
             </div>
