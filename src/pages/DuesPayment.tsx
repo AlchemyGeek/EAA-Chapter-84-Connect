@@ -189,7 +189,6 @@ export default function DuesPayment() {
       (m) =>
         m.member_type !== "Prospect" &&
         ((m.first_name?.toLowerCase().includes(term) || false) ||
-souhait
         (m.last_name?.toLowerCase().includes(term) || false) ||
         (`${m.first_name} ${m.last_name}`.toLowerCase().includes(term)) ||
         (m.eaa_number?.includes(term) || false))
