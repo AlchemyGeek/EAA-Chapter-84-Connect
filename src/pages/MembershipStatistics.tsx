@@ -106,7 +106,9 @@ export default function MembershipStatistics() {
     return new Date(m.expiration_date).getFullYear() === currentYear;
   }).length;
 
+  // Prospects who never paid dues were never members — excluded from new member stats
   const newThisYear = members.filter((m) => {
+    if (isProspect(m)) return false;
     if (!m.date_added) return false;
     return new Date(m.date_added).getFullYear() === currentYear;
   }).length;
@@ -166,6 +168,7 @@ export default function MembershipStatistics() {
   // New members by month
   const newMemberMonthCounts = new Array(12).fill(0);
   members.forEach((m) => {
+    if (isProspect(m)) return;
     if (!m.date_added) return;
     const d = new Date(m.date_added);
     if (d.getFullYear() === currentYear) {
