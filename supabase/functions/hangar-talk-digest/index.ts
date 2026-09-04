@@ -79,14 +79,6 @@ Deno.serve(async (req) => {
     const nowIso = new Date().toISOString();
 
     for (const [recipient, recipientSubs] of byRecipient) {
-      // Check suppression list first.
-      const { data: suppressed } = await supabase
-        .from("suppressed_emails")
-        .select("email")
-        .eq("email", recipient)
-        .maybeSingle();
-      if (suppressed) continue;
-
       const keyId = (recipientSubs[0] as any).roster_members.key_id as number;
 
       // For each subscription, find new replies since last_notified_at (or sub created_at).
