@@ -1,74 +1,15 @@
-import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, XCircle, Loader2, MailX } from "lucide-react";
+import { CheckCircle, XCircle, MailX } from "lucide-react";
 
-type Status = "loading" | "valid" | "already_unsubscribed" | "invalid" | "success" | "error";
+type Status = "managed" | "invalid" | "success";
 
 const Unsubscribe = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
   const hangarTalkStatus = searchParams.get("source") === "hangar-talk" ? searchParams.get("status") : null;
-  const [status, setStatus] = useState<Status>(
-    hangarTalkStatus === "success" ? "success" : hangarTalkStatus === "invalid" ? "invalid" : "loading"
-  );
-  const [confirming, setConfirming] = useState(false);
+  const status: Status =
+    hangarTalkStatus === "success" ? "success" : hangarTalkStatus === "invalid" ? "invalid" : "managed";
 
-  useEffect(() => {
-    if (hangarTalkStatus) return;
-    if (!token) {
-      setStatus("invalid");
-      return;
-    }
-    const validate = async () => {
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        const res = await fetch(
-          `${supabaseUrl}/functions/v1/handle-email-unsubscribe?token=${token}`,
-          { headers: { apikey: anonKey } }
-        );
-        const data = await res.json();
-        if (!res.ok) {
-          setStatus("invalid");
-        } else if (data.valid === false && data.reason === "already_unsubscribed") {
-          setStatus("already_unsubscribed");
-        } else if (data.valid) {
-          setStatus("valid");
-        } else {
-          setStatus("invalid");
-        }
-      } catch {
-        setStatus("invalid");
-      }
-    };
-    validate();
-  }, [token, hangarTalkStatus]);
-
-  const handleConfirm = async () => {
-    if (!token) return;
-    setConfirming(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("handle-email-unsubscribe", {
-        body: { token },
-      });
-      if (error) {
-        setStatus("error");
-      } else if (data?.success) {
-        setStatus("success");
-      } else if (data?.reason === "already_unsubscribed") {
-        setStatus("already_unsubscribed");
-      } else {
-        setStatus("error");
-      }
-    } catch {
-      setStatus("error");
-    } finally {
-      setConfirming(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
