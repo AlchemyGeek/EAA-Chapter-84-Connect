@@ -66,7 +66,7 @@ export default function BriefingRoomReview() {
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Recently published
+            Recently published, unpublished & rejected
           </h2>
           {recent.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nothing published yet.</p>
@@ -192,6 +192,11 @@ function ReviewRow({
                 Unpublished
               </Badge>
             )}
+            {item.status === "rejected" && (
+              <Badge variant="outline" className="text-[10px] text-destructive">
+                Rejected
+              </Badge>
+            )}
           </div>
           <div className="flex items-start gap-3">
             {item.image_url && (
@@ -246,6 +251,14 @@ function ReviewRow({
               >
                 <ArchiveIcon className="mr-1.5 h-4 w-4" />
                 Unpublish
+              </Button>
+            ) : item.status === "rejected" ? (
+              <Button
+                size="sm"
+                onClick={() => run({ id: item.id, status: "published" }, "Published")}
+              >
+                <Check className="mr-1.5 h-4 w-4" />
+                Approve
               </Button>
             ) : (
               <Button
