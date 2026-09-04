@@ -192,6 +192,11 @@ function ReviewRow({
                 Unpublished
               </Badge>
             )}
+            {item.status === "rejected" && (
+              <Badge variant="outline" className="text-[10px] text-destructive">
+                Rejected
+              </Badge>
+            )}
           </div>
           <div className="flex items-start gap-3">
             {item.image_url && (

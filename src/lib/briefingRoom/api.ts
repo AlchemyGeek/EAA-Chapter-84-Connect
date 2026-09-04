@@ -118,7 +118,7 @@ export function useRecentPublishedForReview() {
       const { data, error } = await supabase
         .from(TABLE as any)
         .select("*")
-        .in("status", ["published", "archived"])
+        .in("status", ["published", "archived", "rejected"])
         .order("added_at", { ascending: false })
         .limit(30);
       if (error) throw error;
