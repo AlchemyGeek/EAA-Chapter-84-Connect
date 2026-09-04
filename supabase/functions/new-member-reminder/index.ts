@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { COMPLETE_MEMBERSHIP_HTML } from "../_shared/new-member-emails/complete-membership.ts";
+import { sendRawEmail } from "../_shared/transactional-email-templates/send-raw-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,27 +21,6 @@ function escapeHtmlAttr(str: string): string {
   return escapeHtml(str);
 }
 
-async function getOrCreateUnsubscribeToken(supabase: ReturnType<typeof createClient>, email: string): Promise<string> {
-  const { data: existingToken } = await supabase
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", email)
-    .is("used_at", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (existingToken?.token) {
-    return existingToken.token;
-  }
-
-  const unsubscribeToken = crypto.randomUUID();
-  await supabase
-    .from("email_unsubscribe_tokens")
-    .insert({ email, token: unsubscribeToken });
-
-  return unsubscribeToken;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
