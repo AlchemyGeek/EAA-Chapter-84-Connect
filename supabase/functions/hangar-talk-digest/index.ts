@@ -5,6 +5,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { signToken } from "../_shared/hangarTalkToken.ts";
+import { sendRawEmail } from "../_shared/transactional-email-templates/send-raw-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -79,14 +80,6 @@ Deno.serve(async (req) => {
     const nowIso = new Date().toISOString();
 
     for (const [recipient, recipientSubs] of byRecipient) {
-      // Check suppression list first.
-      const { data: suppressed } = await supabase
-        .from("suppressed_emails")
-        .select("email")
-        .eq("email", recipient)
-        .maybeSingle();
-      if (suppressed) continue;
-
       const keyId = (recipientSubs[0] as any).roster_members.key_id as number;
 
       // For each subscription, find new replies since last_notified_at (or sub created_at).
@@ -184,32 +177,8 @@ Deno.serve(async (req) => {
       );
       const unsubAllUrl = `${supabaseUrl}/functions/v1/hangar-talk-link?token=${encodeURIComponent(unsubAllToken)}`;
 
-      // The Lovable email API requires an unsubscribe_token on every
-      // transactional send. Fetch or create the recipient's global token so
-      // the pipeline appends its standard unsubscribe footer (single footer,
-      // no duplicate Hangar Talk one above).
-      let globalUnsubToken: string | null = null;
-      const { data: existingTok } = await supabase
-        .from("email_unsubscribe_tokens")
-        .select("token")
-        .eq("email", recipient)
-        .is("used_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (existingTok?.token) {
-        globalUnsubToken = existingTok.token as string;
-      } else {
-        const newTok = crypto.randomUUID();
-        const { error: tokErr } = await supabase
-          .from("email_unsubscribe_tokens")
-          .insert({ email: recipient, token: newTok });
-        if (!tokErr) globalUnsubToken = newTok;
-      }
-      if (!globalUnsubToken) {
-        console.error(`Could not obtain unsubscribe token for ${recipient}; skipping.`);
-        continue;
-      }
+      // Unsubscribe handling (footer + hosted page) is managed by Lovable.
+
 
       const messageId = crypto.randomUUID();
       const idempotencyKey = `ht-digest-${messageId}`;
@@ -236,28 +205,23 @@ Deno.serve(async (req) => {
       const text = textSections.join("\n---\n") +
         `\n\nYou're receiving this because you subscribed to one or more Hangar Talk threads.\n`;
 
-      const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
+      try {
+        const result = await sendRawEmail({
           to: recipient,
           from: FROM_ADDR,
-          sender_domain: SENDER_DOMAIN,
           subject,
           html,
           text,
-          purpose: "transactional",
           label: "hangar_talk_digest",
-          idempotency_key: idempotencyKey,
-          unsubscribe_token: globalUnsubToken,
-          message_id: messageId,
-          queued_at: new Date().toISOString(),
-        },
-      });
-
-      if (enqueueError) {
-        console.error(`Failed to enqueue digest for ${recipient}:`, enqueueError.message);
+          idempotencyKey: idempotencyKey,
+          supabase,
+        });
+        if (!result.sent) continue;
+      } catch (sendError) {
+        console.error(`Failed to send Hangar Talk digest:`, sendError);
         continue;
       }
+
 
       // Mark these subscriptions as notified.
       await supabase

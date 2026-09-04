@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { COMPLETE_MEMBERSHIP_HTML } from "../_shared/new-member-emails/complete-membership.ts";
+import { sendRawEmail } from "../_shared/transactional-email-templates/send-raw-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,27 +21,6 @@ function escapeHtmlAttr(str: string): string {
   return escapeHtml(str);
 }
 
-async function getOrCreateUnsubscribeToken(supabase: ReturnType<typeof createClient>, email: string): Promise<string> {
-  const { data: existingToken } = await supabase
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", email)
-    .is("used_at", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (existingToken?.token) {
-    return existingToken.token;
-  }
-
-  const unsubscribeToken = crypto.randomUUID();
-  await supabase
-    .from("email_unsubscribe_tokens")
-    .insert({ email, token: unsubscribeToken });
-
-  return unsubscribeToken;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -184,53 +164,35 @@ Deno.serve(async (req) => {
     const textBody = htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
     const membershipEmail = "membership@eaa84.org";
-    const applicantUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, recipient);
-    const membershipUnsubscribeToken = await getOrCreateUnsubscribeToken(supabase, membershipEmail);
-    const sharedMessageId = crypto.randomUUID();
-    const queuedAt = new Date().toISOString();
-
-    const basePayload = {
-      from: "Membership <notify@notify.eaa84.org>",
-      reply_to: membershipEmail,
-      sender_domain: "notify.eaa84.org",
-      subject,
-      html: htmlBody,
-      text: textBody,
-      purpose: "transactional",
-      label: "new_member_dues_reminder",
-      queued_at: queuedAt,
-    };
+    const fromAddress = "Membership <notify@notify.eaa84.org>";
 
     const sends = [
-      {
-        ...basePayload,
-        to: recipient,
-        idempotency_key: `new-member-reminder-${application_id}`,
-        unsubscribe_token: applicantUnsubscribeToken,
-        message_id: sharedMessageId,
-      },
-      {
-        ...basePayload,
-        to: membershipEmail,
-        idempotency_key: `new-member-reminder-${application_id}-membership`,
-        unsubscribe_token: membershipUnsubscribeToken,
-        message_id: `${sharedMessageId}-membership`,
-      },
+      { to: recipient, idempotencyKey: `new-member-reminder-${application_id}` },
+      { to: membershipEmail, idempotencyKey: `new-member-reminder-${application_id}-membership` },
     ];
 
-    for (const payload of sends) {
-      const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload,
-      });
-      if (enqueueError) {
-        console.error("Failed to enqueue reminder:", enqueueError.message, "to:", payload.to);
-        return new Response(JSON.stringify({ error: "Failed to enqueue reminder" }), {
+    for (const send of sends) {
+      try {
+        await sendRawEmail({
+          to: send.to,
+          from: fromAddress,
+          replyTo: membershipEmail,
+          subject,
+          html: htmlBody,
+          text: textBody,
+          label: "new_member_dues_reminder",
+          idempotencyKey: send.idempotencyKey,
+          supabase,
+        });
+      } catch (sendError) {
+        console.error("Failed to send reminder:", sendError);
+        return new Response(JSON.stringify({ error: "Failed to send reminder" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
+
 
 
     await supabase
