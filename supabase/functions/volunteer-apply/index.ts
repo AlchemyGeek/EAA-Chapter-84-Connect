@@ -158,10 +158,10 @@ Deno.serve(async (req) => {
         // Send one notification per contact via the transactional email system
         for (const contactEmail of contactEmails) {
           try {
-            const { data: emailResponse, error: emailInvokeError } = await supabase.functions.invoke("send-transactional-email", {
-              body: {
-                templateName: "volunteer-application-notification",
-                recipientEmail: contactEmail,
+            const result = await sendTemplateEmail(
+              "volunteer-application-notification",
+              contactEmail,
+              {
                 idempotencyKey: `volunteer-apply-${opportunity_id}-${member.key_id}-${contactEmail}`,
                 templateData: {
                   opportunityTitle: opportunity.title,
@@ -170,28 +170,20 @@ Deno.serve(async (req) => {
                   memberPhone: phone,
                 },
               },
-              headers: {
-                Authorization: `Bearer ${supabaseServiceKey}`,
-                apikey: supabaseServiceKey,
-              },
-            });
+            );
 
-            if (emailInvokeError) {
-              console.error(`Failed to queue volunteer notification for ${contactEmail}:`, emailInvokeError);
-              continue;
-            }
-
-            if (emailResponse?.error || emailResponse?.success === false || !emailResponse?.queued) {
-              console.error(`Volunteer notification was not accepted for ${contactEmail}:`, emailResponse);
+            if (!result.sent) {
+              console.log("Volunteer notification skipped for a suppressed recipient");
               continue;
             }
 
             queuedEmailCount += 1;
-            console.log(`Volunteer notification queued for ${contactEmail}`);
+            console.log("Volunteer notification sent to a contact");
           } catch (emailErr) {
-            console.error(`Failed to queue volunteer notification for ${contactEmail}:`, emailErr);
+            console.error("Failed to send volunteer notification:", emailErr);
           }
         }
+
       }
     }
 
