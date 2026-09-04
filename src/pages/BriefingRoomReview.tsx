@@ -252,6 +252,14 @@ function ReviewRow({
                 <ArchiveIcon className="mr-1.5 h-4 w-4" />
                 Unpublish
               </Button>
+            ) : item.status === "rejected" ? (
+              <Button
+                size="sm"
+                onClick={() => run({ id: item.id, status: "published" }, "Published")}
+              >
+                <Check className="mr-1.5 h-4 w-4" />
+                Approve
+              </Button>
             ) : (
               <Button
                 size="sm"
