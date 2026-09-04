@@ -118,50 +118,26 @@ Deno.serve(async (req) => {
     let enqueued = 0;
 
     for (const recipient of recipientEmails) {
-      const recipientMessageId = `${messageId}-${recipient}`;
-
-      // Get or create unsubscribe token
-      const { data: existingToken } = await supabase
-        .from("email_unsubscribe_tokens")
-        .select("token")
-        .eq("email", recipient)
-        .is("used_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      const unsubscribeToken = existingToken?.token ?? crypto.randomUUID();
-      if (!existingToken) {
-        await supabase
-          .from("email_unsubscribe_tokens")
-          .insert({ email: recipient, token: unsubscribeToken });
-      }
-
-      const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
+      try {
+        const result = await sendRawEmail({
           to: recipient,
           from: "EAA Chapter 84 <notify@notify.eaa84.org>",
-          sender_domain: "notify.eaa84.org",
           subject,
           html: htmlBody,
           text: htmlBody.replace(/<[^>]+>/g, ""),
-          purpose: "transactional",
           label: "new_member_application",
-          idempotency_key: `new-member-notify-${messageId}-${recipient}`,
-          unsubscribe_token: unsubscribeToken,
-          message_id: recipientMessageId,
-          queued_at: new Date().toISOString(),
-        },
-      });
-
-      if (enqueueError) {
-        console.error(`Failed to enqueue email to ${recipient}:`, enqueueError.message);
-      } else {
-        enqueued++;
-        console.log(`Enqueued new member notification to ${recipient}`);
+          idempotencyKey: `new-member-notify-${messageId}-${recipient}`,
+          supabase,
+        });
+        if (result.sent) {
+          enqueued++;
+          console.log(`Sent new member notification to a coordinator`);
+        }
+      } catch (sendError) {
+        console.error(`Failed to send new member notification:`, sendError);
       }
     }
+
 
     return new Response(
       JSON.stringify({
