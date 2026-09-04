@@ -228,28 +228,23 @@ Deno.serve(async (req) => {
       const text = textSections.join("\n---\n") +
         `\n\nYou're receiving this because you subscribed to one or more Hangar Talk threads.\n`;
 
-      const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
+      try {
+        const result = await sendRawEmail({
           to: recipient,
           from: FROM_ADDR,
-          sender_domain: SENDER_DOMAIN,
           subject,
           html,
           text,
-          purpose: "transactional",
           label: "hangar_talk_digest",
-          idempotency_key: idempotencyKey,
-          unsubscribe_token: globalUnsubToken,
-          message_id: messageId,
-          queued_at: new Date().toISOString(),
-        },
-      });
-
-      if (enqueueError) {
-        console.error(`Failed to enqueue digest for ${recipient}:`, enqueueError.message);
+          idempotencyKey: idempotencyKey,
+          supabase,
+        });
+        if (!result.sent) continue;
+      } catch (sendError) {
+        console.error(`Failed to send Hangar Talk digest:`, sendError);
         continue;
       }
+
 
       // Mark these subscriptions as notified.
       await supabase
