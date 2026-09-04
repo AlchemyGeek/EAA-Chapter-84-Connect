@@ -66,7 +66,7 @@ export default function BriefingRoomReview() {
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Recently published
+            Recently published, unpublished & rejected
           </h2>
           {recent.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nothing published yet.</p>
