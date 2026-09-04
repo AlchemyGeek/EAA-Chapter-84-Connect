@@ -114,88 +114,47 @@ Deno.serve(async (req) => {
     const htmlBody = WELCOME_HTML.replace(/\{\{first_name\}\}/g, firstName);
     const textBody = htmlBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-    const messageId = crypto.randomUUID();
-
-    const { data: existingToken } = await supabase
-      .from("email_unsubscribe_tokens")
-      .select("token")
-      .eq("email", recipient)
-      .is("used_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const unsubscribeToken = existingToken?.token ?? crypto.randomUUID();
-    if (!existingToken) {
-      await supabase
-        .from("email_unsubscribe_tokens")
-        .insert({ email: recipient, token: unsubscribeToken });
-    }
-
     const membershipEmail = "membership@eaa84.org";
+    const fromAddress = "Membership <notify@notify.eaa84.org>";
 
-    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    try {
+      await sendRawEmail({
         to: recipient,
-        from: "Membership <notify@notify.eaa84.org>",
-        reply_to: membershipEmail,
-        sender_domain: "notify.eaa84.org",
+        from: fromAddress,
+        replyTo: membershipEmail,
         subject,
         html: htmlBody,
         text: textBody,
-        purpose: "transactional",
         label: "new_member_welcome",
-        idempotency_key: `new-member-welcome-${application_id}`,
-        unsubscribe_token: unsubscribeToken,
-        message_id: messageId,
-        queued_at: new Date().toISOString(),
-      },
-    });
-
-    if (enqueueError) {
-      console.error("Failed to enqueue welcome:", enqueueError.message);
-      return new Response(JSON.stringify({ error: "Failed to enqueue welcome" }), {
+        idempotencyKey: `new-member-welcome-${application_id}`,
+        supabase,
+      });
+    } catch (sendError) {
+      console.error("Failed to send welcome:", sendError);
+      return new Response(JSON.stringify({ error: "Failed to send welcome" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Separate copy to membership mailbox (cc on enqueue payload is dropped by processor)
-    const { data: membershipToken } = await supabase
-      .from("email_unsubscribe_tokens")
-      .select("token")
-      .eq("email", membershipEmail)
-      .is("used_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    let membershipUnsub = membershipToken?.token;
-    if (!membershipUnsub) {
-      membershipUnsub = crypto.randomUUID();
-      await supabase
-        .from("email_unsubscribe_tokens")
-        .insert({ email: membershipEmail, token: membershipUnsub });
-    }
-
-    await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    // Separate copy to the membership mailbox.
+    try {
+      await sendRawEmail({
         to: membershipEmail,
-        from: "Membership <notify@notify.eaa84.org>",
-        reply_to: membershipEmail,
-        sender_domain: "notify.eaa84.org",
+        from: fromAddress,
+        replyTo: membershipEmail,
         subject: `[Copy] ${subject} — ${app.first_name} ${app.last_name}`,
         html: htmlBody,
         text: textBody,
-        purpose: "transactional",
         label: "new_member_welcome_copy",
-        idempotency_key: `new-member-welcome-copy-${application_id}`,
-        unsubscribe_token: membershipUnsub,
-        message_id: `${messageId}-copy`,
-        queued_at: new Date().toISOString(),
-      },
-    });
+        idempotencyKey: `new-member-welcome-copy-${application_id}`,
+        supabase,
+      });
+    } catch (copyError) {
+      console.error("Failed to send welcome copy to membership:", copyError);
+    }
+
+
 
 
     await supabase
