@@ -116,6 +116,9 @@ Deno.serve(async (req) => {
 
     const membershipEmail = "membership@eaa84.org";
     const fromAddress = "Membership <notify@notify.eaa84.org>";
+    // A failed send permanently burns its idempotency key, so each attempt
+    // needs a fresh one. welcome_sent_at still guards against duplicates.
+    const attemptId = Date.now().toString(36);
 
     try {
       await sendRawEmail({
@@ -126,12 +129,13 @@ Deno.serve(async (req) => {
         html: htmlBody,
         text: textBody,
         label: "new_member_welcome",
-        idempotencyKey: `new-member-welcome-${application_id}`,
+        idempotencyKey: `new-member-welcome-${application_id}-${attemptId}`,
         supabase,
       });
     } catch (sendError) {
       console.error("Failed to send welcome:", sendError);
-      return new Response(JSON.stringify({ error: "Failed to send welcome" }), {
+      const detail = sendError instanceof Error ? sendError.message : String(sendError);
+      return new Response(JSON.stringify({ error: "Failed to send welcome", detail }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -147,7 +151,7 @@ Deno.serve(async (req) => {
         html: htmlBody,
         text: textBody,
         label: "new_member_welcome_copy",
-        idempotencyKey: `new-member-welcome-copy-${application_id}`,
+        idempotencyKey: `new-member-welcome-copy-${application_id}-${attemptId}`,
         supabase,
       });
     } catch (copyError) {
