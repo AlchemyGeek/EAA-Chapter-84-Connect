@@ -179,12 +179,12 @@ export default function MembershipStatistics() {
   }).length;
 
   const standingData = MONTHS.map((month, i) => {
-    if (i > lastImportMonth) return { month, total: null };
+    if (i > currentMonth) return { month, total: null };
     const cumulative = baseGoodStanding + monthCounts.slice(0, i + 1).reduce((a, b) => a + b, 0);
     return { month, total: cumulative };
   });
 
-  const chartData = MONTHS.map((month, i) => ({ month, renewed: i > lastImportMonth ? null : monthCounts[i] }));
+  const chartData = MONTHS.map((month, i) => ({ month, renewed: i > currentMonth ? null : monthCounts[i] }));
 
   // New members by month
   const newMemberMonthCounts = new Array(12).fill(0);
