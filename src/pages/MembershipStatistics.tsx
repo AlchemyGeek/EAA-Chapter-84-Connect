@@ -97,9 +97,6 @@ export default function MembershipStatistics() {
     return isNaN(d.getTime()) ? null : d;
   };
 
-  const lastImportMonth = lastImport?.imported_at
-    ? new Date(lastImport.imported_at).getMonth()
-    : new Date().getMonth();
 
   // KPIs
   const goodStanding = members.filter((m) => {
