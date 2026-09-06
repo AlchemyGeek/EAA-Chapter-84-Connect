@@ -57,7 +57,7 @@ export default function MembershipStatistics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("roster_members")
-        .select("first_name, last_name, current_standing, expiration_date, date_added, udf1_text, member_type");
+        .select("first_name, last_name, current_standing, expiration_date, date_added, created_at, udf1_text, member_type");
       if (error) throw error;
       return data;
     },
@@ -85,6 +85,17 @@ export default function MembershipStatistics() {
       return data as { imported_at: string; total_members: number; inactive_count: number }[];
     },
   });
+
+  const currentMonth = new Date().getMonth();
+
+  // Members added inside the app (e.g. approved applicants) have no date_added
+  // until the next roster import, so fall back to when the record was created.
+  const joinedDate = (m: { date_added?: string | null; created_at?: string | null }) => {
+    const raw = m.date_added ?? m.created_at;
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  };
 
   const lastImportMonth = lastImport?.imported_at
     ? new Date(lastImport.imported_at).getMonth()
@@ -116,8 +127,8 @@ export default function MembershipStatistics() {
   const newThisYear = members.filter((m) => {
     if (isProspect(m)) return false;
     if (isInactive(m)) return false;
-    if (!m.date_added) return false;
-    return new Date(m.date_added).getFullYear() === currentYear;
+    const d = joinedDate(m);
+    return !!d && d.getFullYear() === currentYear;
   }).length;
 
   const inactive = members.filter((m) => isInactive(m)).length;
@@ -129,7 +140,8 @@ export default function MembershipStatistics() {
     if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() < currentYear) return false;
-    if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
+    const joined = joinedDate(m);
+    if (joined && joined.getFullYear() === currentYear) return false;
     return true;
   }).length;
 
@@ -138,7 +150,8 @@ export default function MembershipStatistics() {
     if (isProspect(m)) return false;
     if (!m.expiration_date) return false;
     if (new Date(m.expiration_date).getFullYear() <= currentYear) return false;
-    if (m.date_added && new Date(m.date_added).getFullYear() === currentYear) return false;
+    const joined = joinedDate(m);
+    if (joined && joined.getFullYear() === currentYear) return false;
     return true;
   }).length;
 
@@ -178,13 +191,12 @@ export default function MembershipStatistics() {
   members.forEach((m) => {
     if (isProspect(m)) return;
     if (isInactive(m)) return;
-    if (!m.date_added) return;
-    const d = new Date(m.date_added);
-    if (d.getFullYear() === currentYear) {
+    const d = joinedDate(m);
+    if (d && d.getFullYear() === currentYear) {
       newMemberMonthCounts[d.getMonth()]++;
     }
   });
-  const newMembersData = MONTHS.map((month, i) => ({ month, newMembers: i > lastImportMonth ? null : newMemberMonthCounts[i] }));
+  const newMembersData = MONTHS.map((month, i) => ({ month, newMembers: i > currentMonth ? null : newMemberMonthCounts[i] }));
 
   // Inactive members over time from snapshot data
   // Group by month, take the latest import per month

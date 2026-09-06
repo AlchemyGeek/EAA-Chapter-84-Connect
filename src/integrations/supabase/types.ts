@@ -1578,11 +1578,6 @@ export type Database = {
         Returns: boolean
       }
       check_email_in_roster: { Args: { _email: string }; Returns: boolean }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
       engagement_by_member: {
         Args: never
         Returns: {
@@ -1614,10 +1609,6 @@ export type Database = {
           active_members: number
           week_start: string
         }[]
-      }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
       }
       get_directory_members: {
         Args: never
@@ -1720,15 +1711,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
       officer_email_audience: {
         Args: { _audience: string }
         Returns: {
@@ -1742,14 +1724,6 @@ export type Database = {
       promote_pending_roles: {
         Args: { _email: string; _user_id: string }
         Returns: undefined
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
       }
       reassign_buddy: { Args: { _application_id: string }; Returns: undefined }
       search_newsletters: {
