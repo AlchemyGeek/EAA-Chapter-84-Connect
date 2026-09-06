@@ -97,9 +97,6 @@ export default function MembershipStatistics() {
     return isNaN(d.getTime()) ? null : d;
   };
 
-  const lastImportMonth = lastImport?.imported_at
-    ? new Date(lastImport.imported_at).getMonth()
-    : new Date().getMonth();
 
   // KPIs
   const goodStanding = members.filter((m) => {
@@ -179,12 +176,12 @@ export default function MembershipStatistics() {
   }).length;
 
   const standingData = MONTHS.map((month, i) => {
-    if (i > lastImportMonth) return { month, total: null };
+    if (i > currentMonth) return { month, total: null };
     const cumulative = baseGoodStanding + monthCounts.slice(0, i + 1).reduce((a, b) => a + b, 0);
     return { month, total: cumulative };
   });
 
-  const chartData = MONTHS.map((month, i) => ({ month, renewed: i > lastImportMonth ? null : monthCounts[i] }));
+  const chartData = MONTHS.map((month, i) => ({ month, renewed: i > currentMonth ? null : monthCounts[i] }));
 
   // New members by month
   const newMemberMonthCounts = new Array(12).fill(0);
@@ -208,10 +205,13 @@ export default function MembershipStatistics() {
       // Latest import per month wins (data is ordered by imported_at)
       monthMap.set(key, { inactive: Number(row.inactive_count) });
     });
+    let lastKnown: number | null = null;
     return MONTHS.map((month, i) => {
       const key = `${currentYear}-${String(i).padStart(2, "0")}`;
       const entry = monthMap.get(key);
-      return { month, inactive: entry ? entry.inactive : null };
+      if (entry) lastKnown = entry.inactive;
+      if (i > currentMonth) return { month, inactive: null };
+      return { month, inactive: entry ? entry.inactive : lastKnown };
     });
   })();
 
