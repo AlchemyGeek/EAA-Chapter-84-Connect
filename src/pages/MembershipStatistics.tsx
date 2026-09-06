@@ -208,10 +208,13 @@ export default function MembershipStatistics() {
       // Latest import per month wins (data is ordered by imported_at)
       monthMap.set(key, { inactive: Number(row.inactive_count) });
     });
+    let lastKnown: number | null = null;
     return MONTHS.map((month, i) => {
       const key = `${currentYear}-${String(i).padStart(2, "0")}`;
       const entry = monthMap.get(key);
-      return { month, inactive: entry ? entry.inactive : null };
+      if (entry) lastKnown = entry.inactive;
+      if (i > currentMonth) return { month, inactive: null };
+      return { month, inactive: entry ? entry.inactive : lastKnown };
     });
   })();
 
