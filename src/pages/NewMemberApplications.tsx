@@ -347,7 +347,8 @@ export default function NewMemberApplications() {
         .update({
           member_type: "Regular",
           expiration_date: newExpiration,
-        })
+          date_added: format(new Date(), "yyyy-MM-dd"),
+        } as any)
         .eq("key_id", app.roster_key_id);
       if (rosterError) throw rosterError;
 
