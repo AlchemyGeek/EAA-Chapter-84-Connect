@@ -25,3 +25,6 @@ refresh_token_expiry = 2592000
 
   [functions.hangar-talk-digest]
     verify_jwt = true
+
+  [functions.new-member-notify]
+    verify_jwt = false
