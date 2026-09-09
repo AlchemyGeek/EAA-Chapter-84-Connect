@@ -70,22 +70,22 @@ export default function NewMemberApplication() {
     setSubmitting(true);
 
     try {
-      const { data, error } = await supabase
-        .from("new_member_applications" as any)
-        .insert({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          eaa_number: eaaNumber.trim(),
-          email: email.trim(),
-          address: address.trim(),
-          city: city.trim(),
-          state: state.trim(),
-          zip_code: zipCode.trim(),
-          quarter_applied: currentQuarter,
-          fee_amount: currentFee?.amount ?? 0,
-        } as any)
-        .select("id")
-        .single();
+      // Generate the id client-side: applicants cannot read rows back after insert.
+      const applicationId = crypto.randomUUID();
+
+      const { error } = await supabase.from("new_member_applications" as any).insert({
+        id: applicationId,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        eaa_number: eaaNumber.trim(),
+        email: email.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        state: state.trim(),
+        zip_code: zipCode.trim(),
+        quarter_applied: currentQuarter,
+        fee_amount: currentFee?.amount ?? 0,
+      } as any);
 
       if (error) throw error;
 
@@ -95,7 +95,7 @@ export default function NewMemberApplication() {
       // Notify the Membership Coordinator(s) — failures must not block the applicant.
       try {
         await supabase.functions.invoke("new-member-notify", {
-          body: { application_id: (data as any)?.id },
+          body: { application_id: applicationId },
         });
       } catch (notifyErr) {
         console.error("Coordinator notification failed", notifyErr);
