@@ -70,25 +70,36 @@ export default function NewMemberApplication() {
     setSubmitting(true);
 
     try {
-      const { error } = await supabase.from("new_member_applications" as any).insert({
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        eaa_number: eaaNumber.trim(),
-        email: email.trim(),
-        address: address.trim(),
-        city: city.trim(),
-        state: state.trim(),
-        zip_code: zipCode.trim(),
-        quarter_applied: currentQuarter,
-        fee_amount: currentFee?.amount ?? 0,
-      } as any);
+      const { data, error } = await supabase
+        .from("new_member_applications" as any)
+        .insert({
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          eaa_number: eaaNumber.trim(),
+          email: email.trim(),
+          address: address.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          zip_code: zipCode.trim(),
+          quarter_applied: currentQuarter,
+          fee_amount: currentFee?.amount ?? 0,
+        } as any)
+        .select("id")
+        .single();
 
       if (error) throw error;
 
       setSubmitted(true);
       toast({ title: "Application submitted successfully!" });
 
-      // Coordinator notification is now handled by a database trigger on INSERT
+      // Notify the Membership Coordinator(s) — failures must not block the applicant.
+      try {
+        await supabase.functions.invoke("new-member-notify", {
+          body: { application_id: (data as any)?.id },
+        });
+      } catch (notifyErr) {
+        console.error("Coordinator notification failed", notifyErr);
+      }
     } catch (err: any) {
       toast({
         title: "Error submitting application",
