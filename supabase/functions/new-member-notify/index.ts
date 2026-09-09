@@ -25,20 +25,33 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify the caller is using the service_role key (internal/server-side only)
-    const authHeader = req.headers.get("authorization") ?? "";
-    const apiKeyHeader = req.headers.get("apikey") ?? "";
-    const providedKey = authHeader.replace("Bearer ", "") || apiKeyHeader;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (providedKey !== supabaseServiceKey) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
+    const body = await req.json().catch(() => ({}));
+    const applicationId = body?.application_id;
+
+    if (!applicationId) {
+      return new Response(JSON.stringify({ error: "Missing application_id" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Only notify for applications that actually exist in the database.
+    const { data: application } = await supabase
+      .from("new_member_applications")
+      .select("first_name, last_name, eaa_number, email, city, state")
+      .eq("id", applicationId)
+      .maybeSingle();
 
+    if (!application) {
+      return new Response(JSON.stringify({ error: "Application not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { first_name, last_name, eaa_number, email, city, state } = application as any;
     const { first_name, last_name, eaa_number, email, city, state } = await req.json();
 
     if (!first_name || !last_name || !email) {
