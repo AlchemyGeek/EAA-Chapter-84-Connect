@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     }
 
     const { first_name, last_name, eaa_number, email, city, state } = application as any;
-    const { first_name, last_name, eaa_number, email, city, state } = await req.json();
+    
 
     if (!first_name || !last_name || !email) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
