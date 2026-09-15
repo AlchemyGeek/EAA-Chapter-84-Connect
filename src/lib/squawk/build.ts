@@ -196,12 +196,13 @@ function quoteSlide(idx: number): SquawkSlide {
 }
 
 export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
-  const [manual, welcome, classifieds, hangar, volunteer] = await Promise.all([
+  const [manual, welcome, classifieds, hangar, volunteer, briefing] = await Promise.all([
     fetchManual(),
     fetchWelcome(),
     fetchClassifieds(),
     fetchHangarTalk(),
     fetchVolunteering(),
+    fetchBriefingRoom(),
   ]);
 
   // Reserve up to two slots for quotes whenever real content exists, otherwise fill with quotes.
