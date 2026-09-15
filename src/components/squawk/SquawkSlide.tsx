@@ -56,6 +56,11 @@ const KIND_STYLES: Record<SquawkSlideKind, KindStyle> = {
     border: "border-l-orange-500",
     iconWrap: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
   },
+  briefing_room: {
+    icon: Newspaper,
+    border: "border-l-indigo-500",
+    iconWrap: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  },
   quote: {
     icon: Quote,
     border: "border-l-slate-400",
