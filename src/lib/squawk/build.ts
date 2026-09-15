@@ -231,6 +231,7 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     ...pickUpTo(classifieds, MAX_PER_MEDIUM),
     ...pickUpTo(hangar, MAX_PER_MEDIUM),
     ...pickUpTo(volunteer, MAX_PER_MEDIUM),
+    ...pickUpTo(briefing, MAX_PER_MEDIUM),
   ]);
   for (const s of mediumPool) {
     if (slides.length >= targetSlots) break;
