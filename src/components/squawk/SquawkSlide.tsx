@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Megaphone, Sparkles, UserPlus, Tag, MessageSquare, HandHelping, Quote } from "lucide-react";
+import { ChevronRight, Megaphone, Sparkles, UserPlus, Tag, MessageSquare, HandHelping, Quote, Newspaper } from "lucide-react";
 import type { SquawkSlide as Slide, SquawkSlideKind } from "@/lib/squawk/types";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
@@ -19,6 +19,7 @@ export const SQUAWK_KIND_PROGRESS: Record<SquawkSlideKind, string> = {
   classifieds: "bg-blue-500",
   hangar_talk: "bg-sky-500",
   volunteering: "bg-orange-500",
+  briefing_room: "bg-indigo-500",
   quote: "bg-slate-400",
 };
 
@@ -54,6 +55,11 @@ const KIND_STYLES: Record<SquawkSlideKind, KindStyle> = {
     icon: HandHelping,
     border: "border-l-orange-500",
     iconWrap: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+  },
+  briefing_room: {
+    icon: Newspaper,
+    border: "border-l-indigo-500",
+    iconWrap: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
   },
   quote: {
     icon: Quote,

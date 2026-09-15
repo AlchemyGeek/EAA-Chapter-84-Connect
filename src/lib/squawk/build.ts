@@ -129,6 +129,26 @@ async function fetchHangarTalk(): Promise<SquawkSlide[]> {
   });
 }
 
+async function fetchBriefingRoom(): Promise<SquawkSlide[]> {
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("briefing_room_items" as any)
+    .select("id, headline, summary, published_at, status")
+    .eq("status", "published")
+    .gte("published_at", since)
+    .order("published_at", { ascending: false })
+    .limit(10);
+  if (error || !data) return [];
+  return (data as any[]).map((n) => ({
+    key: `briefing-${n.id}`,
+    kind: "briefing_room",
+    label: "Briefing Room",
+    title: truncate(n.headline, 80),
+    body: n.summary ? truncate(n.summary, 120) : "New story in the Briefing Room.",
+    href: "/briefing-room",
+  } satisfies SquawkSlide));
+}
+
 function manualToSlide(m: SquawkEntry): SquawkSlide {
   return {
     key: `manual-${m.id}`,
@@ -176,12 +196,13 @@ function quoteSlide(idx: number): SquawkSlide {
 }
 
 export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
-  const [manual, welcome, classifieds, hangar, volunteer] = await Promise.all([
+  const [manual, welcome, classifieds, hangar, volunteer, briefing] = await Promise.all([
     fetchManual(),
     fetchWelcome(),
     fetchClassifieds(),
     fetchHangarTalk(),
     fetchVolunteering(),
+    fetchBriefingRoom(),
   ]);
 
   // Reserve up to two slots for quotes whenever real content exists, otherwise fill with quotes.
@@ -190,7 +211,8 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     Math.min(welcome.length, MAX_WELCOME) +
     Math.min(classifieds.length, MAX_PER_MEDIUM) +
     Math.min(hangar.length, MAX_PER_MEDIUM) +
-    Math.min(volunteer.length, MAX_PER_MEDIUM);
+    Math.min(volunteer.length, MAX_PER_MEDIUM) +
+    Math.min(briefing.length, MAX_PER_MEDIUM);
   const targetSlots = Math.min(MAX_SLOTS - MAX_QUOTES_WITH_CONTENT, eligibleCount);
 
 
@@ -209,6 +231,7 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     ...pickUpTo(classifieds, MAX_PER_MEDIUM),
     ...pickUpTo(hangar, MAX_PER_MEDIUM),
     ...pickUpTo(volunteer, MAX_PER_MEDIUM),
+    ...pickUpTo(briefing, MAX_PER_MEDIUM),
   ]);
   for (const s of mediumPool) {
     if (slides.length >= targetSlots) break;
