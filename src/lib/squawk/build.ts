@@ -211,7 +211,8 @@ export async function buildSquawkSlides(): Promise<SquawkSlide[]> {
     Math.min(welcome.length, MAX_WELCOME) +
     Math.min(classifieds.length, MAX_PER_MEDIUM) +
     Math.min(hangar.length, MAX_PER_MEDIUM) +
-    Math.min(volunteer.length, MAX_PER_MEDIUM);
+    Math.min(volunteer.length, MAX_PER_MEDIUM) +
+    Math.min(briefing.length, MAX_PER_MEDIUM);
   const targetSlots = Math.min(MAX_SLOTS - MAX_QUOTES_WITH_CONTENT, eligibleCount);
 
 
