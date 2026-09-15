@@ -129,6 +129,26 @@ async function fetchHangarTalk(): Promise<SquawkSlide[]> {
   });
 }
 
+async function fetchBriefingRoom(): Promise<SquawkSlide[]> {
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("briefing_room_items" as any)
+    .select("id, headline, summary, published_at, status")
+    .eq("status", "published")
+    .gte("published_at", since)
+    .order("published_at", { ascending: false })
+    .limit(10);
+  if (error || !data) return [];
+  return (data as any[]).map((n) => ({
+    key: `briefing-${n.id}`,
+    kind: "briefing_room",
+    label: "Briefing Room",
+    title: truncate(n.headline, 80),
+    body: n.summary ? truncate(n.summary, 120) : "New story in the Briefing Room.",
+    href: "/briefing-room",
+  } satisfies SquawkSlide));
+}
+
 function manualToSlide(m: SquawkEntry): SquawkSlide {
   return {
     key: `manual-${m.id}`,
