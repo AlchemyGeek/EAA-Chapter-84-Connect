@@ -99,6 +99,29 @@ export default function Flyover() {
           </div>
         </header>
 
+        {!isLoading && !isError && (
+          <nav
+            aria-label="Sections"
+            className="sticky top-0 z-10 flex gap-1 overflow-x-auto border-b border-border bg-card px-2 py-1.5"
+          >
+            {[
+              { id: "briefing", label: "Briefing Room", show: briefing.length > 0 },
+              { id: "volunteering", label: "Volunteering", show: volunteering.length > 0 },
+              { id: "classifieds", label: "Classifieds", show: classifieds.length > 0 },
+            ]
+              .filter((s) => s.show)
+              .map((s) => (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  className="inline-flex min-h-[44px] items-center whitespace-nowrap rounded-full px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  {s.label}
+                </a>
+              ))}
+          </nav>
+        )}
+
         <div className="space-y-8 px-4 py-5">
           {isLoading && (
             <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
