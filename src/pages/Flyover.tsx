@@ -38,16 +38,23 @@ type FlyoverData = {
 function SectionHeading({
   icon: Icon,
   title,
+  description,
 }: {
   icon: typeof Newspaper;
   title: string;
+  description: string;
 }) {
   return (
-    <div className="flex items-center gap-2 border-b border-border pb-2">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h2>
+    <div className="border-b border-border pb-3">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h2>
+      </div>
+      <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
     </div>
   );
 }
