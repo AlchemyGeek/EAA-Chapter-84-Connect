@@ -134,7 +134,7 @@ export default function Flyover() {
 
           {!isLoading && !isError && (
             <>
-              <section className="space-y-3">
+              <section id="briefing" className="scroll-mt-14 space-y-3">
                 <SectionHeading icon={Newspaper} title="Briefing Room" />
                 {briefing.length === 0 ? (
                   <p className="py-4 text-center text-sm text-muted-foreground">
@@ -150,7 +150,7 @@ export default function Flyover() {
               </section>
 
               {volunteering.length > 0 && (
-                <section className="space-y-3">
+                <section id="volunteering" className="scroll-mt-14 space-y-3">
                   <SectionHeading icon={HandHelping} title="Volunteering" />
                   <div className="space-y-3">
                     {volunteering.map((v) => (
@@ -184,7 +184,7 @@ export default function Flyover() {
               )}
 
               {classifieds.length > 0 && (
-                <section className="space-y-3">
+                <section id="classifieds" className="scroll-mt-14 space-y-3">
                   <SectionHeading icon={Tag} title="Classifieds" />
                   <div className="space-y-3">
                     {classifieds.map((c) => {
