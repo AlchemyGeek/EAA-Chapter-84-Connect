@@ -36,6 +36,7 @@ import BriefingRoomArchive from "./pages/BriefingRoomArchive";
 import BriefingRoomReview from "./pages/BriefingRoomReview";
 import NewslettersAdmin from "./pages/NewslettersAdmin";
 import ProxyVote from "./pages/ProxyVote";
+import Flyover from "./pages/Flyover";
 import Classifieds from "./pages/Classifieds";
 import ClassifiedDetail from "./pages/ClassifiedDetail";
 import ClassifiedNew from "./pages/ClassifiedNew";
@@ -113,6 +114,7 @@ const App = () => (
             <Route path="/hangar-talk/:id/edit" element={<HangarTalkEdit />} />
             <Route path="/newsletters-admin" element={<NewslettersAdmin />} />
             <Route path="/join" element={<NewMemberApplication />} />
+            <Route path="/flyover" element={<Flyover />} />
             <Route path="/proxy-vote" element={<ProxyVote />} />
             
             <Route path="/unsubscribe" element={<Unsubscribe />} />
