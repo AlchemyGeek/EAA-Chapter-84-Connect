@@ -1,14 +1,19 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /flyover
 
 User-agent: Bingbot
 Allow: /
+Disallow: /flyover
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /flyover
 
 User-agent: facebookexternalhit
 Allow: /
+Disallow: /flyover
 
 User-agent: *
 Allow: /
+Disallow: /flyover
