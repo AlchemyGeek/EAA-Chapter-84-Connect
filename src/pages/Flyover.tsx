@@ -264,7 +264,7 @@ export default function Flyover() {
                             href={`mailto:${CHAPTER_EMAIL}?subject=${encodeURIComponent(`Classifieds: ${c.title}`)}`}
                             className="mt-2 inline-flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
                           >
-                            <Mail className="h-4 w-4" /> {CHAPTER_EMAIL}
+                            <Mail className="h-4 w-4" /> Contact Us
                           </a>
                         </article>
                       );
