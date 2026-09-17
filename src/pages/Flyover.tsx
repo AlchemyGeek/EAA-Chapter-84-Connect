@@ -38,16 +38,23 @@ type FlyoverData = {
 function SectionHeading({
   icon: Icon,
   title,
+  description,
 }: {
   icon: typeof Newspaper;
   title: string;
+  description: string;
 }) {
   return (
-    <div className="flex items-center gap-2 border-b border-border pb-2">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h2>
+    <div className="border-b border-border pb-3">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h2>
+      </div>
+      <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
     </div>
   );
 }
@@ -134,8 +141,15 @@ export default function Flyover() {
 
           {!isLoading && !isError && (
             <>
-              <section id="briefing" className="scroll-mt-14 space-y-3">
-                <SectionHeading icon={Newspaper} title="Briefing Room" />
+              <section
+                id="briefing"
+                className="scroll-mt-14 space-y-3 rounded-xl border border-border bg-muted/40 p-4"
+              >
+                <SectionHeading
+                  icon={Newspaper}
+                  title="Briefing Room"
+                  description="Aviation news and chapter stories, hand-picked by our officers. This is what your fellow members are reading — fresh from the hangar."
+                />
                 {briefing.length === 0 ? (
                   <p className="py-4 text-center text-sm text-muted-foreground">
                     No stories published yet.
@@ -150,8 +164,15 @@ export default function Flyover() {
               </section>
 
               {volunteering.length > 0 && (
-                <section id="volunteering" className="scroll-mt-14 space-y-3">
-                  <SectionHeading icon={HandHelping} title="Volunteering" />
+                <section
+                  id="volunteering"
+                  className="scroll-mt-14 space-y-3 rounded-xl border border-border bg-primary/5 p-4"
+                >
+                  <SectionHeading
+                    icon={HandHelping}
+                    title="Volunteering"
+                    description="Our chapter runs on volunteers — and it's the fastest way to meet people and feel part of the crew. See where help is needed and step up."
+                  />
                   <div className="space-y-3">
                     {volunteering.map((v) => (
                       <article
@@ -184,8 +205,15 @@ export default function Flyover() {
               )}
 
               {classifieds.length > 0 && (
-                <section id="classifieds" className="scroll-mt-14 space-y-3">
-                  <SectionHeading icon={Tag} title="Classifieds" />
+                <section
+                  id="classifieds"
+                  className="scroll-mt-14 space-y-3 rounded-xl border border-border bg-accent/5 p-4"
+                >
+                  <SectionHeading
+                    icon={Tag}
+                    title="Classifieds"
+                    description="Buy, sell, and swap aviation gear with people you trust. From tools to aircraft projects — check here before you shop anywhere else."
+                  />
                   <div className="space-y-3">
                     {classifieds.map((c) => {
                       const price = formatPrice(c.price);
