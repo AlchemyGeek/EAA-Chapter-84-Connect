@@ -28,3 +28,6 @@ refresh_token_expiry = 2592000
 
   [functions.new-member-notify]
     verify_jwt = false
+
+  [functions.flyover-public]
+    verify_jwt = false
