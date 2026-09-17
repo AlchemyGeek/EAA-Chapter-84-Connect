@@ -148,7 +148,7 @@ export default function Flyover() {
                 <SectionHeading
                   icon={Newspaper}
                   title="Briefing Room"
-                  description="Aviation news and chapter stories, hand-picked by our officers. This is what your fellow members are reading — fresh from the hangar."
+                  description="Aviation news and community stories, edited by our officers. This is what your fellow members are reading — fresh from the hangar."
                 />
                 {briefing.length === 0 ? (
                   <p className="py-4 text-center text-sm text-muted-foreground">
@@ -166,7 +166,7 @@ export default function Flyover() {
               {volunteering.length > 0 && (
                 <section
                   id="volunteering"
-                  className="scroll-mt-14 space-y-3 rounded-xl border border-border bg-primary/5 p-4"
+                  className="scroll-mt-14 space-y-3 rounded-xl border border-border bg-secondary/10 p-4"
                 >
                   <SectionHeading
                     icon={HandHelping}
@@ -264,7 +264,7 @@ export default function Flyover() {
                             href={`mailto:${CHAPTER_EMAIL}?subject=${encodeURIComponent(`Classifieds: ${c.title}`)}`}
                             className="mt-2 inline-flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
                           >
-                            <Mail className="h-4 w-4" /> {CHAPTER_EMAIL}
+                            <Mail className="h-4 w-4" /> Contact Us
                           </a>
                         </article>
                       );
