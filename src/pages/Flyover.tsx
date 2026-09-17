@@ -148,7 +148,7 @@ export default function Flyover() {
                 <SectionHeading
                   icon={Newspaper}
                   title="Briefing Room"
-                  description="Aviation news and chapter stories, hand-picked by our officers. This is what your fellow members are reading — fresh from the hangar."
+                  description="Aviation news and community stories, edited by our officers. This is what your fellow members are reading — fresh from the hangar."
                 />
                 {briefing.length === 0 ? (
                   <p className="py-4 text-center text-sm text-muted-foreground">
@@ -166,7 +166,7 @@ export default function Flyover() {
               {volunteering.length > 0 && (
                 <section
                   id="volunteering"
-                  className="scroll-mt-14 space-y-3 rounded-xl border border-border bg-primary/5 p-4"
+                  className="scroll-mt-14 space-y-3 rounded-xl border border-border bg-secondary/10 p-4"
                 >
                   <SectionHeading
                     icon={HandHelping}
