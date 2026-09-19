@@ -78,7 +78,7 @@ export default function SurveyResults() {
       <div className="flex items-center gap-3">
         <ClipboardList className="h-6 w-6 text-accent" />
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-foreground">New Member Survey — Class of 2026</h1>
+          <h1 className="text-2xl font-bold text-foreground">2026 New Member Survey — Class of 2026</h1>
           <p className="text-sm text-muted-foreground">
             {responses.length} response{responses.length === 1 ? "" : "s"} collected
             {persona !== ALL_PERSONAS ? ` (${filtered.length} in this view)` : ""}

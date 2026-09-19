@@ -157,7 +157,7 @@ export default function Survey() {
           <img src={chapterLogo} alt="EAA Chapter 84" className="h-14 w-14 rounded-full ring-2 ring-border" />
           <div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">EAA Chapter 84</h1>
-            <p className="text-sm text-muted-foreground">New Member Survey — Class of 2026</p>
+            <p className="text-sm text-muted-foreground">2026 New Member Survey — Class of 2026</p>
           </div>
         </div>
 

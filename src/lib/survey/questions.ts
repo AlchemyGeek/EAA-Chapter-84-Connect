@@ -1,4 +1,4 @@
-// New Member Survey — Class of 2026
+// 2026 New Member Survey — Class of 2026
 // Question wording mirrors the board-approved spec, with the year updated to 2026.
 
 export const SURVEY_KEY = "new-member-2026";
