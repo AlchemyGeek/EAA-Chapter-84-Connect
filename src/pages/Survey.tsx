@@ -191,8 +191,14 @@ export default function Survey() {
 
           {SURVEY_SECTIONS.map((section) => (
             <Card key={section.title}>
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-foreground">{section.title}</CardTitle>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <CardTitle className="text-lg font-semibold text-foreground pt-1">{section.title}</CardTitle>
+                {(() => {
+                  const img = sectionImage(section.title);
+                  return img ? (
+                    <img src={img.src} alt={img.alt} className="h-24 w-auto shrink-0" aria-hidden="true" />
+                  ) : null;
+                })()}
               </CardHeader>
               <CardContent className="space-y-8">
                 {section.questions.map((q) => (
