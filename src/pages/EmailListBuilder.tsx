@@ -44,7 +44,8 @@ const AUDIENCES: { value: AudienceKey; label: string; description: string }[] = 
   {
     value: "joined_this_year",
     label: "Members who joined this year",
-    description: "Members whose roster join date falls in the current calendar year.",
+    description:
+      "Active members whose join date falls in the current calendar year. Matches the \"New This Year\" count on the statistics page (prospects excluded).",
   },
   {
     value: "active_good_unsigned_proxy_2026",
