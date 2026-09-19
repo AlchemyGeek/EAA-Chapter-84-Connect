@@ -1444,6 +1444,27 @@ export type Database = {
         }
         Relationships: []
       }
+      survey_responses: {
+        Row: {
+          answers: Json
+          id: string
+          submitted_at: string
+          survey_key: string
+        }
+        Insert: {
+          answers?: Json
+          id?: string
+          submitted_at?: string
+          survey_key: string
+        }
+        Update: {
+          answers?: Json
+          id?: string
+          submitted_at?: string
+          survey_key?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
