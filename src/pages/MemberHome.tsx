@@ -232,6 +232,21 @@ export default function MemberHome() {
     },
   });
 
+  // Survey response count (table arrives with the survey feature; fail quietly until then)
+  const { data: surveyResponseCount = 0 } = useQuery({
+    queryKey: ["survey-response-count"],
+    enabled: isOfficerOrAbove || isAdmin,
+    staleTime: 0,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("survey_responses" as any)
+        .select("*", { count: "exact", head: true })
+        .eq("survey_key", "new-member-2026");
+      if (error) return 0;
+      return count ?? 0;
+    },
+  });
+
   // Fetch member chapter data (for directory visibility)
   const activeKeyId = impersonateKeyId ? Number(impersonateKeyId) : myMember?.key_id;
   const { data: chapterData } = useQuery({
@@ -791,6 +806,7 @@ export default function MemberHome() {
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Insights</p>
                 <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
                 <AdminLink to="/member-engagement" icon={Activity} label="Member Engagement" />
+                <AdminLink to="/survey-results" icon={ClipboardList} label={`New Member Survey${surveyResponseCount > 0 ? ` (${surveyResponseCount})` : ""}`} />
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Archive</p>
