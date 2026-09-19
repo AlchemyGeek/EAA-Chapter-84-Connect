@@ -163,8 +163,11 @@ export default function Survey() {
 
         {/* Intro */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-foreground">{SURVEY_INTRO_TITLE}</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle className="text-lg font-semibold text-foreground">{SURVEY_INTRO_TITLE}</CardTitle>
+            </div>
+            <img src={imgWelcome.url} alt="Welcoming pilot waving" className="h-24 w-auto shrink-0" />
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground leading-relaxed">{SURVEY_INTRO_BODY}</p>
