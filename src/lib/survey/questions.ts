@@ -193,4 +193,4 @@ export const OPEN_TEXT_QUESTIONS = ["q11", "q16", "q27"];
 
 export const SURVEY_INTRO_TITLE = "New to the Pattern — tell us how we're doing";
 export const SURVEY_INTRO_BODY =
-  "Welcome aboard! You joined Chapter 84 in 2026, and we'd love to hear how it's going. This short survey (about 7–8 minutes) helps us understand what you're interested in, how our website, Chapter84 Connect, and newsletter are working for you, and how your first months with the chapter felt. Your answers go to the board as a group summary. Blunt feedback is welcome — it's the most useful kind. Name and email are optional at the end.";
+  "Welcome aboard! You joined Chapter 84 in 2026, and we'd love to hear how it's going. This short survey (about 5 minutes) helps us understand what you're interested in, how our website, Chapter84 Connect, and newsletter are working for you, and how your first months with the chapter felt. Your answers go to the board as a group summary. Blunt feedback is welcome — it's the most useful kind. Name and email are optional at the end.";
