@@ -262,7 +262,7 @@ function QuestionInput({
   }
 
   if (q.type === "nps") {
-    const selected = typeof value === "number" ? value : undefined;
+    const selected = value !== undefined && value !== "" && value !== null ? Number(value) : undefined;
     return (
       <div className="space-y-2">
         <div className="flex flex-wrap gap-1.5">
