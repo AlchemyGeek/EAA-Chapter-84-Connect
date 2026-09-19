@@ -89,23 +89,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "Member show-and-tell of their aircraft or projects",
         ],
       },
-      {
-        id: "q9", text: "What gets in the way of participating more? Select all that apply.", type: "multi", required: false, allowOther: true,
-        options: [
-          "Meeting day/time doesn't work for me",
-          "Distance or commute",
-          "Work or family schedule",
-          "Not sure what's going on or how to get involved",
-          "Haven't met enough people yet",
-          "Activities aren't a match for my interests",
-          "Cost",
-          "Nothing — I participate as much as I want",
-        ],
-      },
-      {
-        id: "q10", text: "If we offered virtual or hybrid options, how likely would you be to join?", type: "single", required: false,
-        options: ["Very likely", "Somewhat likely", "Not likely", "I prefer in person only"],
-      },
       { id: "q11", text: "What one activity or program do you wish the chapter offered that it doesn't today?", type: "open", required: false, multiline: true },
     ],
   },
