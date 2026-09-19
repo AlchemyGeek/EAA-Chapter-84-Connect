@@ -142,8 +142,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "I understood how to use Connect and other chapter resources.",
         ],
       },
-      { id: "q21", text: "What went well in your first months with the chapter?", type: "open", required: false, multiline: true },
-      { id: "q22", text: "What was missing, confusing, or frustrating?", type: "open", required: false, multiline: true },
       {
         id: "q23", text: "What did you need in your first 90 days that you didn't get? Select all that apply.", type: "multi", required: false, allowOther: true,
         options: [
