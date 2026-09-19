@@ -119,21 +119,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "I know where to go when I have a question.",
         ],
       },
-      {
-        id: "q15", text: "Which Connect features have you used? Select all that apply.", type: "multi", required: false, allowOther: true,
-        options: [
-          "Logging in and updating my profile",
-          "Member directory",
-          "Paying or checking dues",
-          "Classifieds",
-          "Hangar Talk",
-          "Briefing Room (aviation news)",
-          "Volunteering opportunities",
-          "Squawk (homepage announcements)",
-          "Newsletter archive",
-          "I haven't logged in to Connect",
-        ],
-      },
       { id: "q16", text: "What would make Connect more useful to you?", type: "open", required: false, multiline: true },
       {
         id: "q17", text: "How would you prefer to hear from the chapter? Rank your top 2.", type: "multi", required: false, maxPicks: 2, allowOther: true,
