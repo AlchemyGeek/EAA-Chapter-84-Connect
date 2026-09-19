@@ -89,23 +89,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "Member show-and-tell of their aircraft or projects",
         ],
       },
-      {
-        id: "q9", text: "What gets in the way of participating more? Select all that apply.", type: "multi", required: false, allowOther: true,
-        options: [
-          "Meeting day/time doesn't work for me",
-          "Distance or commute",
-          "Work or family schedule",
-          "Not sure what's going on or how to get involved",
-          "Haven't met enough people yet",
-          "Activities aren't a match for my interests",
-          "Cost",
-          "Nothing — I participate as much as I want",
-        ],
-      },
-      {
-        id: "q10", text: "If we offered virtual or hybrid options, how likely would you be to join?", type: "single", required: false,
-        options: ["Very likely", "Somewhat likely", "Not likely", "I prefer in person only"],
-      },
       { id: "q11", text: "What one activity or program do you wish the chapter offered that it doesn't today?", type: "open", required: false, multiline: true },
     ],
   },
@@ -136,21 +119,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "I know where to go when I have a question.",
         ],
       },
-      {
-        id: "q15", text: "Which Connect features have you used? Select all that apply.", type: "multi", required: false, allowOther: true,
-        options: [
-          "Logging in and updating my profile",
-          "Member directory",
-          "Paying or checking dues",
-          "Classifieds",
-          "Hangar Talk",
-          "Briefing Room (aviation news)",
-          "Volunteering opportunities",
-          "Squawk (homepage announcements)",
-          "Newsletter archive",
-          "I haven't logged in to Connect",
-        ],
-      },
       { id: "q16", text: "What would make Connect more useful to you?", type: "open", required: false, multiline: true },
       {
         id: "q17", text: "How would you prefer to hear from the chapter? Rank your top 2.", type: "multi", required: false, maxPicks: 2, allowOther: true,
@@ -174,8 +142,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "I understood how to use Connect and other chapter resources.",
         ],
       },
-      { id: "q21", text: "What went well in your first months with the chapter?", type: "open", required: false, multiline: true },
-      { id: "q22", text: "What was missing, confusing, or frustrating?", type: "open", required: false, multiline: true },
       {
         id: "q23", text: "What did you need in your first 90 days that you didn't get? Select all that apply.", type: "multi", required: false, allowOther: true,
         options: [
@@ -223,8 +189,8 @@ export const SURVEY_SECTIONS: SurveySection[] = [
 
 export const ALL_QUESTIONS: SurveyQuestion[] = SURVEY_SECTIONS.flatMap((s) => s.questions);
 
-export const OPEN_TEXT_QUESTIONS = ["q11", "q16", "q21", "q22", "q27"];
+export const OPEN_TEXT_QUESTIONS = ["q11", "q16", "q27"];
 
 export const SURVEY_INTRO_TITLE = "New to the Pattern — tell us how we're doing";
 export const SURVEY_INTRO_BODY =
-  "Welcome aboard! You joined Chapter 84 in 2026, and we'd love to hear how it's going. This short survey (about 7–8 minutes) helps us understand what you're interested in, how our website, Chapter84 Connect, and newsletter are working for you, and how your first months with the chapter felt. Your answers go to the board as a group summary. Blunt feedback is welcome — it's the most useful kind. Name and email are optional at the end.";
+  "Welcome aboard! You joined Chapter 84 in 2026, and we'd love to hear how it's going. This short survey (about 5 minutes) helps us understand what you're interested in, how our website, Chapter84 Connect, and newsletter are working for you, and how your first months with the chapter felt. Your answers go to the board as a group summary. Blunt feedback is welcome — it's the most useful kind. Name and email are optional at the end.";
