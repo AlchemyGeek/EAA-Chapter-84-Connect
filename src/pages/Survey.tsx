@@ -38,7 +38,7 @@ import {
 
 type Answers = Record<string, unknown>;
 
-const SUBMITTED_KEY = `survey-submitted-${SURVEY_KEY}`;
+const SUBMITTED_KEY = `survey-submitted-${SURVEY_KEY}-r2`;
 const OTHER = "Other";
 
 export default function Survey() {
