@@ -8,6 +8,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
 import chapterLogo from "@/assets/chapter-logo.jpg";
+import imgWelcome from "@/assets/debrief-01-welcome.png.asset.json";
+import imgAboutYou from "@/assets/debrief-02-about-you.png.asset.json";
+import imgActivities from "@/assets/debrief-03-activities.png.asset.json";
+import imgResources from "@/assets/debrief-04-resources.png.asset.json";
+import imgOnboarding from "@/assets/debrief-05-onboarding.png.asset.json";
+import imgLookingAhead from "@/assets/debrief-06-looking-ahead.png.asset.json";
+
+/** Section illustrations, matched by keyword in the section title. */
+const SECTION_IMAGES: { match: string; src: string; alt: string }[] = [
+  { match: "About You", src: imgAboutYou.url, alt: "Pilot filling out a name tag" },
+  { match: "Activities", src: imgActivities.url, alt: "Pilot with a wrench and a burger on a stick" },
+  { match: "Resources", src: imgResources.url, alt: "Pilot puzzling over a tablet and cables" },
+  { match: "Onboarding", src: imgOnboarding.url, alt: "Pilot in a seat checking off a clipboard" },
+  { match: "Looking Ahead", src: imgLookingAhead.url, alt: "Pilot looking through a telescope at a runway sign" },
+];
+
+function sectionImage(title: string) {
+  return SECTION_IMAGES.find((s) => title.includes(s.match));
+}
 import {
   ALL_QUESTIONS,
   SURVEY_INTRO_BODY,
