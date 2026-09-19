@@ -189,7 +189,7 @@ export const SURVEY_SECTIONS: SurveySection[] = [
 
 export const ALL_QUESTIONS: SurveyQuestion[] = SURVEY_SECTIONS.flatMap((s) => s.questions);
 
-export const OPEN_TEXT_QUESTIONS = ["q11", "q16", "q21", "q22", "q27"];
+export const OPEN_TEXT_QUESTIONS = ["q11", "q16", "q27"];
 
 export const SURVEY_INTRO_TITLE = "New to the Pattern — tell us how we're doing";
 export const SURVEY_INTRO_BODY =
