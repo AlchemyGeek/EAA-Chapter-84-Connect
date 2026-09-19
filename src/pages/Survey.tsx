@@ -8,6 +8,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
 import chapterLogo from "@/assets/chapter-logo.jpg";
+import imgWelcome from "@/assets/debrief-01-welcome.png.asset.json";
+import imgAboutYou from "@/assets/debrief-02-about-you.png.asset.json";
+import imgActivities from "@/assets/debrief-03-activities.png.asset.json";
+import imgResources from "@/assets/debrief-04-resources.png.asset.json";
+import imgOnboarding from "@/assets/debrief-05-onboarding.png.asset.json";
+import imgLookingAhead from "@/assets/debrief-06-looking-ahead.png.asset.json";
+
+/** Section illustrations, matched by keyword in the section title. */
+const SECTION_IMAGES: { match: string; src: string; alt: string }[] = [
+  { match: "About You", src: imgAboutYou.url, alt: "Pilot filling out a name tag" },
+  { match: "Activities", src: imgActivities.url, alt: "Pilot with a wrench and a burger on a stick" },
+  { match: "Resources", src: imgResources.url, alt: "Pilot puzzling over a tablet and cables" },
+  { match: "Onboarding", src: imgOnboarding.url, alt: "Pilot in a seat checking off a clipboard" },
+  { match: "Looking Ahead", src: imgLookingAhead.url, alt: "Pilot looking through a telescope at a runway sign" },
+];
+
+function sectionImage(title: string) {
+  return SECTION_IMAGES.find((s) => title.includes(s.match));
+}
 import {
   ALL_QUESTIONS,
   SURVEY_INTRO_BODY,
@@ -144,8 +163,11 @@ export default function Survey() {
 
         {/* Intro */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-foreground">{SURVEY_INTRO_TITLE}</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle className="text-lg font-semibold text-foreground">{SURVEY_INTRO_TITLE}</CardTitle>
+            </div>
+            <img src={imgWelcome.url} alt="Welcoming pilot waving" className="h-24 w-auto shrink-0" />
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground leading-relaxed">{SURVEY_INTRO_BODY}</p>
@@ -169,8 +191,14 @@ export default function Survey() {
 
           {SURVEY_SECTIONS.map((section) => (
             <Card key={section.title}>
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-foreground">{section.title}</CardTitle>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <CardTitle className="text-lg font-semibold text-foreground pt-1">{section.title}</CardTitle>
+                {(() => {
+                  const img = sectionImage(section.title);
+                  return img ? (
+                    <img src={img.src} alt={img.alt} className="h-24 w-auto shrink-0" aria-hidden="true" />
+                  ) : null;
+                })()}
               </CardHeader>
               <CardContent className="space-y-8">
                 {section.questions.map((q) => (
