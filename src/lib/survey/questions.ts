@@ -15,6 +15,8 @@ export interface SurveyQuestion {
   maxPicks?: number;
   allowOther?: boolean; // appends an "Other: ____" free-text option
   rows?: string[];
+  /** Optional reference links shown under specific grid rows. */
+  rowLinks?: Record<string, string>;
   columns?: string[];
   /** Grid columns are an ordered 1-5 scale (low label -> high label); adds an N/A choice when set. */
   scaleLabels?: [string, string];
@@ -46,29 +48,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
       { id: "q1", text: "Which best describes you? Select all that apply.", type: "multi", required: true, options: PERSONAS },
       { id: "q2", text: "If you had to pick just one, which is your primary category?", type: "single", required: true, options: PERSONAS },
       { id: "q3", text: "Anything about how you'd describe yourself that these categories miss?", type: "open", required: false, multiline: true },
-      {
-        id: "q4", text: "Which best describes your aviation experience?", type: "single", required: false,
-        options: [
-          "Brand new — curious, just getting started",
-          "Student pilot or working on a certificate",
-          "Certificated pilot",
-          "Builder with a project underway or completed",
-          "Long-time aviation person new to this chapter",
-        ],
-      },
-      {
-        id: "q5", text: "What brought you to Chapter 84? Select all that apply.", type: "multi", required: false, allowOther: true,
-        options: [
-          "Wanted to build or get help with a build",
-          "Wanted to meet other pilots / aviators",
-          "Interested in the presentations and speakers",
-          "Wanted to learn and get mentorship",
-          "Wanted to volunteer / give back",
-          "Introduced through Young Eagles",
-          "Referred by a friend or existing member",
-          "Found us online (website or search)",
-        ],
-      },
       { id: "q6", text: "Which quarter of 2026 did you join?", type: "single", required: false, options: ["Q1", "Q2", "Q3", "Q4", "Not sure"] },
     ],
   },
@@ -78,17 +57,19 @@ export const SURVEY_SECTIONS: SurveySection[] = [
       {
         id: "q7", text: "How interested are you in each of these chapter activities?", type: "grid", required: true,
         columns: ["I already participate", "Very interested", "Somewhat interested", "Not interested"],
+        rowLinks: {
+          "IMC / VMC clubs (instrument and proficiency-focused; possibly virtual)":
+            "https://www.eaa.org/eaa/pilots/eaa-pilot-proficiency/proficiency-and-education-programs",
+        },
         rows: [
           "Monthly member meetings and presentations",
           "Burger Burn events",
           "Young Eagles flight events",
-          "Ray Scholarship program",
           "Build and restoration projects (working alongside other builders)",
           "Time in the chapter hangar / work parties",
           "Fly-outs and group flights",
           "IMC / VMC clubs (instrument and proficiency-focused; possibly virtual)",
           "Tech counselor visits and build inspections",
-          "Mentoring other new members (Buddy Program)",
           "Community and airport outreach",
         ],
       },
@@ -125,7 +106,7 @@ export const SURVEY_SECTIONS: SurveySection[] = [
         id: "q10", text: "If we offered virtual or hybrid options, how likely would you be to join?", type: "single", required: false,
         options: ["Very likely", "Somewhat likely", "Not likely", "I prefer in person only"],
       },
-      { id: "q11", text: "What one activity or program do you wish the chapter offered that it doesn't today?", type: "open", required: true, multiline: true },
+      { id: "q11", text: "What one activity or program do you wish the chapter offered that it doesn't today?", type: "open", required: false, multiline: true },
     ],
   },
   {
@@ -138,8 +119,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "Chapter website (eaa84.org)",
           "Chapter84 Connect member portal",
           "Monthly newsletter",
-          "Online dues payment page",
-          "Membership email (membership@eaa84.org)",
         ],
       },
       {
@@ -172,7 +151,7 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "I haven't logged in to Connect",
         ],
       },
-      { id: "q16", text: "What would make Connect more useful to you?", type: "open", required: true, multiline: true },
+      { id: "q16", text: "What would make Connect more useful to you?", type: "open", required: false, multiline: true },
       {
         id: "q17", text: "How would you prefer to hear from the chapter? Rank your top 2.", type: "multi", required: false, maxPicks: 2, allowOther: true,
         options: ["Email", "Newsletter", "Connect notifications", "Text message", "Website", "At meetings"],
@@ -182,14 +161,6 @@ export const SURVEY_SECTIONS: SurveySection[] = [
   {
     title: "Section 4 — Your Onboarding Experience",
     questions: [
-      {
-        id: "q18", text: "How did you join?", type: "single", required: true, allowOther: true,
-        options: [
-          "Online application",
-          "In person at a chapter meeting or event",
-          "Through EAA national, then found the chapter",
-        ],
-      },
       {
         id: "q19", text: "Agree or disagree:", type: "grid", required: true,
         columns: AGREEMENT, scaleLabels: ["Strongly disagree", "Strongly agree"],
@@ -203,20 +174,8 @@ export const SURVEY_SECTIONS: SurveySection[] = [
           "I understood how to use Connect and other chapter resources.",
         ],
       },
-      {
-        id: "q20", text: "Which of these did you receive or experience? Select all that apply.", type: "multi", required: false,
-        options: [
-          "Welcome email",
-          "Introduction in the newsletter (\"New to the Pattern\")",
-          "Matched with a buddy / mentor (New Member Buddy Program)",
-          "Personal outreach from a board member or volunteer",
-          "Invitation to a meeting or event",
-          "Tour of the hangar or airport",
-          "None of these",
-        ],
-      },
-      { id: "q21", text: "What went well in your first months with the chapter?", type: "open", required: true, multiline: true },
-      { id: "q22", text: "What was missing, confusing, or frustrating?", type: "open", required: true, multiline: true },
+      { id: "q21", text: "What went well in your first months with the chapter?", type: "open", required: false, multiline: true },
+      { id: "q22", text: "What was missing, confusing, or frustrating?", type: "open", required: false, multiline: true },
       {
         id: "q23", text: "What did you need in your first 90 days that you didn't get? Select all that apply.", type: "multi", required: false, allowOther: true,
         options: [
