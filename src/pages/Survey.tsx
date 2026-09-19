@@ -385,6 +385,16 @@ function QuestionInput({
       {(q.rows ?? []).map((row) => (
         <div key={row} className="rounded-md border border-border p-3 space-y-2">
           <p className="text-sm text-foreground leading-snug">{row}</p>
+          {q.rowLinks?.[row] && (
+            <a
+              href={q.rowLinks[row]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-xs text-primary underline underline-offset-2"
+            >
+              Learn more
+            </a>
+          )}
           <div className="flex flex-wrap gap-1.5">
             {columns.map((col, i) => {
               const label = q.scaleLabels && col !== "N/A" ? String(i + 1) : col;
