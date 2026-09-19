@@ -1,6 +1,3 @@
--- Survey responses store for the New Member Survey (Class of 2026).
--- Fully anonymous: no link to members or auth users.
-
 create table public.survey_responses (
   id uuid primary key default gen_random_uuid(),
   survey_key text not null,
