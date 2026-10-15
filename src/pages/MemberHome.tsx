@@ -806,7 +806,6 @@ export default function MemberHome() {
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Insights</p>
                 <AdminLink to="/membership-stats" icon={BarChart3} label="Membership Statistics" />
                 <AdminLink to="/member-engagement" icon={Activity} label="Member Engagement" />
-                <AdminLink to="/survey-results" icon={ClipboardList} label={`2026 New Member Survey${surveyResponseCount > 0 ? ` (${surveyResponseCount})` : ""}`} />
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Archive</p>
@@ -819,6 +818,7 @@ export default function MemberHome() {
                   <span className="flex-1">2026 Bylaws Proxy Vote Results{proxyVoteSignCount > 0 ? ` (${proxyVoteSignCount})` : ""}</span>
                   <Download className="h-4 w-4 text-muted-foreground" />
                 </button>
+                <AdminLink to="/survey-results" icon={ClipboardList} label={`2026 New Member Survey${surveyResponseCount > 0 ? ` (${surveyResponseCount})` : ""}`} />
               </div>
             </CardContent>
           </Card>
