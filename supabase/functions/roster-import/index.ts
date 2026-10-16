@@ -330,7 +330,10 @@ Deno.serve(async (req) => {
           const matchedKeyId = (incoming as any).__matched_key_id;
           if (matchedKeyId != null) {
             const existing = existingMap.get(matchedKeyId)!;
-            const diffs = diffRecord(existing, incoming);
+            // Ignore bookkeeping fields — the row's missing KeyID and the
+            // internal matcher aren't real changes.
+            const diffs = diffRecord(existing, incoming)
+              .filter((d) => d.field !== "key_id" && d.field !== "__matched_key_id");
             if (diffs.length > 0) {
               previewModified.push({
                 key_id: matchedKeyId,
@@ -476,11 +479,15 @@ Deno.serve(async (req) => {
         const matchedKeyId = (incoming as any).__matched_key_id;
         if (matchedKeyId != null) {
           const existing = existingMap.get(matchedKeyId)!;
-          const diffs = diffRecord(existing, incoming);
+          // Ignore bookkeeping fields — the row's missing KeyID and the
+          // internal matcher aren't real changes.
+          const diffs = diffRecord(existing, incoming)
+            .filter((d) => d.field !== "key_id" && d.field !== "__matched_key_id");
           if (diffs.length > 0) {
             modifiedCount++;
             const payload: any = { ...incoming, last_import_id: importId };
             delete payload.key_id;
+            delete payload.__matched_key_id;
             await adminClient
               .from("roster_members")
               .update(payload)
