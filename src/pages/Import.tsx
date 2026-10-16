@@ -274,6 +274,12 @@ export default function Import() {
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <dt className="text-muted-foreground">Records in file</dt>
               <dd className="font-medium">{preview.record_count}</dd>
+              {typeof preview.prospect_count === "number" && (
+                <>
+                  <dt className="text-muted-foreground text-xs pl-3">— including prospects in the file</dt>
+                  <dd className="font-medium text-xs pl-3">{preview.prospect_count}</dd>
+                </>
+              )}
               <dt className="text-muted-foreground">Will add</dt>
               <dd className="font-medium text-green-600">+{preview.counts.added}</dd>
               <dt className="text-muted-foreground">Will modify</dt>
@@ -287,6 +293,20 @@ export default function Import() {
               <dt className="text-muted-foreground">Prospect reconciliations</dt>
               <dd className="font-medium">{preview.counts.reconciled}</dd>
             </dl>
+
+            {typeof preview.rows_without_key_id === "number" && preview.rows_without_key_id > 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  {preview.rows_without_key_id} row(s) in this file have no KeyID — prospects are
+                  sometimes exported without one. They are counted above and matched by EAA#
+                  {preview.rows_without_key_id_matched > 0
+                    ? ` (${preview.rows_without_key_id_matched} matched)`
+                    : ""}
+                  ; any that can't be matched are not imported.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {preview.counts.removed > 0 && !preview.allow_removals && (
               <Alert>
@@ -381,6 +401,12 @@ export default function Import() {
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <dt className="text-muted-foreground">Records processed</dt>
               <dd className="font-medium">{result.record_count}</dd>
+              {typeof result.prospect_count === "number" && (
+                <>
+                  <dt className="text-muted-foreground text-xs pl-3">— including prospects in the file</dt>
+                  <dd className="font-medium text-xs pl-3">{result.prospect_count}</dd>
+                </>
+              )}
               <dt className="text-muted-foreground">Added</dt>
               <dd className="font-medium text-green-600">+{result.added}</dd>
               <dt className="text-muted-foreground">Modified</dt>
