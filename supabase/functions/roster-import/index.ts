@@ -395,7 +395,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           dry_run: true,
           allow_removals: allowRemovals,
-          record_count: incomingRecords.length,
+          record_count: totalFileRows,
+          prospect_count: prospectCount,
+          rows_without_key_id: rowsMissingKeyId,
+          rows_without_key_id_matched: keylessMatched,
           counts: {
             added: previewAdded.length,
             modified: previewModified.length,
@@ -418,7 +421,7 @@ Deno.serve(async (req) => {
       .insert({
         imported_by: user.id,
         file_name: file.name,
-        record_count: incomingRecords.length,
+        record_count: totalFileRows,
         status: "processing",
       })
       .select()
@@ -469,6 +472,37 @@ Deno.serve(async (req) => {
 
     // Process each incoming record
     for (const incoming of incomingRecords) {
+      if (incoming.key_id == null) {
+        const matchedKeyId = (incoming as any).__matched_key_id;
+        if (matchedKeyId != null) {
+          const existing = existingMap.get(matchedKeyId)!;
+          const diffs = diffRecord(existing, incoming);
+          if (diffs.length > 0) {
+            modifiedCount++;
+            const payload: any = { ...incoming, last_import_id: importId };
+            delete payload.key_id;
+            await adminClient
+              .from("roster_members")
+              .update(payload)
+              .eq("key_id", matchedKeyId);
+            for (const diff of diffs) {
+              changeRecords.push({
+                import_id: importId,
+                key_id: matchedKeyId,
+                change_type: "modified",
+                field_name: diff.field,
+                old_value: diff.oldVal,
+                new_value: diff.newVal,
+                first_name: incoming.first_name,
+                last_name: incoming.last_name,
+                eaa_number: incoming.eaa_number,
+              });
+            }
+          }
+        }
+        continue;
+      }
+
       const { existing, isReconciledProspect } = resolveExisting(incoming);
 
       if (!existing) {
@@ -558,6 +592,7 @@ Deno.serve(async (req) => {
     for (const [keyId, existing] of existingMap) {
       if (incomingKeyIds.has(keyId)) continue;
       if (reconciledOldKeyIds.has(keyId)) continue;
+      if (keylessMatchedKeyIds.has(keyId)) continue; // matched from a KeyID-less row
       removedKeyIds.push(keyId);
       if (allowRemovals) {
         removedCount++;
@@ -631,7 +666,10 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         import_id: importId,
-        record_count: incomingRecords.length,
+        record_count: totalFileRows,
+        prospect_count: prospectCount,
+        rows_without_key_id: rowsMissingKeyId,
+        rows_without_key_id_matched: keylessMatched,
         added: addedCount,
         modified: modifiedCount,
         removed: removedCount,
