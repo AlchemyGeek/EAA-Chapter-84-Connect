@@ -26,6 +26,7 @@ const LEADERSHIP_ROLES = [
   "Secretary",
   "Treasurer",
   "Newsletter Editor",
+  "Social Media Coordinator",
   "Membership Coordinator",
   "Hangar Manager",
   "Program Chair",
