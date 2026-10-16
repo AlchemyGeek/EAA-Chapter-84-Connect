@@ -242,8 +242,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const incomingRecords = rawRows.map(mapRow).filter((r) => r.key_id != null);
-    const incomingKeyIds = new Set(incomingRecords.map((r) => r.key_id));
+    const incomingRecords = rawRows.map(mapRow);
+    // Report EVERY row in the file — prospects included. Rows without a KeyID
+    // (some prospect exports omit it) stay in the count and are matched by
+    // normalized EAA# below instead of being silently dropped.
+    const totalFileRows = rawRows.length;
+    const rowsMissingKeyId = incomingRecords.filter((r) => r.key_id == null).length;
+    const prospectCount = incomingRecords.filter(
+      (r) => String(r.member_type ?? "").toLowerCase() === "prospect"
+    ).length;
+    const incomingKeyIds = new Set(
+      incomingRecords.filter((r) => r.key_id != null).map((r) => r.key_id)
+    );
 
     // Fetch existing members
     const { data: existingMembers } = await adminClient
@@ -290,6 +300,21 @@ Deno.serve(async (req) => {
       return { existing: prospect, isReconciledProspect: true };
     };
 
+    // KeyID-less rows: match by EAA# so they update the matching local record
+    // rather than being dropped. Unmatched rows are counted and reported.
+    const keylessMatchedKeyIds = new Set<number>();
+    let keylessMatched = 0;
+    for (const row of incomingRecords) {
+      if (row.key_id != null) continue;
+      const eaa = normEaa(row.eaa_number);
+      const existing = eaa ? localByEaa.get(eaa) : undefined;
+      if (existing) {
+        (row as any).__matched_key_id = existing.key_id;
+        keylessMatchedKeyIds.add(existing.key_id);
+        keylessMatched++;
+      }
+    }
+
     // key_ids of local rows that are "consumed" by an incoming record via EAA reconciliation
     const reconciledOldKeyIds = new Set<number>();
 
@@ -301,6 +326,24 @@ Deno.serve(async (req) => {
       const previewReconciled: any[] = [];
 
       for (const incoming of incomingRecords) {
+        if (incoming.key_id == null) {
+          const matchedKeyId = (incoming as any).__matched_key_id;
+          if (matchedKeyId != null) {
+            const existing = existingMap.get(matchedKeyId)!;
+            const diffs = diffRecord(existing, incoming);
+            if (diffs.length > 0) {
+              previewModified.push({
+                key_id: matchedKeyId,
+                first_name: incoming.first_name,
+                last_name: incoming.last_name,
+                eaa_number: incoming.eaa_number,
+                fields: diffs,
+                matched_by: "EAA# (row has no KeyID)",
+              });
+            }
+          }
+          continue;
+        }
         const { existing, isReconciledProspect } = resolveExisting(incoming);
         if (!existing) {
           previewAdded.push({
@@ -338,6 +381,7 @@ Deno.serve(async (req) => {
       for (const [keyId, existing] of existingMap) {
         if (incomingKeyIds.has(keyId)) continue;
         if (reconciledOldKeyIds.has(keyId)) continue; // matched via EAA reconciliation
+        if (keylessMatchedKeyIds.has(keyId)) continue; // matched from a KeyID-less row
         previewRemoved.push({
           key_id: keyId,
           first_name: existing.first_name,
