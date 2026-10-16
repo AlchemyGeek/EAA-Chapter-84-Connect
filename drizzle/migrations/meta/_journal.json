@@ -15,6 +15,13 @@
       "when": 1792127362861,
       "tag": "0001_officer_email_audience_include_prospects",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792127520683,
+      "tag": "0002_revert_email_audience_prospects",
+      "breakpoints": true
     }
   ]
 }
