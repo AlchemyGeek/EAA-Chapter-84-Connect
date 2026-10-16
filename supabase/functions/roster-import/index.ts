@@ -242,8 +242,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const incomingRecords = rawRows.map(mapRow).filter((r) => r.key_id != null);
-    const incomingKeyIds = new Set(incomingRecords.map((r) => r.key_id));
+    const incomingRecords = rawRows.map(mapRow);
+    // Report EVERY row in the file — prospects included. Rows without a KeyID
+    // (some prospect exports omit it) stay in the count and are matched by
+    // normalized EAA# below instead of being silently dropped.
+    const totalFileRows = rawRows.length;
+    const rowsMissingKeyId = incomingRecords.filter((r) => r.key_id == null).length;
+    const prospectCount = incomingRecords.filter(
+      (r) => String(r.member_type ?? "").toLowerCase() === "prospect"
+    ).length;
+    const incomingKeyIds = new Set(
+      incomingRecords.filter((r) => r.key_id != null).map((r) => r.key_id)
+    );
 
     // Fetch existing members
     const { data: existingMembers } = await adminClient
@@ -290,6 +300,21 @@ Deno.serve(async (req) => {
       return { existing: prospect, isReconciledProspect: true };
     };
 
+    // KeyID-less rows: match by EAA# so they update the matching local record
+    // rather than being dropped. Unmatched rows are counted and reported.
+    const keylessMatchedKeyIds = new Set<number>();
+    let keylessMatched = 0;
+    for (const row of incomingRecords) {
+      if (row.key_id != null) continue;
+      const eaa = normEaa(row.eaa_number);
+      const existing = eaa ? localByEaa.get(eaa) : undefined;
+      if (existing) {
+        (row as any).__matched_key_id = existing.key_id;
+        keylessMatchedKeyIds.add(existing.key_id);
+        keylessMatched++;
+      }
+    }
+
     // key_ids of local rows that are "consumed" by an incoming record via EAA reconciliation
     const reconciledOldKeyIds = new Set<number>();
 
@@ -301,6 +326,27 @@ Deno.serve(async (req) => {
       const previewReconciled: any[] = [];
 
       for (const incoming of incomingRecords) {
+        if (incoming.key_id == null) {
+          const matchedKeyId = (incoming as any).__matched_key_id;
+          if (matchedKeyId != null) {
+            const existing = existingMap.get(matchedKeyId)!;
+            // Ignore bookkeeping fields — the row's missing KeyID and the
+            // internal matcher aren't real changes.
+            const diffs = diffRecord(existing, incoming)
+              .filter((d) => d.field !== "key_id" && d.field !== "__matched_key_id");
+            if (diffs.length > 0) {
+              previewModified.push({
+                key_id: matchedKeyId,
+                first_name: incoming.first_name,
+                last_name: incoming.last_name,
+                eaa_number: incoming.eaa_number,
+                fields: diffs,
+                matched_by: "EAA# (row has no KeyID)",
+              });
+            }
+          }
+          continue;
+        }
         const { existing, isReconciledProspect } = resolveExisting(incoming);
         if (!existing) {
           previewAdded.push({
@@ -338,6 +384,7 @@ Deno.serve(async (req) => {
       for (const [keyId, existing] of existingMap) {
         if (incomingKeyIds.has(keyId)) continue;
         if (reconciledOldKeyIds.has(keyId)) continue; // matched via EAA reconciliation
+        if (keylessMatchedKeyIds.has(keyId)) continue; // matched from a KeyID-less row
         previewRemoved.push({
           key_id: keyId,
           first_name: existing.first_name,
@@ -351,7 +398,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           dry_run: true,
           allow_removals: allowRemovals,
-          record_count: incomingRecords.length,
+          record_count: totalFileRows,
+          prospect_count: prospectCount,
+          rows_without_key_id: rowsMissingKeyId,
+          rows_without_key_id_matched: keylessMatched,
           counts: {
             added: previewAdded.length,
             modified: previewModified.length,
@@ -374,7 +424,7 @@ Deno.serve(async (req) => {
       .insert({
         imported_by: user.id,
         file_name: file.name,
-        record_count: incomingRecords.length,
+        record_count: totalFileRows,
         status: "processing",
       })
       .select()
@@ -425,6 +475,41 @@ Deno.serve(async (req) => {
 
     // Process each incoming record
     for (const incoming of incomingRecords) {
+      if (incoming.key_id == null) {
+        const matchedKeyId = (incoming as any).__matched_key_id;
+        if (matchedKeyId != null) {
+          const existing = existingMap.get(matchedKeyId)!;
+          // Ignore bookkeeping fields — the row's missing KeyID and the
+          // internal matcher aren't real changes.
+          const diffs = diffRecord(existing, incoming)
+            .filter((d) => d.field !== "key_id" && d.field !== "__matched_key_id");
+          if (diffs.length > 0) {
+            modifiedCount++;
+            const payload: any = { ...incoming, last_import_id: importId };
+            delete payload.key_id;
+            delete payload.__matched_key_id;
+            await adminClient
+              .from("roster_members")
+              .update(payload)
+              .eq("key_id", matchedKeyId);
+            for (const diff of diffs) {
+              changeRecords.push({
+                import_id: importId,
+                key_id: matchedKeyId,
+                change_type: "modified",
+                field_name: diff.field,
+                old_value: diff.oldVal,
+                new_value: diff.newVal,
+                first_name: incoming.first_name,
+                last_name: incoming.last_name,
+                eaa_number: incoming.eaa_number,
+              });
+            }
+          }
+        }
+        continue;
+      }
+
       const { existing, isReconciledProspect } = resolveExisting(incoming);
 
       if (!existing) {
@@ -514,6 +599,7 @@ Deno.serve(async (req) => {
     for (const [keyId, existing] of existingMap) {
       if (incomingKeyIds.has(keyId)) continue;
       if (reconciledOldKeyIds.has(keyId)) continue;
+      if (keylessMatchedKeyIds.has(keyId)) continue; // matched from a KeyID-less row
       removedKeyIds.push(keyId);
       if (allowRemovals) {
         removedCount++;
@@ -587,7 +673,10 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         import_id: importId,
-        record_count: incomingRecords.length,
+        record_count: totalFileRows,
+        prospect_count: prospectCount,
+        rows_without_key_id: rowsMissingKeyId,
+        rows_without_key_id_matched: keylessMatched,
         added: addedCount,
         modified: modifiedCount,
         removed: removedCount,
