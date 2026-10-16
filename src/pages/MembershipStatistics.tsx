@@ -120,10 +120,10 @@ export default function MembershipStatistics() {
     return new Date(m.expiration_date).getFullYear() === currentYear;
   }).length;
 
-  // Prospects who never paid dues were never members — excluded from new member stats
+  // New members this year: every roster entry whose join date falls in the
+  // current calendar year — prospects included, since they either become
+  // active members or stay on file as Inactive for future outreach.
   const newThisYear = members.filter((m) => {
-    if (isProspect(m)) return false;
-    if (isInactive(m)) return false;
     const d = joinedDate(m);
     return !!d && d.getFullYear() === currentYear;
   }).length;
@@ -183,11 +183,9 @@ export default function MembershipStatistics() {
 
   const chartData = MONTHS.map((month, i) => ({ month, renewed: i > currentMonth ? null : monthCounts[i] }));
 
-  // New members by month
+  // New members by month — all roster entries, prospects included
   const newMemberMonthCounts = new Array(12).fill(0);
   members.forEach((m) => {
-    if (isProspect(m)) return;
-    if (isInactive(m)) return;
     const d = joinedDate(m);
     if (d && d.getFullYear() === currentYear) {
       newMemberMonthCounts[d.getMonth()]++;
