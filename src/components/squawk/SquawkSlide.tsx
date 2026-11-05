@@ -82,13 +82,13 @@ function Body({ slide }: { slide: Slide }) {
     : "text-sm sm:text-base font-semibold text-foreground leading-snug line-clamp-2";
 
   const bodyClass = isQuote && quoteMedium
-    ? "mt-1 text-[11px] text-muted-foreground leading-snug line-clamp-1"
-    : "mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2";
+    ? "mt-1 text-[11px] text-muted-foreground leading-snug line-clamp-2"
+    : "mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-3";
 
   return (
     <div
       className={cn(
-        "flex h-[130px] items-start gap-3 border-l-4 p-4 sm:p-5",
+        "flex h-[152px] items-start gap-3 border-l-4 p-4 sm:p-5",
         style.border,
       )}
     >
