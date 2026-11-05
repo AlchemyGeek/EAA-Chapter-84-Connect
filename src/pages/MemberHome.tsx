@@ -20,7 +20,7 @@ import {
   LogOut, Shield, Upload, Download, FileText, Users,
   Plane, Phone, Award, ChevronRight, Bug, X, Settings, AlertTriangle, BarChart3, CircleDollarSign,
   UserCog, BadgeCheck, HandHelping, UserPlus, Mail, Heart, Activity, Newspaper,
-  ClipboardList, Vote, Tag, MessageSquare, Archive,
+  ClipboardList, Vote, Tag, MessageSquare, Archive, BookMarked,
 } from "lucide-react";
 
 import { useIsOfficer } from "@/hooks/useIsOfficer";
@@ -763,6 +763,7 @@ export default function MemberHome() {
             ) : (
               <>
                 <AdminLink to="/members" icon={Users} label={`Member Directory${directoryCount > 0 ? ` (${directoryCount})` : ""}`} />
+                <AdminLink to="/resources" icon={BookMarked} label="Resources" />
                 <AdminLink 
                   to={impersonateKeyId ? `/member-volunteering?viewAs=${impersonateKeyId}` : "/member-volunteering"} 
                   icon={HandHelping} 

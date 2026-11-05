@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChapterLeadership } from "@/components/admin/ChapterLeadership";
 import { BuddyEmailTemplates } from "@/components/admin/BuddyEmailTemplates";
 import { SquawkAdmin } from "@/components/admin/SquawkAdmin";
+import { ResourceLinksAdmin } from "@/components/admin/ResourceLinksAdmin";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,7 +52,8 @@ interface ChapterFee {
 }
 
 export default function SiteConfig() {
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { user, loading: authLoading, isAdmin, isOfficerOrAbove } = useAuth();
+  const resourcesFocus = new URLSearchParams(window.location.search).get("section") === "resources";
   const queryClient = useQueryClient();
 
   // Link state
@@ -234,7 +236,7 @@ export default function SiteConfig() {
     );
   }
 
-  if (!user || !isAdmin) return <Navigate to="/home" replace />;
+  if (!user || !(isAdmin || isOfficerOrAbove)) return <Navigate to="/home" replace />;
 
   return (
     <div className="min-h-screen bg-background">
@@ -249,6 +251,9 @@ export default function SiteConfig() {
           <h1 className="text-xl font-bold tracking-tight">Website Configuration</h1>
         </div>
 
+        <ResourceLinksAdmin defaultOpen={resourcesFocus || !isAdmin} />
+
+        {isAdmin && (<>
         {/* Site Links Section */}
         <Collapsible open={linksOpen} onOpenChange={setLinksOpen}>
           <Card>
@@ -392,6 +397,7 @@ export default function SiteConfig() {
 
         {/* Chapter Leadership Section */}
         <ChapterLeadership />
+        </>)}
       </div>
 
 
@@ -505,3 +511,4 @@ export default function SiteConfig() {
     </div>
   );
 }
+
