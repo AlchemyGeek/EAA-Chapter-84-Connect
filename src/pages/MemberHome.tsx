@@ -763,7 +763,7 @@ export default function MemberHome() {
             ) : (
               <>
                 <AdminLink to="/members" icon={Users} label={`Member Directory${directoryCount > 0 ? ` (${directoryCount})` : ""}`} />
-                <AdminLink to="/resources" icon={BookMarked} label="Resources" />
+                <AdminLink to="/resources" icon={BookMarked} label="Resources" badge="New" />
                 <AdminLink 
                   to={impersonateKeyId ? `/member-volunteering?viewAs=${impersonateKeyId}` : "/member-volunteering"} 
                   icon={HandHelping} 
