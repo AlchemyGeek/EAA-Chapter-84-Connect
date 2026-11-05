@@ -18,6 +18,7 @@ import ImportHistory from "./pages/ImportHistory";
 import ImportReport from "./pages/ImportReport";
 import Export from "./pages/Export";
 import SiteConfig from "./pages/SiteConfig";
+import Resources from "./pages/Resources";
 import MembershipStatistics from "./pages/MembershipStatistics";
 import DuesPayment from "./pages/DuesPayment";
 import MembershipBadges from "./pages/MembershipBadges";
@@ -83,6 +84,7 @@ const App = () => (
             {/* Admin routes still use the sidebar layout */}
             <Route element={<AppLayout />}>
               <Route path="/members" element={<Members />} />
+              <Route path="/resources" element={<Resources />} />
               <Route path="/members/:keyId" element={<MemberDetail />} />
               <Route path="/import" element={<Import />} />
               <Route path="/imports" element={<ImportHistory />} />
