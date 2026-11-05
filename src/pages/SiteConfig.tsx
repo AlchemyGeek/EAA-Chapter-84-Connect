@@ -397,6 +397,7 @@ export default function SiteConfig() {
 
         {/* Chapter Leadership Section */}
         <ChapterLeadership />
+        </>)}
       </div>
 
 
@@ -509,5 +510,5 @@ export default function SiteConfig() {
       </Dialog>
     </div>
   );
-}        </>)}
+}
 
