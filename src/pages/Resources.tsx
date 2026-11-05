@@ -39,7 +39,7 @@ export default function Resources() {
             </Button>
           )}
         </div>
-        <p className="text-base text-muted-foreground">Useful websites for chapter members.</p>
+        <p className="text-sm text-muted-foreground">Useful websites for chapter members.</p>
 
         {isLoading ? (
           <div className="text-muted-foreground animate-pulse">Loading…</div>
@@ -51,15 +51,15 @@ export default function Resources() {
             if (!items.length) return null;
             return (
               <Card key={cat.value}>
-                <CardHeader className="pb-2"><CardTitle className="text-base font-semibold">{cat.label}</CardTitle></CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">{cat.label}</CardTitle></CardHeader>
                 <CardContent className="divide-y divide-border pt-0">
                   {items.map((l) => (
                     <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer"
                       className="flex items-start gap-3 py-3 min-h-11 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors">
                       <div className="min-w-0 flex-1">
-                        <p className="text-base font-medium text-primary">{l.name}</p>
-                        {l.description && <p className="text-base text-muted-foreground">{l.description}</p>}
-                        <p className="text-sm text-muted-foreground truncate">{domainOf(l.url)}</p>
+                        <p className="text-sm font-medium text-primary">{l.name}</p>
+                        {l.description && <p className="text-sm text-muted-foreground">{l.description}</p>}
+                        <p className="text-xs text-muted-foreground truncate">{domainOf(l.url)}</p>
                       </div>
                       <ExternalLink className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
                     </a>
