@@ -48,6 +48,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { applicationCompletionUpdates } from "@/lib/applicationCompletion";
 
 const PAYMENT_METHODS = [
   { label: "Cash", code: "cash" },
@@ -340,25 +341,19 @@ export default function NewMemberApplications() {
       if (!app.roster_key_id) throw new Error("No linked roster record found");
 
       const newExpiration = getSecondTuesdayOfMarchNextYear();
+      const updates = applicationCompletionUpdates(new Date().toISOString(), newExpiration);
 
       // Update roster member
       const { error: rosterError } = await supabase
         .from("roster_members")
-        .update({
-          member_type: "Regular",
-          expiration_date: newExpiration,
-          date_added: format(new Date(), "yyyy-MM-dd"),
-        } as any)
+        .update(updates.roster)
         .eq("key_id", app.roster_key_id);
       if (rosterError) throw rosterError;
 
       // Mark application as processed
       const { error: appError } = await supabase
         .from("new_member_applications")
-        .update({
-          processed: true,
-          processed_at: new Date().toISOString(),
-        })
+        .update(updates.application)
         .eq("id", app.id);
       if (appError) throw appError;
     },
@@ -944,7 +939,7 @@ export default function NewMemberApplications() {
                       size="sm"
                       className="w-full sm:w-auto"
                       disabled={sendWelcome.isPending || !detailApp.fees_verified || !!detailApp.archived_at}
-                      title={!detailApp.fees_verified ? "Mark dues verified first" : undefined}
+                      title={detailApp.archived_at ? "Restore application first" : !detailApp.fees_verified ? "Mark dues verified first" : undefined}
                       onClick={() => sendWelcome.mutate(detailApp)}
                     >
                       <Mail className="h-4 w-4 mr-2" />
