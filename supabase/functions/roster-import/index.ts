@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { findReconciliationMatch } from "./memberMatching.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -256,48 +257,33 @@ Deno.serve(async (req) => {
     );
 
     // Fetch existing members
-    const { data: existingMembers } = await adminClient
+    const { data: existingMembers, error: existingError } = await adminClient
       .from("roster_members")
       .select("*");
+    if (existingError) throw existingError;
     const existingMap = new Map<number, Record<string, any>>();
     (existingMembers || []).forEach((m: any) => existingMap.set(m.key_id, m));
 
-    // Build EAA# -> local member lookup for reconciliation.
-    // When the EAA Roster Tool re-issues a record we exported (typically a
-    // prospect that was promoted), it comes back with a NEW key_id. Match on
-    // normalized EAA# so we treat it as "same person, modified" instead of
-    // Added + Removed. Applies to any member_type, since the local record may
-    // already have been promoted from Prospect to Regular.
-    // Normalize to digits only — local records entered via the application form
-    // may carry an "EAA " prefix or punctuation that the roster export omits.
-    const normEaa = (v: any): string => String(v ?? "").replace(/\D/g, "");
-    const localByEaa = new Map<string, Record<string, any>>();
-    for (const m of existingMembers || []) {
-      const eaa = normEaa(m.eaa_number);
-      if (!eaa) continue;
-      // Skip if this row's own key_id is also in the incoming file
-      // (already handled by direct key_id match)
-      if (incomingKeyIds.has(m.key_id)) continue;
-      // Prefer Prospect rows when several local rows share an EAA#
-      const prev = localByEaa.get(eaa);
-      const isProspect = String(m.member_type ?? "").toLowerCase() === "prospect";
-      if (!prev || (isProspect && String(prev.member_type ?? "").toLowerCase() !== "prospect")) {
-        localByEaa.set(eaa, m);
-      }
+    // Never consume another record that is itself present in this file.
+    // Both preview and apply use the same uniquely-resolved identity matches.
+    const candidates = (existingMembers || []).filter(m => !incomingKeyIds.has(m.key_id));
+    const identityMatches = new Map<Record<string, any>, Record<string, any>>();
+    const matchCounts = new Map<number, number>();
+    for (const incoming of incomingRecords) {
+      if (existingMap.has(incoming.key_id)) continue;
+      const match = findReconciliationMatch(incoming, candidates);
+      if (!match) continue;
+      identityMatches.set(incoming, match);
+      matchCounts.set(match.key_id, (matchCounts.get(match.key_id) ?? 0) + 1);
     }
-
-
-    // For each incoming record, resolve which local row (if any) it corresponds to.
-    // Returns { existing, isReconciledProspect } — isReconciledProspect means matched
-    // by EAA# to a local Prospect with a different key_id.
     const resolveExisting = (incoming: Record<string, any>) => {
       const byKey = existingMap.get(incoming.key_id);
       if (byKey) return { existing: byKey, isReconciledProspect: false };
-      const eaa = normEaa(incoming.eaa_number);
-      if (!eaa) return { existing: null, isReconciledProspect: false };
-      const prospect = localByEaa.get(eaa);
-      if (!prospect) return { existing: null, isReconciledProspect: false };
-      return { existing: prospect, isReconciledProspect: true };
+      const match = identityMatches.get(incoming);
+      if (!match || matchCounts.get(match.key_id) !== 1) {
+        return { existing: null, isReconciledProspect: false };
+      }
+      return { existing: match, isReconciledProspect: true };
     };
 
     // KeyID-less rows: match by EAA# so they update the matching local record
@@ -306,8 +292,7 @@ Deno.serve(async (req) => {
     let keylessMatched = 0;
     for (const row of incomingRecords) {
       if (row.key_id != null) continue;
-      const eaa = normEaa(row.eaa_number);
-      const existing = eaa ? localByEaa.get(eaa) : undefined;
+      const { existing } = resolveExisting(row);
       if (existing) {
         (row as any).__matched_key_id = existing.key_id;
         keylessMatchedKeyIds.add(existing.key_id);
@@ -329,7 +314,8 @@ Deno.serve(async (req) => {
         if (incoming.key_id == null) {
           const matchedKeyId = (incoming as any).__matched_key_id;
           if (matchedKeyId != null) {
-            const existing = existingMap.get(matchedKeyId)!;
+            const existing = existingMap.get(matchedKeyId);
+            if (!existing) throw new Error("Matched member disappeared from import preview");
             // Ignore bookkeeping fields — the row's missing KeyID and the
             // internal matcher aren't real changes.
             const diffs = diffRecord(existing, incoming)
@@ -341,7 +327,7 @@ Deno.serve(async (req) => {
                 last_name: incoming.last_name,
                 eaa_number: incoming.eaa_number,
                 fields: diffs,
-                matched_by: "EAA# (row has no KeyID)",
+                matched_by: "Member identity (row has no KeyID)",
               });
             }
           }
@@ -468,7 +454,7 @@ Deno.serve(async (req) => {
           .update({ [col]: newKeyId })
           .eq(col, oldKeyId);
         if (error) {
-          console.error(`FK remap failed for ${table}.${col} ${oldKeyId}->${newKeyId}:`, error.message);
+          throw new Error(`Member history could not be moved in ${table}: ${error.message}`);
         }
       }
     };
@@ -478,7 +464,8 @@ Deno.serve(async (req) => {
       if (incoming.key_id == null) {
         const matchedKeyId = (incoming as any).__matched_key_id;
         if (matchedKeyId != null) {
-          const existing = existingMap.get(matchedKeyId)!;
+          const existing = existingMap.get(matchedKeyId);
+          if (!existing) throw new Error("Matched member disappeared from import");
           // Ignore bookkeeping fields — the row's missing KeyID and the
           // internal matcher aren't real changes.
           const diffs = diffRecord(existing, incoming)
@@ -536,17 +523,17 @@ Deno.serve(async (req) => {
       const diffs = diffRecord(existing, incoming);
 
       if (isReconciledProspect) {
-        // Local Prospect matched to EAA-assigned record by EAA#.
-        // Remap child FKs first, then delete the old prospect row and
-        // insert the incoming one with the new key_id. This preserves all
-        // chapter-side data (notes, images, subscriptions, dues, etc.).
-        reconciledOldKeyIds.add(existing.key_id);
-        await remapChildFks(existing.key_id, incoming.key_id);
-        await adminClient.from("roster_members").delete().eq("key_id", existing.key_id);
-        await adminClient.from("roster_members").insert({
+        // The authoritative member must exist before history with foreign keys
+        // can move. Never delete the local record after a failed history move.
+        const { error: insertError } = await adminClient.from("roster_members").insert({
           ...incoming,
           last_import_id: importId,
         });
+        if (insertError) throw insertError;
+        await remapChildFks(existing.key_id, incoming.key_id);
+        const { error: deleteError } = await adminClient.from("roster_members").delete().eq("key_id", existing.key_id);
+        if (deleteError) throw deleteError;
+        reconciledOldKeyIds.add(existing.key_id);
 
         modifiedCount++;
         // Always emit a change record so the reconciliation is visible in history
