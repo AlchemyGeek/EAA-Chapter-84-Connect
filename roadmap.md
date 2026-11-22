@@ -1,3 +1,5 @@
 - [x] Add safe placeholder-EAA reconciliation to import preview and application, with regression tests.
 - [x] Preserve Jake's chapter history and remove his duplicate EAA 0 roster record.
 - [x] Deploy and verify import matching and Jake's remaining record.
+- [x] Update and test December renewal reminders and lifetime/prepaid exemptions.
+- [x] Verify the signed-in renewal banner and status display.

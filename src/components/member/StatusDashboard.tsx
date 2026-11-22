@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { isLifetimeMember, membershipRenewalYear } from "@/lib/membershipRenewal";
 
 type MembershipStatus = "good" | "expiring" | "lapsed";
 
@@ -36,6 +37,10 @@ function computeStatus(
     };
   }
 
+  if (isLifetimeMember(memberType)) {
+    return { status: "good", message: "You're a Lifetime Member in good standing.", coverageYear: null, overdue: false, isProspect: false };
+  }
+
   if (!expDate) {
     return { status: "good", message: "You're in good standing.", coverageYear: null, overdue: false, isProspect: false };
   }
@@ -52,11 +57,11 @@ function computeStatus(
     };
   }
 
-  const daysUntil = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  if (daysUntil <= 60) {
+  const renewalYear = membershipRenewalYear({ current_standing: currentStanding, member_type: memberType, expiration_date: expirationDate }, now);
+  if (renewalYear !== null) {
     return {
       status: "expiring",
-      message: `Your dues expire in ${daysUntil} days. Please renew to stay current.`,
+      message: `Renewal for ${renewalYear} is now open. Please renew to stay current.`,
       coverageYear,
       overdue: false,
       isProspect: false,

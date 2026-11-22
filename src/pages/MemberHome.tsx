@@ -40,6 +40,7 @@ import { Navigate, Link } from "react-router-dom";
 import { exportProxyVoteResults } from "@/lib/exportProxyVotes";
 import { Squawk } from "@/components/squawk/Squawk";
 import { version as appVersion } from "../../package.json";
+import { isLifetimeMember, membershipRenewalYear } from "@/lib/membershipRenewal";
 
 
 export default function MemberHome() {
@@ -378,16 +379,9 @@ export default function MemberHome() {
   const isInactive = !!member && member.current_standing !== "Active";
   const isProspect = !!member && (member.member_type || "").toLowerCase() === "prospect";
 
-  // Dues reminder for active members whose expiration has passed or is within 60 days
-  const needsDuesReminder = (() => {
-    if (!member || isInactive || isProspect) return false;
-    if (!member.expiration_date) return false;
-    const exp = new Date(member.expiration_date);
-    const now = new Date();
-    if (exp < now) return true;
-    const daysUntil = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntil <= 60;
-  })();
+  const isLifetime = isLifetimeMember(member?.member_type);
+  const renewalYear = membershipRenewalYear(member);
+  const needsDuesReminder = renewalYear !== null;
   const duesExpired = !!member?.expiration_date && new Date(member.expiration_date) < new Date();
   // Active but overdue = active standing with expired dues (prospects excluded)
   const isOverdue = !!member && !isInactive && !isProspect && duesExpired;
@@ -598,7 +592,7 @@ export default function MemberHome() {
         )}
 
         {/* Renewal CTA for inactive (lapsed, non-prospect) members */}
-        {member && isInactive && !isProspect && (
+        {member && isInactive && !isProspect && !isLifetime && (
           <Card className="border-2 border-destructive/40 bg-destructive/5 shadow-md">
             <CardContent className="p-5">
               <div className="flex items-start gap-3">
@@ -640,7 +634,7 @@ export default function MemberHome() {
                   <p className="text-sm font-medium text-foreground leading-relaxed">
                     {duesExpired
                       ? "Your chapter dues have expired. Please renew to keep enjoying all chapter programs and events!"
-                      : "Your chapter dues are expiring soon. Renew now to stay current!"}
+                      : `Renew your Chapter 84 membership for ${renewalYear}. Membership starts January 1, with a grace period until the second Tuesday of March.`}
                   </p>
                   {renewalUrl ? (
                     <a href={renewalUrl} target="_blank" rel="noopener noreferrer">
