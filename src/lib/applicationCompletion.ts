@@ -1,8 +1,13 @@
 // Completion restores an incomplete applicant without changing email history.
-export function applicationCompletionUpdates(completedAt: string, expirationDate: string) {
+export function applicationCompletionUpdates(
+  completedAt: string,
+  expirationDate: string,
+  student?: { dateOfBirth: string | null },
+) {
   return {
     roster: {
-      member_type: "Regular",
+      member_type: student ? "Student" : "Regular",
+      ...(student?.dateOfBirth ? { birth_date: student.dateOfBirth } : {}),
       current_standing: "Active",
       expiration_date: expirationDate,
       date_added: completedAt.slice(0, 10),

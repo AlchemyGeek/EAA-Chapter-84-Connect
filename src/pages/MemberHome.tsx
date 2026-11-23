@@ -1,3 +1,4 @@
+import { renewalFeeKind, STUDENT_RENEWAL_FEE } from "@/lib/studentMembership";
 import { useState } from "react"; // refreshed
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -396,6 +397,10 @@ export default function MemberHome() {
       const match = chapterFees.find((f) => f.name.toUpperCase().includes(q));
       if (match) return match;
     }
+    if (renewalFeeKind(member as any) === "student") {
+      const student = chapterFees.find((f) => f.name.trim().toLowerCase() === STUDENT_RENEWAL_FEE);
+      if (student) return student;
+    }
     return chapterFees.find(
       (f) => f.name.toLowerCase().includes("annual") || f.name.toLowerCase().includes("renewal") || f.name.toLowerCase().includes("renew")
     );
@@ -636,6 +641,11 @@ export default function MemberHome() {
                       ? "Your chapter dues have expired. Please renew to keep enjoying all chapter programs and events!"
                       : `Renew your Chapter 84 membership for ${renewalYear}. Membership starts January 1, with a grace period until the second Tuesday of March.`}
                   </p>
+                  {renewalFeeKind(member as any) === "aged-out" && (
+                    <p className="text-sm text-muted-foreground">
+                      You've turned 19, so you now renew as a Regular member.
+                    </p>
+                  )}
                   {renewalUrl ? (
                     <a href={renewalUrl} target="_blank" rel="noopener noreferrer">
                       <Button className="mt-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold">

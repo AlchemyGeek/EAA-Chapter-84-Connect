@@ -29,6 +29,13 @@
       "when": 1793901192003,
       "tag": "0003_create_resource_links",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795452519277,
+      "tag": "0004_student_membership",
+      "breakpoints": true
     }
   ]
 }

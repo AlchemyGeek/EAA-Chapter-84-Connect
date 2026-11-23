@@ -341,7 +341,11 @@ export default function NewMemberApplications() {
       if (!app.roster_key_id) throw new Error("No linked roster record found");
 
       const newExpiration = getSecondTuesdayOfMarchNextYear();
-      const updates = applicationCompletionUpdates(new Date().toISOString(), newExpiration);
+      const updates = applicationCompletionUpdates(
+        new Date().toISOString(),
+        newExpiration,
+        app.membership_type === "student" ? { dateOfBirth: app.date_of_birth ?? null } : undefined,
+      );
 
       // Update roster member
       const { error: rosterError } = await supabase
@@ -688,6 +692,9 @@ export default function NewMemberApplications() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">
                       {app.last_name}, {app.first_name}
+                      {app.membership_type === "student" && (
+                        <Badge variant="secondary" className="ml-2 text-xs align-middle">Student</Badge>
+                      )}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       EAA #{app.eaa_number} · {format(new Date(app.created_at), "MM/dd/yyyy")}
@@ -857,6 +864,14 @@ export default function NewMemberApplications() {
                 <span className="text-muted-foreground">Address</span>
                 <p className="font-medium">
                   {detailApp.address}, {detailApp.city}, {detailApp.state} {detailApp.zip_code}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Membership Type</span>
+                <p className="font-medium">
+                  {detailApp.membership_type === "student"
+                    ? `Student${detailApp.date_of_birth ? ` · Born ${format(new Date(detailApp.date_of_birth + "T00:00:00"), "MM/dd/yyyy")}` : ""}`
+                    : "Regular"}
                 </p>
               </div>
               <div>

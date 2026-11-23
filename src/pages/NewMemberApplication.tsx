@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { ExternalLink, CheckCircle2 } from "lucide-react";
+import { isStudentEligible, STUDENT_NEW_MEMBER_FEE } from "@/lib/studentMembership";
 import chapterLogo from "@/assets/chapter-logo.jpg";
 
 interface ChapterFee {
@@ -44,6 +45,10 @@ export default function NewMemberApplication() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
+  const [membershipType, setMembershipType] = useState<"regular" | "student">("regular");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [ageError, setAgeError] = useState(false);
+  const isStudent = membershipType === "student";
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -62,11 +67,16 @@ export default function NewMemberApplication() {
   });
 
   const currentFee = useMemo(() => {
+    if (isStudent) return fees.find((f) => f.name.trim().toLowerCase() === STUDENT_NEW_MEMBER_FEE);
     return fees.find((f) => f.name.toUpperCase().includes(currentQuarter));
-  }, [fees, currentQuarter]);
+  }, [fees, currentQuarter, isStudent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isStudent && !isStudentEligible(dateOfBirth)) {
+      setAgeError(true);
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -85,6 +95,8 @@ export default function NewMemberApplication() {
         zip_code: zipCode.trim(),
         quarter_applied: currentQuarter,
         fee_amount: currentFee?.amount ?? 0,
+        membership_type: membershipType,
+        date_of_birth: isStudent ? dateOfBirth : null,
       } as any);
 
       if (error) throw error;
@@ -181,6 +193,40 @@ export default function NewMemberApplication() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium text-foreground">Membership Type</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(["regular", "student"] as const).map((t) => (
+                    <label
+                      key={t}
+                      className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm ${membershipType === t ? "border-primary bg-primary/5" : "border-border"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="membership-type"
+                        value={t}
+                        checked={membershipType === t}
+                        onChange={() => { setMembershipType(t); setAgeError(false); }}
+                      />
+                      {t === "regular" ? "Regular Member" : "Student Member"}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {isStudent && (
+                <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-2 text-sm">
+                  <p className="font-semibold text-foreground">Student Membership requires an active EAA National Student Membership.</p>
+                  <p className="text-muted-foreground">
+                    EAA National's Student Membership is free for ages 8–18 (through your 19th birthday) and is activated after completing a Young Eagles flight.{" "}
+                    <a href="https://www.eaa.org/eaa/join-eaa/student" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      Learn more / activate your free EAA Student Membership →
+                    </a>
+                  </p>
+                  <p className="text-muted-foreground">Already have your EAA Student Membership number? Enter it below.</p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="first-name">First Name</Label>
@@ -271,6 +317,24 @@ export default function NewMemberApplication() {
                 </div>
               </div>
 
+              {isStudent && (
+                <div className="space-y-2">
+                  <Label htmlFor="dob">Date of Birth</Label>
+                  <Input
+                    id="dob"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => { setDateOfBirth(e.target.value); setAgeError(false); }}
+                    required
+                  />
+                  {ageError && (
+                    <p className="text-sm text-destructive" role="alert">
+                      Student Membership is for applicants under 19. Please apply as a Regular Member instead.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="pt-2">
                 <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
                   {submitting ? "Submitting..." : "Submit Application"}
@@ -288,22 +352,28 @@ export default function NewMemberApplication() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {isStudent ? (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Student dues are a flat $5 per year, regardless of when you join.
+            </p>
+            ) : (
             <p className="text-sm text-muted-foreground leading-relaxed">
               Dues for New Members are pro-rated by quarter. If you are joining EAA Chapter 84 for
               the first time, your annual membership fee is pro-rated based on the quarter you join.
               Dues are reset each January, and renewals are $20 annually regardless of when you
               joined.
             </p>
+            )}
 
             {currentFee ? (
               <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      Current Quarter: {currentQuarter} ({getQuarterDisplayName(currentQuarter)})
+                      {isStudent ? "Student Membership" : `Current Quarter: ${currentQuarter} (${getQuarterDisplayName(currentQuarter)})`}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Pro-rated new member dues
+                      {isStudent ? "Annual student dues" : "Pro-rated new member dues"}
                     </p>
                   </div>
                   <span className="text-2xl font-bold text-foreground tabular-nums">

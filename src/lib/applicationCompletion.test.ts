@@ -20,3 +20,10 @@ describe("completion of a previously incomplete application", () => {
     expect(application.welcome_sent_at).toBe("2026-11-10T12:00:00Z");
   });
 });
+describe("completion of a student application", () => {
+  it("sets the member type to Student and saves the date of birth", () => {
+    const u = applicationCompletionUpdates("2026-11-23T00:00:00Z", "2027-03-09", { dateOfBirth: "2010-04-02" });
+    expect(u.roster.member_type).toBe("Student");
+    expect((u.roster as any).birth_date).toBe("2010-04-02");
+  });
+});

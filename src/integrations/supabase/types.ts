@@ -890,6 +890,7 @@ export type Database = {
           archived_by_name: string | null
           city: string
           created_at: string
+          date_of_birth: string | null
           eaa_number: string
           eaa_verified: boolean
           email: string
@@ -898,6 +899,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          membership_type: string
           processed: boolean
           processed_at: string | null
           quarter_applied: string
@@ -914,6 +916,7 @@ export type Database = {
           archived_by_name?: string | null
           city: string
           created_at?: string
+          date_of_birth?: string | null
           eaa_number: string
           eaa_verified?: boolean
           email: string
@@ -922,6 +925,7 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          membership_type?: string
           processed?: boolean
           processed_at?: string | null
           quarter_applied: string
@@ -938,6 +942,7 @@ export type Database = {
           archived_by_name?: string | null
           city?: string
           created_at?: string
+          date_of_birth?: string | null
           eaa_number?: string
           eaa_verified?: boolean
           email?: string
@@ -946,6 +951,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          membership_type?: string
           processed?: boolean
           processed_at?: string | null
           quarter_applied?: string
