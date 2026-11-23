@@ -67,12 +67,6 @@ export const COMPLETE_MEMBERSHIP_HTML = String.raw`
                 <tr>
                   <td style="padding:8px 0; font-size:15px; color:#1a1a1a; line-height:1.5;">
                     <span style="display:inline-block; width:8px; height:8px; background-color:#0B1F3A; border-radius:50%; margin-right:10px;"></span>
-                    A New Member Buddy to help you find your bearings
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 0; font-size:15px; color:#1a1a1a; line-height:1.5;">
-                    <span style="display:inline-block; width:8px; height:8px; background-color:#0B1F3A; border-radius:50%; margin-right:10px;"></span>
                     Access to Chapter Connect — classifieds, Hangar Talk, and more
                   </td>
                 </tr>
