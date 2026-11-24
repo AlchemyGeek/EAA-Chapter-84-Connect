@@ -4,3 +4,4 @@
 - [x] Update and test December renewal reminders and lifetime/prepaid exemptions.
 - [x] Verify the signed-in renewal banner and status display.- [x] Structured Ratings picker, chips, search assist, convert 24 records, v26.11.05.
 - [x] Qualification tags: match edit-form font size, allow multi-select in directory search.
+- [x] Directory qualification filter reads as a filter: labeled panel, selected count, "X of Y members".

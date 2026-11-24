@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Search, ChevronRight } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, Filter, Check } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 
@@ -110,7 +110,11 @@ export default function Members() {
     <div className="mx-auto w-full max-w-3xl px-4 py-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl md:text-2xl font-bold">Members</h1>
-        <span className="text-sm text-muted-foreground">{filtered.length} members</span>
+        <span className="text-sm text-muted-foreground">
+          {filtered.length === members.length
+            ? `${filtered.length} members`
+            : `${filtered.length} of ${members.length} members`}
+        </span>
       </div>
 
       <div className="flex items-center gap-4">
@@ -124,31 +128,47 @@ export default function Members() {
         </div>
       </div>
 
-      <div>
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            aria-expanded={showQuals}
-            onClick={() => setShowQuals((v) => !v)}
-            className="min-h-[44px] text-base font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {showQuals ? "Hide qualifications" : "Qualifications"}
-          </button>
+      <div
+        className={`rounded-md border bg-background ${
+          selectedQuals.length ? "border-primary" : "border-border"
+        }`}
+      >
+        <button
+          type="button"
+          aria-expanded={showQuals}
+          aria-controls="qual-filter-panel"
+          onClick={() => setShowQuals((v) => !v)}
+          className="flex min-h-[44px] w-full items-center gap-2 px-3 text-left"
+        >
+          <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="text-sm font-medium">Filter by qualification</span>
           {selectedQuals.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setSelectedQuals([])}
-              className="min-h-[44px] px-2 text-sm text-muted-foreground underline-offset-4 hover:underline"
-            >
-              Clear {selectedQuals.length} selected
-            </button>
+            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
+              {selectedQuals.length} selected
+            </span>
           )}
-        </div>
+          <ChevronDown
+            className={`ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+              showQuals ? "rotate-180" : ""
+            }`}
+          />
+        </button>
         {showQuals && (
-          <>
-            <p className="pt-1 text-xs text-muted-foreground">
-              Tap one or more. Shows members with every selected qualification.
-            </p>
+          <div id="qual-filter-panel" className="border-t border-border px-3 pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+              <p className="text-sm text-muted-foreground">
+                Tap one or more. Shows members who hold every qualification you pick.
+              </p>
+              {selectedQuals.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedQuals([])}
+                  className="min-h-[44px] px-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
             <div className="flex flex-wrap gap-2 pt-1">
               {ALL_QUALIFICATION_TOKENS.map((t) => {
                 const on = selectedQuals.includes(t);
@@ -158,18 +178,19 @@ export default function Members() {
                     type="button"
                     aria-pressed={on}
                     onClick={() => toggleQual(t)}
-                    className={`min-h-[44px] rounded-full border px-3 text-sm transition-colors ${
+                    className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3 text-sm transition-colors ${
                       on
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-background text-foreground hover:bg-muted"
                     }`}
                   >
+                    {on && <Check className="h-3.5 w-3.5 shrink-0" />}
                     {t}
                   </button>
                 );
               })}
             </div>
-          </>
+          </div>
         )}
       </div>
 
