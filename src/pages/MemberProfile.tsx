@@ -1,3 +1,4 @@
+import { RatingChips } from "@/components/member/RatingChips";
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -258,7 +259,7 @@ export default function MemberProfile() {
               <div className="space-y-3">
                 {member.ratings && (
                   <InfoRow icon={Award} label="Ratings">
-                    {member.ratings}
+                    <RatingChips value={member.ratings} />
                   </InfoRow>
                 )}
                 {member.aircraft_owned && (

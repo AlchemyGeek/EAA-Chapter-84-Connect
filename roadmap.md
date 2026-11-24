@@ -2,4 +2,4 @@
 - [x] Preserve Jake's chapter history and remove his duplicate EAA 0 roster record.
 - [x] Deploy and verify import matching and Jake's remaining record.
 - [x] Update and test December renewal reminders and lifetime/prepaid exemptions.
-- [x] Verify the signed-in renewal banner and status display.
+- [x] Verify the signed-in renewal banner and status display.- [ ] Structured Ratings picker, chips, search assist, convert 24 records, v26.11.05.

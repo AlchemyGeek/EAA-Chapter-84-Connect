@@ -11,11 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { QualificationsPicker } from "./QualificationsPicker";
+import { RatingChips } from "./RatingChips";
 
 export interface EditableFieldDef {
   label: string;
   key: string;
-  type?: "text" | "date" | "boolean";
+  type?: "text" | "date" | "boolean" | "ratings";
 }
 
 function formatValue(value: any, type?: string): string {
@@ -103,7 +105,7 @@ export function EditableSection({
                 {fields.map((f) => (
                   <div key={f.key}>
                     <dt className="text-xs text-muted-foreground">{f.label}</dt>
-                    <dd className="text-sm font-medium">{formatValue(data[f.key], f.type)}</dd>
+                    <dd className="text-sm font-medium">{f.type === "ratings" ? <RatingChips value={data[f.key]} /> : formatValue(data[f.key], f.type)}</dd>
                   </div>
                 ))}
               </dl>
@@ -139,8 +141,17 @@ export function EditableSection({
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                 {fields.map((f) => (
-                  <div key={f.key}>
-                    {f.type === "boolean" ? (
+                  <div key={f.key} className={f.type === "ratings" ? "sm:col-span-2" : undefined}>
+                    {f.type === "ratings" ? (
+                      <>
+                        <p className="text-xs text-muted-foreground mb-2">{f.label}</p>
+                        <QualificationsPicker
+                          value={draft[f.key] ?? ""}
+                          onChange={(v) => setDraft((prev) => ({ ...prev, [f.key]: v }))}
+                          disabled={saving}
+                        />
+                      </>
+                    ) : f.type === "boolean" ? (
                       <label
                         htmlFor={`edit-${f.key}`}
                         className="flex items-center gap-2 min-h-[44px] cursor-pointer select-none text-sm"

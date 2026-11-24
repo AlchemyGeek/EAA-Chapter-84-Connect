@@ -1,3 +1,4 @@
+import { isValidElement } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   Accordion,
@@ -24,7 +25,7 @@ function FieldGrid({ fields }: { fields: FieldDisplay[] }) {
       {fields.map((f) => (
         <div key={f.label}>
           <dt className="text-xs text-muted-foreground">{f.label}</dt>
-          <dd className="text-sm font-medium">{formatValue(f.value)}</dd>
+          <dd className="text-sm font-medium">{isValidElement(f.value) ? f.value : formatValue(f.value)}</dd>
         </div>
       ))}
     </dl>

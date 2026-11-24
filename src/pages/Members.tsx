@@ -1,3 +1,4 @@
+import { ALL_QUALIFICATION_TOKENS } from "@/lib/qualifications";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 
 export default function Members() {
   const [search, setSearch] = useState("");
+  const [showQuals, setShowQuals] = useState(false);
   const [roleOnly, setRoleOnly] = useState(false);
   const isMobile = useIsMobile();
   useTrackEngagement("directory_view");
@@ -111,6 +113,34 @@ export default function Members() {
           <Switch id="role-filter" checked={roleOnly} onCheckedChange={setRoleOnly} />
           <Label htmlFor="role-filter" className="text-sm cursor-pointer whitespace-nowrap">Officers</Label>
         </div>
+      </div>
+
+      <div>
+        <button
+          type="button"
+          aria-expanded={showQuals}
+          onClick={() => setShowQuals((v) => !v)}
+          className="min-h-[44px] text-base font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {showQuals ? "Hide qualifications" : "Qualifications"}
+        </button>
+        {showQuals && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {ALL_QUALIFICATION_TOKENS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={search === t}
+                onClick={() => setSearch(t)}
+                className={`min-h-[44px] rounded-full border px-3 text-base transition-colors ${
+                  search === t ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:bg-muted"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {isLoading ? (

@@ -1,3 +1,4 @@
+import { RatingChips } from "@/components/member/RatingChips";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +65,7 @@ export default function MemberDetail() {
 
   const aviationFields = aviationVisible
     ? [
-        { label: "Ratings", value: member.ratings },
+        { label: "Ratings", value: <RatingChips value={member.ratings} /> },
         { label: "Aircraft Owned", value: member.aircraft_owned },
         { label: "Aircraft Project", value: member.aircraft_project },
         { label: "Aircraft Built", value: member.aircraft_built },

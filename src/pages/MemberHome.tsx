@@ -423,7 +423,7 @@ export default function MemberHome() {
   ];
 
   const aviationFieldDefs: EditableFieldDef[] = [
-    { label: "Ratings", key: "ratings" },
+    { label: "Ratings", key: "ratings", type: "ratings" },
     { label: "Aircraft Owned", key: "aircraft_owned" },
     { label: "Aircraft Project", key: "aircraft_project" },
     { label: "Aircraft Built", key: "aircraft_built" },
