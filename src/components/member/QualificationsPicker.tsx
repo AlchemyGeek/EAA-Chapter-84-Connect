@@ -43,7 +43,7 @@ export function QualificationsPicker({ value, onChange, disabled }: Props) {
                   aria-pressed={on}
                   disabled={disabled}
                   onClick={() => toggle(t, section.single, section.tokens)}
-                  className={`min-h-[44px] rounded-full border px-3 text-base transition-colors ${
+                  className={`min-h-[44px] rounded-full border px-3 text-sm transition-colors ${
                     on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:bg-muted"
                   }`}
                 >
