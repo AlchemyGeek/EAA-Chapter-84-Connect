@@ -805,7 +805,6 @@ export default function MemberHome() {
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">New Members</p>
                 <AdminLink to="/new-member-applications" icon={UserPlus} label={`Applications${pendingAppCount > 0 ? ` (${pendingAppCount})` : ""}`} />
-                <AdminLink to="/buddy-program" icon={Heart} label="Buddy Program" />
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">Insights</p>
@@ -824,6 +823,7 @@ export default function MemberHome() {
                   <Download className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <AdminLink to="/survey-results" icon={ClipboardList} label={`2026 New Member Survey${surveyResponseCount > 0 ? ` (${surveyResponseCount})` : ""}`} />
+                <AdminLink to="/buddy-program" icon={Heart} label="Buddy Program (Retired)" />
               </div>
             </CardContent>
           </Card>
