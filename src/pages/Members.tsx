@@ -141,7 +141,7 @@ export default function Members() {
           className="flex min-h-[44px] w-full items-center gap-2 px-3 text-left"
         >
           <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="text-sm font-medium">Filter by qualification</span>
+          <span className="text-sm font-medium">Filter by rating</span>
           {selectedQuals.length > 0 && (
             <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
               {selectedQuals.length} selected
@@ -157,7 +157,7 @@ export default function Members() {
           <div id="qual-filter-panel" className="border-t border-border px-3 pb-3">
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
               <p className="text-sm text-muted-foreground">
-                Tap one or more. Shows members who hold every qualification you pick.
+                Tap one or more. Shows members who hold every rating you pick.
               </p>
               {selectedQuals.length > 0 && (
                 <button
