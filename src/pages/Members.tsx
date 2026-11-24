@@ -1,4 +1,4 @@
-import { ALL_QUALIFICATION_TOKENS } from "@/lib/qualifications";
+import { ALL_QUALIFICATION_TOKENS, matchesQualifications } from "@/lib/qualifications";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 export default function Members() {
   const [search, setSearch] = useState("");
   const [showQuals, setShowQuals] = useState(false);
+  const [selectedQuals, setSelectedQuals] = useState<string[]>([]);
   const [roleOnly, setRoleOnly] = useState(false);
   const isMobile = useIsMobile();
   useTrackEngagement("directory_view");
@@ -74,6 +75,11 @@ export default function Members() {
     roleMap.set(l.key_id, list);
   }
 
+  const toggleQual = (t: string) =>
+    setSelectedQuals((cur) =>
+      cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t],
+    );
+
   const filtered = members.filter((m) => {
     // Exclude prospects from the directory even if they slip through the RPC
     if (m.member_type === "Prospect") return false;
@@ -94,7 +100,10 @@ export default function Members() {
 
     const textMatch = !q || searchableFields.some((f) => f?.toLowerCase().includes(q));
     const roleMatch = !roleOnly || roleMap.has(m.key_id);
-    return textMatch && roleMatch;
+    const qualMatch =
+      selectedQuals.length === 0 ||
+      (aviationVisible && matchesQualifications(m.ratings, selectedQuals));
+    return textMatch && roleMatch && qualMatch;
   });
 
   return (
@@ -116,30 +125,51 @@ export default function Members() {
       </div>
 
       <div>
-        <button
-          type="button"
-          aria-expanded={showQuals}
-          onClick={() => setShowQuals((v) => !v)}
-          className="min-h-[44px] text-base font-medium text-primary underline-offset-4 hover:underline"
-        >
-          {showQuals ? "Hide qualifications" : "Qualifications"}
-        </button>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            aria-expanded={showQuals}
+            onClick={() => setShowQuals((v) => !v)}
+            className="min-h-[44px] text-base font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {showQuals ? "Hide qualifications" : "Qualifications"}
+          </button>
+          {selectedQuals.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedQuals([])}
+              className="min-h-[44px] px-2 text-sm text-muted-foreground underline-offset-4 hover:underline"
+            >
+              Clear {selectedQuals.length} selected
+            </button>
+          )}
+        </div>
         {showQuals && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {ALL_QUALIFICATION_TOKENS.map((t) => (
-              <button
-                key={t}
-                type="button"
-                aria-pressed={search === t}
-                onClick={() => setSearch(t)}
-                className={`min-h-[44px] rounded-full border px-3 text-base transition-colors ${
-                  search === t ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:bg-muted"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <>
+            <p className="pt-1 text-xs text-muted-foreground">
+              Tap one or more. Shows members with every selected qualification.
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {ALL_QUALIFICATION_TOKENS.map((t) => {
+                const on = selectedQuals.includes(t);
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleQual(t)}
+                    className={`min-h-[44px] rounded-full border px-3 text-sm transition-colors ${
+                      on
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
@@ -171,7 +201,9 @@ export default function Members() {
           ))}
           {filtered.length === 0 && (
             <p className="text-center text-muted-foreground py-8">
-              {search ? "No members match your search." : "No members yet. Import a roster to get started."}
+              {search || selectedQuals.length
+                ? "No members match your search."
+                : "No members yet. Import a roster to get started."}
             </p>
           )}
         </div>
@@ -209,7 +241,9 @@ export default function Members() {
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                    {search ? "No members match your search." : "No members yet. Import a roster to get started."}
+                    {search || selectedQuals.length
+                      ? "No members match your search."
+                      : "No members yet. Import a roster to get started."}
                   </TableCell>
                 </TableRow>
               )}

@@ -48,3 +48,23 @@ export function serializeRatings({ selected, other }: QualificationsValue): stri
   }
   return out.join(", ");
 }
+
+// Normalizes hyphen variants, whitespace and case so legacy free-text ratings
+// (e.g. "cfii", "Rotorcraft-Helicopter") still match a canonical token.
+function normalizeToken(s: string): string {
+  return s
+    .replace(/[\u2010-\u2015\u2212]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+export function matchesQualifications(
+  value: string | null | undefined,
+  selected: string[],
+): boolean {
+  if (selected.length === 0) return true;
+  const { selected: picked, other } = parseRatings(value);
+  const have = new Set([...picked, ...other].map(normalizeToken));
+  return selected.every((t) => have.has(normalizeToken(t)));
+}

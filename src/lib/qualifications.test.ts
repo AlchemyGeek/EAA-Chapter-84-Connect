@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRatings, serializeRatings } from "./qualifications";
+import { matchesQualifications, parseRatings, serializeRatings } from "./qualifications";
 
 describe("qualifications", () => {
   it("serializes the spec example in category order", () => {
@@ -22,5 +22,16 @@ describe("qualifications", () => {
   it("treats empty as no qualifications", () => {
     expect(parseRatings("")).toEqual({ selected: [], other: [] });
     expect(serializeRatings({ selected: [], other: [] })).toBe("");
+  });
+  it("requires every selected qualification to be present", () => {
+    const r = "Private, ASEL, Instrument Airplane, CFI, CFII, A&P, Tailwheel";
+    expect(matchesQualifications(r, ["CFII", "A&P"])).toBe(true);
+    expect(matchesQualifications(r, ["CFII", "IA"])).toBe(false);
+    expect(matchesQualifications(r, [])).toBe(true);
+  });
+  it("matches old free-text ratings ignoring case and hyphen style", () => {
+    expect(matchesQualifications("cfii, rotorcraft‑helicopter", ["CFII", "Rotorcraft‑Helicopter"])).toBe(true);
+    expect(matchesQualifications("Rotorcraft-Helicopter", ["Rotorcraft‑Helicopter"])).toBe(true);
+    expect(matchesQualifications("", ["CFI"])).toBe(false);
   });
 });
