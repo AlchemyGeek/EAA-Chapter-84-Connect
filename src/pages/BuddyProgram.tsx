@@ -38,6 +38,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// The Buddy Program is retired. The page stays available as a read-only record
+// of past volunteers and assignments. Flip this to false to restore the full
+// officer workflow if the chapter ever reinstates the program.
+const RETIRED: boolean = true;
+
 export default function BuddyProgram() {
   const { user, loading: authLoading, isOfficerOrAbove } = useAuth();
   const queryClient = useQueryClient();
@@ -421,7 +426,17 @@ export default function BuddyProgram() {
       <div>
         <h1 className="text-xl font-bold">New Member Buddy Program</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Pair new members with experienced chapter volunteers. Assignments, emails, and graduations are managed manually.
+          Records are kept here in case the chapter reinstates the program.
+        </p>
+      </div>
+
+      {/* Retired banner */}
+      <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-4 py-6 text-center">
+        <p className="text-3xl font-bold uppercase tracking-[0.2em] text-amber-900 dark:text-amber-100">
+          Retired
+        </p>
+        <p className="text-sm text-amber-900/80 dark:text-amber-200/80 mt-2">
+          This program is no longer active. Everything below is view-only.
         </p>
       </div>
 
@@ -434,6 +449,7 @@ export default function BuddyProgram() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {!RETIRED && (
           <div className="space-y-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -472,6 +488,7 @@ export default function BuddyProgram() {
               <p className="text-xs text-muted-foreground">No matching members found.</p>
             )}
           </div>
+          )}
 
           {volLoading ? (
             <p className="text-sm text-muted-foreground">Loading...</p>
@@ -499,6 +516,7 @@ export default function BuddyProgram() {
                     <Badge variant="outline" className="text-xs hidden sm:inline-flex">
                       {v.total} total
                     </Badge>
+                    {!RETIRED && (
                     <Button
                       size="icon"
                       variant="ghost"
@@ -507,6 +525,7 @@ export default function BuddyProgram() {
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -524,6 +543,7 @@ export default function BuddyProgram() {
                 <UserPlus className="h-4 w-4 text-muted-foreground" />
                 New Members
               </CardTitle>
+              {!RETIRED && (
               <Button
                 size="sm"
                 variant="outline"
@@ -533,6 +553,7 @@ export default function BuddyProgram() {
                 <Plus className="h-3 w-3" />
                 Add Member
               </Button>
+              )}
             </div>
             <div className="flex border rounded-md self-start">
               <button
@@ -571,6 +592,7 @@ export default function BuddyProgram() {
               sortedVolunteers={sortedVolunteers}
               emailLogs={emailLogs}
               now={now}
+              readOnly={RETIRED}
               onAssign={(appId, currentVolKeyId) => {
                 setAssignDialog({ appId, currentVolKeyId });
                 setSelectedVolunteer("");
@@ -592,6 +614,8 @@ export default function BuddyProgram() {
         </CardContent>
       </Card>
 
+      {!RETIRED && (
+        <>
       {/* Assign / Reassign Dialog */}
       <Dialog open={!!assignDialog} onOpenChange={() => { setAssignDialog(null); setSelectedVolunteer(""); }}>
         <DialogContent>
@@ -765,6 +789,8 @@ export default function BuddyProgram() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </>
+      )}
     </div>
   );
 }
@@ -785,6 +811,7 @@ function ActiveMembersList({
   onRemove,
   sendEmailPending,
   getEmailStatus,
+  readOnly,
 }: {
   completedApps: any[];
   appRosterMembers: any[];
@@ -799,6 +826,7 @@ function ActiveMembersList({
   onGraduate: (assignmentId: string) => void;
   onRemove: (appId: string, name: string) => void;
   sendEmailPending: boolean;
+  readOnly: boolean;
   getEmailStatus: (id: string) => {
     introSent: boolean;
     introSentAt?: string;
@@ -908,6 +936,7 @@ function ActiveMembersList({
                 </div>
 
 
+                {!readOnly && (
                 <div className="flex flex-wrap items-center gap-1">
                   {!emailStatus?.introSent && (
                     <Button
@@ -962,12 +991,14 @@ function ActiveMembersList({
                     Remove
                   </Button>
                 </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <p className="text-xs text-muted-foreground italic">
                   No buddy assigned yet.
                 </p>
+                {!readOnly && (
                 <div className="flex items-center gap-1">
                   {sortedVolunteers.length > 0 && (
                     <Button
@@ -990,6 +1021,7 @@ function ActiveMembersList({
                     Remove
                   </Button>
                 </div>
+                )}
               </div>
             )}
           </div>
