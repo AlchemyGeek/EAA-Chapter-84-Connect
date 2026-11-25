@@ -16,6 +16,11 @@ export const PAGE_LABELS: Record<string, string> = {
 
 export const pageLabel = (key: string) => PAGE_LABELS[key] ?? key;
 
+/** Sum the already reconciled page rows, including historical combined services. */
+export function totalPageVisits(rows: readonly { visits: number }[]): number {
+  return rows.reduce((total, row) => total + row.visits, 0);
+}
+
 /** Largest-remainder rounding to 1 decimal so shares always total exactly 100. */
 export function sharePercentages(counts: number[]): number[] {
   const total = counts.reduce((a, b) => a + b, 0);

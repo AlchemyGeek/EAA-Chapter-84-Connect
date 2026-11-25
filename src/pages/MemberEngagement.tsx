@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
-import { pageLabel, sharePercentages } from "@/lib/pageAccess";
+import { pageLabel, sharePercentages, totalPageVisits } from "@/lib/pageAccess";
 import { Activity, Users, TrendingUp, Star, Moon, MousePointerClick, Info, ArrowUpDown, Download } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,18 @@ type MemberRow = {
 };
 
 type SortKey = "name" | "total_events" | "events_30d" | "events_7d" | "last_seen";
+
+async function fetchPageAccess(range: string) {
+  const { data, error } = await supabase.rpc("engagement_by_page", {
+    _days: range === "all" ? null : Number(range),
+  } as any);
+  if (error) throw error;
+  const rows = ((data ?? []) as any[]).map((r) => ({
+    page: pageLabel(r.page), visits: Number(r.visits), members: Number(r.members),
+  }));
+  const pct = sharePercentages(rows.map((r) => r.visits));
+  return rows.map((r, i) => ({ ...r, percent: pct[i] }));
+}
 
 function formatRelative(iso: string | null): string {
   if (!iso) return "—";
@@ -97,17 +109,12 @@ export default function MemberEngagement() {
   const { data: pageRows = [], isLoading: pagesLoading } = useQuery({
     queryKey: ["engagement-by-page", pageRange],
     staleTime: 0,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("engagement_by_page", {
-        _days: pageRange === "all" ? null : Number(pageRange),
-      } as any);
-      if (error) throw error;
-      const rows = ((data ?? []) as any[]).map((r) => ({
-        page: pageLabel(r.page), visits: Number(r.visits), members: Number(r.members),
-      }));
-      const pct = sharePercentages(rows.map((r) => r.visits));
-      return rows.map((r, i) => ({ ...r, percent: pct[i] }));
-    },
+    queryFn: () => fetchPageAccess(pageRange),
+  });
+  const { data: pageRows30d } = useQuery({
+    queryKey: ["engagement-by-page", "30"],
+    staleTime: 0,
+    queryFn: () => fetchPageAccess("30"),
   });
 
   const [search, setSearch] = useState("");
@@ -188,7 +195,7 @@ export default function MemberEngagement() {
     { label: "Engagement Rate", value: kpis ? `${engagementRate}%` : "—", icon: Activity, color: "text-chart-3", description: "Percentage of active roster members who used the app in the last 30 days." },
     { label: "Highly Engaged", value: kpis?.highly_engaged_30d ?? "—", icon: Star, color: "text-chart-4", description: "Members with 5 or more interactions in the last 30 days." },
     { label: "Dormant (60d)", value: kpis?.dormant_60d ?? "—", icon: Moon, color: "text-muted-foreground", description: "Active roster members with no app activity in the last 60 days." },
-    { label: "Service Views (30d)", value: kpis?.service_page_views_30d ?? "—", icon: MousePointerClick, color: "text-chart-5", description: "Total visits to service pages (dues, volunteering, etc.) in the last 30 days." },
+    { label: "Page Visits (30d)", value: pageRows30d ? totalPageVisits(pageRows30d) : "—", icon: MousePointerClick, color: "text-chart-5", description: "Total page visits by everyone in the last 30 days, counted once per page per sitting. Includes historical combined service visits without double-counting." },
   ];
 
   return (
