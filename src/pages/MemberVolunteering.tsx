@@ -16,6 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function MemberVolunteering() {
+  useTrackEngagement("page_view:volunteering");
   const { user, loading: authLoading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();

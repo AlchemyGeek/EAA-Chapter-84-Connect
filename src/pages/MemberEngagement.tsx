@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
+import { pageLabel, sharePercentages } from "@/lib/pageAccess";
 import { Activity, Users, TrendingUp, Star, Moon, MousePointerClick, Info, ArrowUpDown, Download } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,10 @@ const trendChartConfig = {
     label: "Active Members",
     color: "hsl(var(--primary))",
   },
+};
+
+const pageChartConfig = {
+  percent: { label: "Share", color: "hsl(var(--primary))" },
 };
 
 type MemberRow = {
@@ -85,6 +90,23 @@ export default function MemberEngagement() {
       const { data, error } = await supabase.rpc("engagement_by_member");
       if (error) throw error;
       return (data ?? []) as MemberRow[];
+    },
+  });
+
+  const [pageRange, setPageRange] = useState<string>("30");
+  const { data: pageRows = [], isLoading: pagesLoading } = useQuery({
+    queryKey: ["engagement-by-page", pageRange],
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("engagement_by_page", {
+        _days: pageRange === "all" ? null : Number(pageRange),
+      } as any);
+      if (error) throw error;
+      const rows = ((data ?? []) as any[]).map((r) => ({
+        page: pageLabel(r.page), visits: Number(r.visits), members: Number(r.members),
+      }));
+      const pct = sharePercentages(rows.map((r) => r.visits));
+      return rows.map((r, i) => ({ ...r, percent: pct[i] }));
     },
   });
 
@@ -228,6 +250,63 @@ export default function MemberEngagement() {
                 />
               </LineChart>
             </ChartContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-base">Page Access</CardTitle>
+          <Select value={pageRange} onValueChange={setPageRange}>
+            <SelectTrigger className="w-[160px] h-11" aria-label="Time range">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="all">All time</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {pagesLoading ? (
+            <p className="text-muted-foreground">Loading page access...</p>
+          ) : pageRows.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No page visits in this range.</p>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">Share of all page visits. All pages add up to 100%.</p>
+              <ChartContainer config={pageChartConfig} className="w-full" style={{ height: Math.max(160, pageRows.length * 36) }}>
+                <BarChart data={pageRows} layout="vertical" margin={{ left: 8, right: 24 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12 }} />
+                  <YAxis type="category" dataKey="page" width={170} tick={{ fontSize: 12 }} />
+                  <ChartTooltip content={<ChartTooltipContent formatter={(v) => `${v}%`} />} />
+                  <Bar dataKey="percent" fill="var(--color-percent)" radius={2} />
+                </BarChart>
+              </ChartContainer>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Page</TableHead>
+                    <TableHead className="text-right">Visits</TableHead>
+                    <TableHead className="text-right">Members</TableHead>
+                    <TableHead className="text-right">Share</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pageRows.map((r) => (
+                    <TableRow key={r.page}>
+                      <TableCell>{r.page}</TableCell>
+                      <TableCell className="text-right">{r.visits}</TableCell>
+                      <TableCell className="text-right">{r.members}</TableCell>
+                      <TableCell className="text-right">{r.percent.toFixed(1)}%</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
           )}
         </CardContent>
       </Card>

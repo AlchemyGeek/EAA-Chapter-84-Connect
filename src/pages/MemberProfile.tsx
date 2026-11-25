@@ -26,6 +26,7 @@ import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 
 
 export default function MemberProfile() {
+  useTrackEngagement("page_view:profile");
   useTrackEngagement("profile_view");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const { keyId } = useParams();

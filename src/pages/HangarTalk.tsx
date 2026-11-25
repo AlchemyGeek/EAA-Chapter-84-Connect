@@ -1,3 +1,4 @@
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import { postSection, type Post } from "@/lib/hangarTalk/types";
 const STORAGE_KEY = "ht-view-pref";
 
 export default function HangarTalk() {
+  useTrackEngagement("page_view:hangar_talk");
   const { data: posts = [], isLoading } = usePosts();
   const { data: me } = useCurrentMember();
   const navigate = useNavigate();

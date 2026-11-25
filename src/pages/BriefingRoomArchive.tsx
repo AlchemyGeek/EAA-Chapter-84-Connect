@@ -13,6 +13,7 @@ import { useArchiveItems, useSources, PAGE_SIZE, type ArchiveFilters } from "@/l
 import { BRIEFING_CATEGORIES, CATEGORY_LABEL, type BriefingCategory } from "@/lib/briefingRoom/types";
 
 export default function BriefingRoomArchive() {
+  useTrackEngagement("page_view:briefing_room_archive");
   const { user, loading: authLoading, isAdmin } = useAuth();
   useTrackEngagement("service_page");
   const { data: me } = useCurrentMember();

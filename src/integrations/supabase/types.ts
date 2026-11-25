@@ -1652,6 +1652,14 @@ export type Database = {
           total_events: number
         }[]
       }
+      engagement_by_page: {
+        Args: { _days?: number }
+        Returns: {
+          members: number
+          page: string
+          visits: number
+        }[]
+      }
       engagement_kpis: {
         Args: never
         Returns: {

@@ -1,3 +1,4 @@
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -33,6 +34,7 @@ import { Pencil, Plus, RotateCcw, Trash2, Eye } from "lucide-react";
 type TabKey = "active" | "archived" | "mine";
 
 export default function Classifieds() {
+  useTrackEngagement("page_view:classifieds");
   const { isOfficerOrAbove } = useAuth();
   const { data: member } = useCurrentMember();
   const { data: listings = [], isLoading } = useListings();

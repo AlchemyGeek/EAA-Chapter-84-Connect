@@ -1,3 +1,4 @@
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ function domainOf(url: string) {
 }
 
 export default function Resources() {
+  useTrackEngagement("page_view:resources");
   const { user, loading, isOfficerOrAbove } = useAuth();
   const { data: links = [], isLoading } = useQuery({
     queryKey: ["resource-links"],

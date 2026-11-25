@@ -1,3 +1,4 @@
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -112,6 +113,7 @@ type DuesPayment = {
 };
 
 export default function DuesPayment() {
+  useTrackEngagement("page_view:dues_payment");
   const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();

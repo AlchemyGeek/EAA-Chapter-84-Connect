@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 
 export default function Members() {
+  useTrackEngagement("page_view:directory");
   const [search, setSearch] = useState("");
   const [showQuals, setShowQuals] = useState(false);
   const [selectedQuals, setSelectedQuals] = useState<string[]>([]);

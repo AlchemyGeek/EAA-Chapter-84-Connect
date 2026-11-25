@@ -1,3 +1,4 @@
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HandHelping, Mail, Newspaper, Tag } from "lucide-react";
@@ -60,6 +61,7 @@ function SectionHeading({
 }
 
 export default function Flyover() {
+  useTrackEngagement("page_view:flyover");
   useEffect(() => {
     const prevTitle = document.title;
     document.title = "Chapter 84 Connect — Flyover";

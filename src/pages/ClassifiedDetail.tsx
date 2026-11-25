@@ -1,3 +1,4 @@
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import {
 import { formatDate, relativeTime } from "@/lib/classifieds/filters";
 
 export default function ClassifiedDetail() {
+  useTrackEngagement("page_view:classifieds");
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isOfficerOrAbove } = useAuth();

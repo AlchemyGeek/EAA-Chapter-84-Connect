@@ -24,6 +24,7 @@ type NewsletterRow = {
 };
 
 export default function Newsletters() {
+  useTrackEngagement("page_view:newsletters");
   const { user, loading: authLoading } = useAuth();
   useTrackEngagement("service_page");
 

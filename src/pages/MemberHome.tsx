@@ -45,6 +45,7 @@ import { isLifetimeMember, membershipRenewalYear } from "@/lib/membershipRenewal
 
 
 export default function MemberHome() {
+  useTrackEngagement("page_view:home");
   const { user, loading: authLoading, isAdmin, isOfficerOrAbove, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [impersonateKeyId, setImpersonateKeyId] = useState<string | null>(null);

@@ -10,6 +10,7 @@ import { BriefingItemCard } from "@/components/briefing-room/BriefingItemCard";
 import { Newspaper } from "lucide-react";
 
 export default function BriefingRoom() {
+  useTrackEngagement("page_view:briefing_room");
   const { user, loading: authLoading, isAdmin } = useAuth();
   useTrackEngagement("service_page");
   const { data: me } = useCurrentMember();

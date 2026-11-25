@@ -1,3 +1,4 @@
+import { useTrackEngagement } from "@/hooks/useTrackEngagement";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,7 @@ import { SubscribeToggle } from "@/components/hangar-talk/SubscribeToggle";
 import { authorDisplayName, timeAgo } from "@/lib/hangarTalk/types";
 
 export default function HangarTalkPost() {
+  useTrackEngagement("page_view:hangar_talk");
   const { id } = useParams();
   const navigate = useNavigate();
   const withViewAs = useWithViewAs();
