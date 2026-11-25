@@ -95,12 +95,15 @@ export function BuddyEmailTemplates() {
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-90" : ""}`} />
                 <Mail className="h-4 w-4 text-secondary" />
-                Buddy Program Emails
+                Buddy Program Emails (Retired)
               </CardTitle>
             </CardHeader>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="pt-0">
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mb-3">
+                The Buddy Program is retired. These templates are kept for records only — no buddy emails are sent. They remain editable in case the chapter reinstates the program.
+              </p>
               <p className="text-xs text-muted-foreground mb-3">
                 Edit the email templates sent to buddy pairs. Placeholders:{" "}
                 <code className="text-xs bg-muted px-1 rounded">[NewMemberName]</code>,{" "}
