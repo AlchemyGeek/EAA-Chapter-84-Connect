@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
-import { pageLabel, sharePercentages, totalPageVisits } from "@/lib/pageAccess";
+import { pageLabel, pageAccessShares, totalPageVisits } from "@/lib/pageAccess";
 import { Activity, Users, TrendingUp, Star, Moon, MousePointerClick, Info, ArrowUpDown, Download } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
@@ -45,10 +45,9 @@ async function fetchPageAccess(range: string) {
   } as any);
   if (error) throw error;
   const rows = ((data ?? []) as any[]).map((r) => ({
-    page: pageLabel(r.page), visits: Number(r.visits), members: Number(r.members),
+    page: String(r.page), visits: Number(r.visits), members: Number(r.members),
   }));
-  const pct = sharePercentages(rows.map((r) => r.visits));
-  return rows.map((r, i) => ({ ...r, percent: pct[i] }));
+  return pageAccessShares(rows).map((r) => ({ ...r, page: pageLabel(r.page) }));
 }
 
 function formatRelative(iso: string | null): string {
@@ -116,6 +115,7 @@ export default function MemberEngagement() {
     staleTime: 0,
     queryFn: () => fetchPageAccess("30"),
   });
+  const comparativePageRows = pageRows.filter((row) => row.percent !== null);
 
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("last_seen");
@@ -283,16 +283,16 @@ export default function MemberEngagement() {
             <p className="text-muted-foreground text-sm">No page visits in this range.</p>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">Share of all page visits. All pages add up to 100%.</p>
-              <ChartContainer config={pageChartConfig} className="w-full" style={{ height: Math.max(160, pageRows.length * 36) }}>
-                <BarChart data={pageRows} layout="vertical" margin={{ left: 8, right: 24 }}>
+              <p className="text-sm text-muted-foreground">Share of page visits excluding Member Home. Shares add up to 100%.</p>
+              {comparativePageRows.length > 0 && <ChartContainer config={pageChartConfig} className="w-full" style={{ height: Math.max(160, comparativePageRows.length * 36) }}>
+                <BarChart data={comparativePageRows} layout="vertical" margin={{ left: 8, right: 24 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12 }} />
                   <YAxis type="category" dataKey="page" width={170} tick={{ fontSize: 12 }} />
                   <ChartTooltip content={<ChartTooltipContent formatter={(v) => `${v}%`} />} />
                   <Bar dataKey="percent" fill="var(--color-percent)" radius={2} />
                 </BarChart>
-              </ChartContainer>
+              </ChartContainer>}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -308,7 +308,7 @@ export default function MemberEngagement() {
                       <TableCell>{r.page}</TableCell>
                       <TableCell className="text-right">{r.visits}</TableCell>
                       <TableCell className="text-right">{r.members}</TableCell>
-                      <TableCell className="text-right">{r.percent.toFixed(1)}%</TableCell>
+                      <TableCell className="text-right">{r.percent === null ? "—" : `${r.percent.toFixed(1)}%`}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

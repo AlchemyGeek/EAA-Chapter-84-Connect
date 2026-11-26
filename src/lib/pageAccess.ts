@@ -16,6 +16,17 @@ export const PAGE_LABELS: Record<string, string> = {
 
 export const pageLabel = (key: string) => PAGE_LABELS[key] ?? key;
 
+/** Keep home counts, but compare shares only among the other pages. */
+export function pageAccessShares<T extends { page: string; visits: number }>(rows: readonly T[]) {
+  const comparedRows = rows.filter((row) => row.page !== "home");
+  const percentages = sharePercentages(comparedRows.map((row) => row.visits));
+  let index = 0;
+  return rows.map((row) => ({
+    ...row,
+    percent: row.page === "home" ? null : percentages[index++],
+  }));
+}
+
 /** Sum the already reconciled page rows, including historical combined services. */
 export function totalPageVisits(rows: readonly { visits: number }[]): number {
   return rows.reduce((total, row) => total + row.visits, 0);
