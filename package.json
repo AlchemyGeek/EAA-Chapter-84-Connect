@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "26.11.06",
+  "version": "26.11.07",
   "type": "module",
   "scripts": {
     "dev": "vite",
